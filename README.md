@@ -1,4 +1,4 @@
-# opwire-testkit
+# opwire-qakit
 
 > Testing toolkit for building opwire-agent modules
 
