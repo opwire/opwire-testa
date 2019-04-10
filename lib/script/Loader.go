@@ -15,8 +15,22 @@ func NewLoader() *Loader {
 	return l
 }
 
+func (l *Loader) ReadDirs(sourceDirs []string, ext string) (files []string, err error) {
+	files = []string{}
+	for _, sourceDir := range sourceDirs {
+		files, _ = l.appendDir(files, sourceDir, ext)
+	}
+	return files, nil
+}
+
 func (l *Loader) ReadDir(sourceDir string, ext string) ([]string, error) {
-	files := []string{}
+	return l.appendDir(nil, sourceDir, ext)
+}
+
+func (l *Loader) appendDir(files []string, sourceDir string, ext string) ([]string, error) {
+	if files == nil {
+		files = []string{}
+	}
 	err := filepath.Walk(sourceDir, func(path string, f os.FileInfo, err error) error {
 		if !f.IsDir() {
 			r, err := regexp.MatchString(ext, f.Name())
