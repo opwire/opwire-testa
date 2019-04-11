@@ -17,9 +17,11 @@ func NewLoader() *Loader {
 	return l
 }
 
-// func (l *Loader) LoadScripts(sourceDirs []string) (descriptors map[string]*Descriptor, err error) {
-	
-// }
+func (l *Loader) LoadScripts(sourceDirs []string) (map[string]*Descriptor, error) {
+	filePaths, _ := l.ReadDirs(sourceDirs, ".yml")
+	descriptors, _ := l.LoadFiles(filePaths)
+	return descriptors, nil
+}
 
 func (l *Loader) LoadFiles(filePaths []string) (descriptors map[string]*Descriptor, err error) {
 	descriptors = make(map[string]*Descriptor, 0)
@@ -71,7 +73,11 @@ func (l *Loader) appendDir(files []string, sourceDir string, ext string) ([]stri
 		if !f.IsDir() {
 			r, err := regexp.MatchString(ext, f.Name())
 			if err == nil && r {
-				files = append(files, strings.TrimPrefix(path, sourceDir))
+				if false {
+					files = append(files, strings.TrimPrefix(path, sourceDir))
+				} else {
+					files = append(files, path)
+				}
 			}
 		}
 		return nil
