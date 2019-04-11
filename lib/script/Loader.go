@@ -17,7 +17,18 @@ func NewLoader() *Loader {
 	return l
 }
 
-func (l *Loader) LoadScript(filePath string) (*Descriptor, error) {
+func (l *Loader) LoadFiles(filePaths []string) (descriptors map[string]*Descriptor, err error) {
+	descriptors = make(map[string]*Descriptor, 0)
+	for _, filePath := range filePaths {
+		descriptor, err := l.LoadFile(filePath)
+		if err == nil {
+			descriptors[filePath] = descriptor
+		}
+	}
+	return descriptors, nil
+}
+
+func (l *Loader) LoadFile(filePath string) (*Descriptor, error) {
 	descriptor := &Descriptor{}
 
 	fs := storages.GetFs()
