@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"gopkg.in/yaml.v2"
+	"github.com/opwire/opwire-qakit/lib/storages"
 )
 
 type Loader struct {
@@ -13,6 +15,25 @@ type Loader struct {
 func NewLoader() *Loader {
 	l := new(Loader)
 	return l
+}
+
+func (l *Loader) LoadScript(filePath string) (*Descriptor, error) {
+	descriptor := &Descriptor{}
+
+	fs := storages.GetFs()
+	file, err := fs.Open(filePath)
+	defer file.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	parser := yaml.NewDecoder(file)
+	err = parser.Decode(descriptor)
+	if err != nil {
+		return nil, err
+	}
+
+	return descriptor, nil
 }
 
 func (l *Loader) ReadDirs(sourceDirs []string, ext string) (files []string, err error) {
@@ -42,3 +63,28 @@ func (l *Loader) appendDir(files []string, sourceDir string, ext string) ([]stri
 	})
 	return files, err
 }
+
+type Descriptor struct {
+	Scenarios []Scenario `yaml:"scenarios"`
+}
+
+type Scenario struct {
+	Title *string `yaml:"title"`
+	Method *string `yaml:"method"`
+	Path *string `yaml:"path"`
+}
+
+// type HttpHeader struct {
+// 	Name *string `yaml:"name"`
+// 	Value *string `yaml:"value"`
+// }
+
+// type HttpRequest struct {
+// 	Headers []HttpHeader `yaml:"headers"`
+// 	Body *string `yaml:"body"`
+// }
+
+// type HttpMeasure struct {
+// 	Headers []HttpHeader `yaml:"headers"`
+// 	Body *string `yaml:"body"`
+// }

@@ -1,3 +1,5 @@
+github.com/gorilla/http v0.0.0-20180526232503-732371cf4733 h1:XP4dudjlxzadyN7vy99RS0wKby/Kkcp4Ejnl7eE7HPY=
+github.com/gorilla/http v0.0.0-20180526232503-732371cf4733/go.mod h1:7SoxxYlLs8XfoT5AXYy1WWMqjg3iaA9gZblNHzXQDqo=
 github.com/urfave/cli v1.20.0 h1:fDqGv3UG/4jbVl/QkFwEdddtEDjh/5Ov6X+0B/3bPaw=
 github.com/urfave/cli v1.20.0/go.mod h1:70zkFmudgCuE/ngEzBv17Jvp/497gISqfk5gWijbERA=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
