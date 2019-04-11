@@ -17,6 +17,10 @@ func NewLoader() *Loader {
 	return l
 }
 
+// func (l *Loader) LoadScripts(sourceDirs []string) (descriptors map[string]*Descriptor, err error) {
+	
+// }
+
 func (l *Loader) LoadFiles(filePaths []string) (descriptors map[string]*Descriptor, err error) {
 	descriptors = make(map[string]*Descriptor, 0)
 	for _, filePath := range filePaths {
@@ -83,19 +87,21 @@ type Scenario struct {
 	Title *string `yaml:"title"`
 	Method *string `yaml:"method"`
 	Path *string `yaml:"path"`
+	Request *HttpRequest `yaml:"request"`
+	Measure *HttpMeasure `yaml:"measure"`
 }
 
-// type HttpHeader struct {
-// 	Name *string `yaml:"name"`
-// 	Value *string `yaml:"value"`
-// }
+type HttpHeader struct {
+	Name *string `yaml:"name"`
+	Value *string `yaml:"value"`
+}
 
-// type HttpRequest struct {
-// 	Headers []HttpHeader `yaml:"headers"`
-// 	Body *string `yaml:"body"`
-// }
+type HttpRequest struct {
+	Headers []HttpHeader `yaml:"headers"`
+	Body *string `yaml:"body"`
+}
 
-// type HttpMeasure struct {
-// 	Headers []HttpHeader `yaml:"headers"`
-// 	Body *string `yaml:"body"`
-// }
+type HttpMeasure struct {
+	Headers []HttpHeader `yaml:"headers"`
+	Body *string `yaml:"body"`
+}
