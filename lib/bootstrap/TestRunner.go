@@ -8,18 +8,51 @@ import (
 	"github.com/opwire/opwire-qakit/lib/script"
 )
 
-type TestRunnerOptions interface {}
-
-type TestRunner struct {
-	handler *engine.SpecHandler
+type TestRunnerOptions interface {
+	GetSpecDirs() []string
 }
 
-func NewTestRunner(opts TestRunnerOptions) (*TestRunner, error) {
-	r := &TestRunner{}
+type TestRunner struct {
+	options TestRunnerOptions
+	specDirs []string
+	loader *script.Loader
+	handler *engine.SpecHandler
+	storage *TestStorage
+}
+
+func NewTestRunner(opts TestRunnerOptions) (r *TestRunner, err error) {
+	r = &TestRunner{}
+
+	// determine test specification dirs
+	if opts == nil {
+		r.specDirs = []string{}
+	} else {
+		r.specDirs = opts.GetSpecDirs()
+	}
+
+	// testing temporary storage
+	r.storage = &TestStorage{}
+
+	// create a Script Loader instance
+	r.loader, err = script.NewLoader(r.storage)
+	if err != nil {
+		return nil, err
+	}
+
+	// create a Spec Handler instance
+	r.handler, err = engine.NewSpecHandler(r.storage)
+	if err != nil {
+		return nil, err
+	}
+
 	return r, nil
 }
 
-func (r *TestRunner) Export(descriptors map[string]*script.Descriptor) ([]testing.InternalTest, error) {
+func (r *TestRunner) loadTestSuites() (map[string]*script.Descriptor, error) {
+	return r.loader.LoadScripts(r.specDirs)
+}
+
+func (r *TestRunner) wrapTestSuites(descriptors map[string]*script.Descriptor) ([]testing.InternalTest, error) {
 	if r.handler == nil {
 		return nil, fmt.Errorf("SpecHandler must not be nil")
 	}
@@ -45,11 +78,15 @@ func (r *TestRunner) wrapTestCase(scenario *engine.Scenario) (testing.InternalTe
 
 func (a *TestRunner) RunTests() error {
 	flag.Set("test.v", "true")
-	tests, err := a.Export(nil)
+	descriptors, err := a.loadTestSuites()
 	if err != nil {
 		return err
 	}
-	testing.Main(defaultMatchString, tests, []testing.InternalBenchmark{}, []testing.InternalExample{})
+	internalTests, err2 := a.wrapTestSuites(descriptors)
+	if err2 != nil {
+		return err2
+	}
+	testing.Main(defaultMatchString, internalTests, []testing.InternalBenchmark{}, []testing.InternalExample{})
 	return nil
 }
 
@@ -57,18 +94,5 @@ func defaultMatchString(pat, str string) (bool, error) {
 	return true, nil
 }
 
-func Test1(t *testing.T) {
-	if 1+2 != 3 {
-		t.Fail()
-	}
-}
+type TestStorage struct {}
 
-func Test2(t *testing.T) {
-	if 3*3 == 9 {
-		t.Fail() // WHOOPS!
-	}
-}
-
-func Test3(t *testing.T) {
-	fmt.Println("Just wanted to print here")
-}

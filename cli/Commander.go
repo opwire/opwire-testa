@@ -54,9 +54,9 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 			Action: func(c *clp.Context) error {
 				f := new(CmdFlags)
 				f.ConfigPath = c.String("config-path")
-				f.SpecDirs = c.String("spec-dirs")
+				f.SpecDirs = c.StringSlice("spec-dirs")
 				f.manifest = manifest
-				tester, err := bootstrap.NewTestRunner(nil)
+				tester, err := bootstrap.NewTestRunner(f)
 				if err != nil {
 					return err
 				}
@@ -88,7 +88,7 @@ type Manifest interface {
 
 type CmdFlags struct {
 	ConfigPath string
-	SpecDirs string
+	SpecDirs []string
 	manifest Manifest
 }
 
@@ -96,7 +96,7 @@ func (a *CmdFlags) GetConfigPath() string {
 	return a.ConfigPath
 }
 
-func (a *CmdFlags) GetSpecDirs() string {
+func (a *CmdFlags) GetSpecDirs() []string {
 	return a.SpecDirs
 }
 
