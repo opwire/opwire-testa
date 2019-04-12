@@ -1,14 +1,14 @@
 package engine
 
-type ExaminerOptions interface {
+type SpecRunnerOptions interface {
 }
 
-type Examiner struct {
+type SpecRunner struct {
 	invoker *HttpInvoker
 }
 
-func NewExaminer(opts ExaminerOptions) (e *Examiner, err error) {
-	e = &Examiner{}
+func NewSpecRunner(opts SpecRunnerOptions) (e *SpecRunner, err error) {
+	e = &SpecRunner{}
 	e.invoker, err = NewHttpInvoker(nil)
 	if err != nil {
 		return nil, err
@@ -16,7 +16,7 @@ func NewExaminer(opts ExaminerOptions) (e *Examiner, err error) {
 	return e, nil
 }
 
-func (e *Examiner) Examine(scenario Scenario) (*ExaminationResult, error) {
+func (e *SpecRunner) Examine(scenario Scenario) (*ExaminationResult, error) {
 	result := &ExaminationResult{}
 	res, err := e.invoker.Do(scenario.Request)
 	if err != nil {
