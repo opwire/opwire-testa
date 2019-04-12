@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 	"gopkg.in/yaml.v2"
+	"github.com/opwire/opwire-qakit/lib/engine"
 	"github.com/opwire/opwire-qakit/lib/storages"
 )
 
@@ -86,28 +87,5 @@ func (l *Loader) appendDir(files []string, sourceDir string, ext string) ([]stri
 }
 
 type Descriptor struct {
-	Scenarios []Scenario `yaml:"scenarios"`
-}
-
-type Scenario struct {
-	Title *string `yaml:"title"`
-	Method *string `yaml:"method"`
-	Path *string `yaml:"path"`
-	Request *HttpRequest `yaml:"request"`
-	Measure *HttpMeasure `yaml:"measure"`
-}
-
-type HttpHeader struct {
-	Name *string `yaml:"name"`
-	Value *string `yaml:"value"`
-}
-
-type HttpRequest struct {
-	Headers []HttpHeader `yaml:"headers"`
-	Body *string `yaml:"body"`
-}
-
-type HttpMeasure struct {
-	Headers []HttpHeader `yaml:"headers"`
-	Body *string `yaml:"body"`
+	Scenarios []engine.Scenario `yaml:"scenarios"`
 }
