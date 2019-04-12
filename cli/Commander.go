@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	clp "github.com/urfave/cli"
+	"github.com/opwire/opwire-qakit/lib/bootstrap"
 )
 
 type Commander struct {
@@ -55,6 +56,11 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 				f.ConfigPath = c.String("config-path")
 				f.SpecDirs = c.String("spec-dirs")
 				f.manifest = manifest
+				tester, err := bootstrap.NewTestRunner(nil)
+				if err != nil {
+					return err
+				}
+				tester.RunTests()
 				return nil
 			},
 		},

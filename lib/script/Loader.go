@@ -10,12 +10,14 @@ import (
 	"github.com/opwire/opwire-qakit/lib/storages"
 )
 
+type LoaderOptions interface {}
+
 type Loader struct {
 }
 
-func NewLoader() *Loader {
+func NewLoader(opts LoaderOptions) (*Loader, error) {
 	l := new(Loader)
-	return l
+	return l, nil
 }
 
 func (l *Loader) LoadScripts(sourceDirs []string) (map[string]*Descriptor, error) {
@@ -87,5 +89,5 @@ func (l *Loader) appendDir(files []string, sourceDir string, ext string) ([]stri
 }
 
 type Descriptor struct {
-	Scenarios []engine.Scenario `yaml:"scenarios"`
+	Scenarios []*engine.Scenario `yaml:"scenarios"`
 }
