@@ -1,6 +1,7 @@
 package script
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -21,27 +22,31 @@ func NewLoader(opts LoaderOptions) (*Loader, error) {
 }
 
 func (l *Loader) LoadScripts(sourceDirs []string) (map[string]*Descriptor, error) {
-	filePaths, _ := l.ReadDirs(sourceDirs, ".yml")
-	descriptors, _ := l.LoadFiles(filePaths)
+	locators, _ := l.ReadDirs(sourceDirs, ".yml")
+	descriptors, _ := l.LoadFiles(locators)
 	return descriptors, nil
 }
 
-func (l *Loader) LoadFiles(filePaths []string) (descriptors map[string]*Descriptor, err error) {
+func (l *Loader) LoadFiles(locators []*Locator) (descriptors map[string]*Descriptor, err error) {
 	descriptors = make(map[string]*Descriptor, 0)
-	for _, filePath := range filePaths {
-		descriptor, err := l.LoadFile(filePath)
+	for _, locator := range locators {
+		descriptor, err := l.LoadFile(locator)
 		if err == nil {
-			descriptors[filePath] = descriptor
+			descriptors[locator.FullPath] = descriptor
 		}
 	}
 	return descriptors, nil
 }
 
-func (l *Loader) LoadFile(filePath string) (*Descriptor, error) {
+func (l *Loader) LoadFile(locator *Locator) (*Descriptor, error) {
+	if locator == nil {
+		return nil, fmt.Errorf("Descriptor must not be nil")
+	}
+
 	descriptor := &Descriptor{}
 
 	fs := storages.GetFs()
-	file, err := fs.Open(filePath)
+	file, err := fs.Open(locator.FullPath)
 	defer file.Close()
 	if err != nil {
 		return nil, err
@@ -53,41 +58,48 @@ func (l *Loader) LoadFile(filePath string) (*Descriptor, error) {
 		return nil, err
 	}
 
+	descriptor.Locator = locator
+
 	return descriptor, nil
 }
 
-func (l *Loader) ReadDirs(sourceDirs []string, ext string) (files []string, err error) {
-	files = []string{}
+func (l *Loader) ReadDirs(sourceDirs []string, ext string) (locators []*Locator, err error) {
+	locators = make([]*Locator, 0)
 	for _, sourceDir := range sourceDirs {
-		files, _ = l.appendDir(files, sourceDir, ext)
+		items, err := l.ReadDir(sourceDir, ext)
+		if err == nil {
+			locators = append(locators, items...)
+		}
 	}
-	return files, nil
+	return locators, nil
 }
 
-func (l *Loader) ReadDir(sourceDir string, ext string) ([]string, error) {
-	return l.appendDir(nil, sourceDir, ext)
-}
-
-func (l *Loader) appendDir(files []string, sourceDir string, ext string) ([]string, error) {
-	if files == nil {
-		files = []string{}
-	}
+func (l *Loader) ReadDir(sourceDir string, ext string) ([]*Locator, error) {
+	locators := make([]*Locator, 0)
 	err := filepath.Walk(sourceDir, func(path string, f os.FileInfo, err error) error {
-		if !f.IsDir() {
+		if err == nil && !f.IsDir() {
 			r, err := regexp.MatchString(ext, f.Name())
 			if err == nil && r {
-				if false {
-					files = append(files, strings.TrimPrefix(path, sourceDir))
-				} else {
-					files = append(files, path)
-				}
+				locator := &Locator{}
+				locator.FullPath = path
+				locator.Home = sourceDir
+				locator.Path = strings.TrimPrefix(path, sourceDir)
+				locators = append(locators, locator)
 			}
 		}
 		return nil
 	})
-	return files, err
+	return locators, err
+}
+
+type Locator struct {
+	FullPath string
+	Home string
+	Path string
+	Error error
 }
 
 type Descriptor struct {
+	Locator *Locator
 	Scenarios []*engine.Scenario `yaml:"scenarios"`
 }
