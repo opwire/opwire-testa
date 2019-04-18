@@ -70,7 +70,7 @@ func (c *HttpInvoker) Do(req *HttpRequest) (*HttpResponse, error) {
 	}
 
 	lowRes, err := httpClient.Do(lowReq)
-	if lowRes.Body != nil {
+	if lowRes != nil && lowRes.Body != nil {
 		defer lowRes.Body.Close()
 	}
 	if err != nil {
