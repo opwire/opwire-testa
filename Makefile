@@ -74,9 +74,9 @@ build-all: build-clean build-mkdir
 		IFS="/" read -ra OS_ARCH <<< $${TARGET}; \
 		GOOS=$${OS_ARCH[0]}; \
 		GOARCH=$${OS_ARCH[1]}; \
-		ARTIFACT_NAME=opwire-qakit-${LATEST_TAG}-$$GOOS-$$GOARCH; \
+		ARTIFACT_NAME=opwire-testa-${LATEST_TAG}-$$GOOS-$$GOARCH; \
 		[[ "$$GOOS" = "windows" ]] && BIN_EXT=".exe" || BIN_EXT=""; \
-		env GOOS=$$GOOS GOARCH=$$GOARCH go build -o ./build/$$ARTIFACT_NAME/opwire-qakit$$BIN_EXT -ldflags "${GO_LDFLAGS} -s -w" && \
+		env GOOS=$$GOOS GOARCH=$$GOARCH go build -o ./build/$$ARTIFACT_NAME/opwire-testa$$BIN_EXT -ldflags "${GO_LDFLAGS} -s -w" && \
 		zip -rjm ./build/$$ARTIFACT_NAME.zip ./build/$$ARTIFACT_NAME/ && \
 		rmdir ./build/$$ARTIFACT_NAME/; \
 	done
@@ -94,7 +94,7 @@ build-mkdir:
 clean: build-clean
 	go clean ./...
 	find . -name \*~ | xargs -r rm -f
-	rm -f ./opwire-qakit
+	rm -f ./opwire-testa
 
 info:
 	@echo "GO version: $(GO_VERSION)"

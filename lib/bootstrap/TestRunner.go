@@ -4,8 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"testing"
-	"github.com/opwire/opwire-qakit/lib/engine"
-	"github.com/opwire/opwire-qakit/lib/script"
+	"github.com/opwire/opwire-testa/lib/engine"
+	"github.com/opwire/opwire-testa/lib/script"
 )
 
 type TestRunnerOptions interface {
@@ -69,7 +69,7 @@ func (r *TestRunner) wrapTestCase(scenario *engine.Scenario) (testing.InternalTe
 	return testing.InternalTest{
 		Name: scenario.Title,
 		F: func (t *testing.T) {
-			result, err := r.handler.Examine(scenario)
+			result, err := r.handler.Examine(t, scenario)
 			_ = result
 			_ = err
 		},

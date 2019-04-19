@@ -20,7 +20,7 @@ func NewSpecHandler(opts SpecHandlerOptions) (e *SpecHandler, err error) {
 	return e, nil
 }
 
-func (e *SpecHandler) Examine(scenario *Scenario) (*ExaminationResult, error) {
+func (e *SpecHandler) Examine(t *testing.T, scenario *Scenario) (*ExaminationResult, error) {
 	if scenario == nil {
 		return nil, fmt.Errorf("Scenario must not be nil")
 	}
@@ -30,6 +30,8 @@ func (e *SpecHandler) Examine(scenario *Scenario) (*ExaminationResult, error) {
 		return nil, err
 	}
 	result.Response = res
+
+	// matching with expectation
 	return result, nil
 }
 

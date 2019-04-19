@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 	clp "github.com/urfave/cli"
-	"github.com/opwire/opwire-qakit/lib/bootstrap"
+	"github.com/opwire/opwire-testa/lib/bootstrap"
 )
 
 type Commander struct {
@@ -32,7 +32,7 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 	}
 
 	app := clp.NewApp()
-	app.Name = "opwire-qakit"
+	app.Name = "opwire-testa"
 	app.Usage = "Testing toolkit for opwire-agent"
 	app.Version = manifest.GetVersion()
 

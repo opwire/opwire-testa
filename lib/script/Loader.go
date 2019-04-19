@@ -7,8 +7,8 @@ import (
 	"regexp"
 	"strings"
 	"gopkg.in/yaml.v2"
-	"github.com/opwire/opwire-qakit/lib/engine"
-	"github.com/opwire/opwire-qakit/lib/storages"
+	"github.com/opwire/opwire-testa/lib/engine"
+	"github.com/opwire/opwire-testa/lib/storages"
 )
 
 type LoaderOptions interface {}

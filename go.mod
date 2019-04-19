@@ -1,4 +1,4 @@
-module github.com/opwire/opwire-qakit
+module github.com/opwire/opwire-testa
 
 go 1.12
 

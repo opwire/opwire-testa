@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"time"
-	"github.com/opwire/opwire-qakit/lib/utils"
+	"github.com/opwire/opwire-testa/lib/utils"
 )
 
 type HttpInvokerOptions interface {
