@@ -14,6 +14,8 @@ import (
 type LoaderOptions interface {}
 
 type Loader struct {
+	options LoaderOptions
+	skipInvalidSpecs bool
 }
 
 func NewLoader(opts LoaderOptions) (*Loader, error) {

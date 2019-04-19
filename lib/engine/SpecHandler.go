@@ -2,7 +2,6 @@ package engine
 
 import(
 	"fmt"
-	"testing"
 )
 
 type SpecHandlerOptions interface {
@@ -21,7 +20,7 @@ func NewSpecHandler(opts SpecHandlerOptions) (e *SpecHandler, err error) {
 	return e, nil
 }
 
-func (e *SpecHandler) Examine(t *testing.T, scenario *Scenario) (*ExaminationResult, error) {
+func (e *SpecHandler) Examine(scenario *Scenario) (*ExaminationResult, error) {
 	if scenario == nil {
 		return nil, fmt.Errorf("Scenario must not be nil")
 	}
@@ -36,12 +35,42 @@ func (e *SpecHandler) Examine(t *testing.T, scenario *Scenario) (*ExaminationRes
 	result.Response = res
 
 	// matching with expectation
+	errors := make(map[string]error, 0)
+	expect := scenario.Expectation
+	if expect != nil {
+		_sc := expect.StatusCode
+		if _sc != nil {
+			if _sc.EqualTo != nil {
+				if res.StatusCode != *_sc.EqualTo {
+					errors["StatusCode"] = fmt.Errorf("Response StatusCode [%d] is not equal to expected value [%d]", res.StatusCode, *_sc.EqualTo)
+				}
+			}
+		}
+		_hs := expect.Headers
+		if _hs != nil {
+			if _hs.Items != nil {
+				for _, item := range _hs.Items {
+					headerVal := res.Header.Get(*item.Name)
+					if item.EqualTo != nil && *item.EqualTo != headerVal {
+						errors[fmt.Sprintf("Header[%s]", *item.Name)] = fmt.Errorf("Returned value: [%s] is mismatched with expected: [%s]", headerVal, *item.EqualTo)
+					}
+				}
+			}
+		}
+		_eb := expect.Body
+		if _eb != nil {
+
+		}
+	}
+	result.Errors = errors
+
 	return result, nil
 }
 
 type Scenario struct {
 	Title string `yaml:"title"`
 	Skipped bool `yaml:"skipped"`
+	OnError string `yaml:"on-error"`
 	Request *HttpRequest `yaml:"request"`
 	Expectation *Expectation `yaml:"expectation"`
 }
@@ -73,5 +102,6 @@ type MeasureBody struct {
 }
 
 type ExaminationResult struct {
+	Errors map[string]error
 	Response *HttpResponse
 }

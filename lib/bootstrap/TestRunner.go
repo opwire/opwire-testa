@@ -17,7 +17,7 @@ type TestRunner struct {
 	specDirs []string
 	loader *script.Loader
 	handler *engine.SpecHandler
-	storage *TestStorage
+	storage *TestStateStore
 }
 
 func NewTestRunner(opts TestRunnerOptions) (r *TestRunner, err error) {
@@ -31,7 +31,7 @@ func NewTestRunner(opts TestRunnerOptions) (r *TestRunner, err error) {
 	}
 
 	// testing temporary storage
-	r.storage = &TestStorage{}
+	r.storage = &TestStateStore{}
 
 	// create a Script Loader instance
 	r.loader, err = script.NewLoader(r.storage)
@@ -69,15 +69,25 @@ func (r *TestRunner) wrapTestCase(scenario *engine.Scenario) (testing.InternalTe
 	return testing.InternalTest{
 		Name: scenario.Title,
 		F: func (t *testing.T) {
-			result, err := r.handler.Examine(t, scenario)
-			_ = result
-			_ = err
+			result, err := r.handler.Examine(scenario)
+			if err != nil {
+				t.Fatalf("[%s] got a fatal error. Exit now", scenario.Title)
+			}
+			if result != nil && len(result.Errors) > 0 {
+				t.Errorf("[%s] has failed:", scenario.Title)
+				for key, err := range result.Errors {
+					t.Logf("+ %s", key)
+					t.Logf("|- %s", err)
+				}
+				} else {
+				t.Logf("[%s] OK", scenario.Title)
+			}
 		},
 	}
 }
 
 func (a *TestRunner) RunTests() error {
-	flag.Set("test.v", "true")
+	flag.Set("test.v", "false")
 	descriptors, err := a.loadTestSuites()
 	if err != nil {
 		return err
@@ -94,5 +104,5 @@ func defaultMatchString(pat, str string) (bool, error) {
 	return true, nil
 }
 
-type TestStorage struct {}
+type TestStateStore struct {}
 

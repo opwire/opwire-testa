@@ -79,17 +79,9 @@ func (c *HttpInvoker) Do(req *HttpRequest) (*HttpResponse, error) {
 
 	res := &HttpResponse{}
 
-	res.Headers = make([]HttpHeader, 0)
-
-	for key, _ := range lowRes.Header {
-		val := lowRes.Header.Get(key)
-		if len(val) > 0 {
-			res.Headers = append(res.Headers, HttpHeader{
-				Name: key,
-				Value: val,
-			})
-		}
-	}
+	res.Status = lowRes.Status
+	res.StatusCode = lowRes.StatusCode
+	res.Header = lowRes.Header
 
 	res.Body, err = ioutil.ReadAll(lowRes.Body)
 	if err != nil {
@@ -117,7 +109,7 @@ type HttpResponse struct {
 	Status string
 	StatusCode int
 	Version string
-	Headers []HttpHeader
+	Header http.Header
 	ContentLength int64
 	Body []byte
 }
