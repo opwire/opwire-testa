@@ -1,7 +1,9 @@
 package engine
 
 import(
+	"encoding/json"
 	"fmt"
+	"github.com/google/go-cmp/cmp"
 )
 
 type SpecHandlerOptions interface {
@@ -59,7 +61,32 @@ func (e *SpecHandler) Examine(scenario *Scenario) (*ExaminationResult, error) {
 		}
 		_eb := expect.Body
 		if _eb != nil {
-
+			if _eb.EqualTo != nil {
+				_rb := string(res.Body)
+				if res.Body == nil || _rb != *_eb.EqualTo {
+					errors["Body"] = fmt.Errorf("Response body is mismatched with expected content.\n    Received: %s\n    Expected: %s", _rb, *_eb.EqualTo)
+				}
+			}
+			if _eb.JSONEquals != nil {
+				var receivedJSON, expectedJSON interface{}
+				next := true
+				if (res.Body == nil) {
+					errors["Body/JSONEquals/empty"] = fmt.Errorf("Response body is empty (invalid JSON)")
+					next = false
+				}
+				if err := json.Unmarshal(res.Body, &receivedJSON); err != nil {
+					errors["Body/JSONEquals/received"] = fmt.Errorf("Invalid response content: %s", err)
+					next = false
+				}
+				if err := json.Unmarshal([]byte(*_eb.JSONEquals), &expectedJSON); err != nil {
+					errors["Body/JSONEquals/expected"] = fmt.Errorf("Invalid expected content: %s", err)
+					next = false
+				}
+				if diff := cmp.Diff(expectedJSON, receivedJSON); diff != "" {
+					errors["Body/JSONEquals/result"] = fmt.Errorf("Body mismatch (-expected +received):\n%s", diff)
+				}
+				_ = next
+			}
 		}
 	}
 	result.Errors = errors
@@ -97,8 +124,12 @@ type MeasureHeader struct {
 
 type MeasureBody struct {
 	HasFormat *string `yaml:"has-format"`
-	EqualTo *string `yaml:"equal-to"`
 	MatchWith *string `yaml:"match-with"`
+	EqualTo *string `yaml:"equal-to"`
+	JSONEquals *string `yaml:"equal-json"`
+	JSONContains *string `yaml:"json-contains"`
+	YAMLEquals *string `yaml:"equal-yaml"`
+	YAMLContains *string `yaml:"yaml-contains"`
 }
 
 type ExaminationResult struct {
