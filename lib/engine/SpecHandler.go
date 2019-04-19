@@ -2,6 +2,7 @@ package engine
 
 import(
 	"fmt"
+	"testing"
 )
 
 type SpecHandlerOptions interface {
@@ -24,7 +25,10 @@ func (e *SpecHandler) Examine(t *testing.T, scenario *Scenario) (*ExaminationRes
 	if scenario == nil {
 		return nil, fmt.Errorf("Scenario must not be nil")
 	}
+
 	result := &ExaminationResult{}
+
+	// make the testing request
 	res, err := e.invoker.Do(scenario.Request)
 	if err != nil {
 		return nil, err
@@ -39,7 +43,33 @@ type Scenario struct {
 	Title string `yaml:"title"`
 	Skipped bool `yaml:"skipped"`
 	Request *HttpRequest `yaml:"request"`
-	Measure *HttpMeasure `yaml:"measure"`
+	Expectation *Expectation `yaml:"expectation"`
+}
+
+type Expectation struct {
+	StatusCode *MeasureStatusCode `yaml:"status-code"`
+	Headers *MeasureHeaders `yaml:"headers"`
+	Body *MeasureBody `yaml:"body"`
+}
+
+type MeasureStatusCode struct {
+	EqualTo *int `yaml:"equal-to"`
+}
+
+type MeasureHeaders struct {
+	HasTotal *int `yaml:"has-total"`
+	Items []MeasureHeader `yaml:"items"`
+}
+
+type MeasureHeader struct {
+	Name *string `yaml:"name"`
+	EqualTo *string `yaml:"equal-to"`
+}
+
+type MeasureBody struct {
+	HasFormat *string `yaml:"has-format"`
+	EqualTo *string `yaml:"equal-to"`
+	MatchWith *string `yaml:"match-with"`
 }
 
 type ExaminationResult struct {

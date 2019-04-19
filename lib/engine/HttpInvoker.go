@@ -121,8 +121,3 @@ type HttpResponse struct {
 	ContentLength int64
 	Body []byte
 }
-
-type HttpMeasure struct {
-	Headers []HttpHeader `yaml:"headers"`
-	Body string `yaml:"body"`
-}
