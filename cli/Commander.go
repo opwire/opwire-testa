@@ -94,6 +94,11 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 				f.Url = c.String("url")
 				f.Header = c.StringSlice("header")
 				f.Body = c.String("data")
+				broker, err := bootstrap.NewReqBroker(nil)
+				if err != nil {
+					return err
+				}
+				broker.Execute(f)
 				return nil
 			},
 		},
@@ -124,6 +129,22 @@ type CmdReqFlags struct {
 	Url string
 	Header []string
 	Body string
+}
+
+func (f *CmdReqFlags) GetMethod() string {
+	return f.Method
+}
+
+func (f *CmdReqFlags) GetUrl() string {
+	return f.Url
+}
+
+func (f *CmdReqFlags) GetHeader() []string {
+	return f.Header
+}
+
+func (f *CmdReqFlags) GetBody() string {
+	return f.Body
 }
 
 type CmdRunFlags struct {

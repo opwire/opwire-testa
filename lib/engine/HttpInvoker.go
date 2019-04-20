@@ -32,15 +32,19 @@ func (c *HttpInvoker) Do(req *HttpRequest) (*HttpResponse, error) {
 	if req == nil {
 		return nil, fmt.Errorf("Request must not be nil")
 	}
-	pdp := c.pdp
-	if len(req.PDP) > 0 {
-		pdp = req.PDP
+
+	url := req.Url
+	if len(url) == 0 {
+		pdp := c.pdp
+		if len(req.PDP) > 0 {
+			pdp = req.PDP
+		}
+		basePath := "/$"
+		if len(req.Path) > 0 {
+			basePath = req.Path
+		}
+		url, _ = utils.UrlJoin(pdp, basePath)
 	}
-	basePath := "/$"
-	if len(req.Path) > 0 {
-		basePath = req.Path
-	}
-	url, _ := utils.UrlJoin(pdp, basePath)
 
 	reqTimeout := time.Second * 10
 	var httpClient *http.Client = &http.Client{
@@ -79,6 +83,7 @@ func (c *HttpInvoker) Do(req *HttpRequest) (*HttpResponse, error) {
 
 	res := &HttpResponse{}
 
+	res.Version = lowRes.Proto
 	res.Status = lowRes.Status
 	res.StatusCode = lowRes.StatusCode
 	res.Header = lowRes.Header
@@ -99,6 +104,7 @@ type HttpHeader struct {
 
 type HttpRequest struct {
 	Method string `yaml:"method"`
+	Url string `yaml:"url"`
 	PDP string `yaml:"pdp"`
 	Path string `yaml:"path"`
 	Headers []HttpHeader `yaml:"headers"`
