@@ -3,8 +3,10 @@ package cli
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	clp "github.com/urfave/cli"
 	"github.com/opwire/opwire-testa/lib/bootstrap"
+	"github.com/opwire/opwire-testa/lib/utils"
 )
 
 type Commander struct {
@@ -97,6 +99,12 @@ func (a *CmdFlags) GetConfigPath() string {
 }
 
 func (a *CmdFlags) GetSpecDirs() []string {
+	if a.SpecDirs == nil || len(a.SpecDirs) == 0 {
+		testDir := filepath.Join(utils.FindWorkingDir(), "tests")
+		if utils.IsDir(testDir) {
+			a.SpecDirs = []string{testDir}
+		}
+	}
 	return a.SpecDirs
 }
 
