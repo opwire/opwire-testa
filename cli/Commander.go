@@ -54,7 +54,7 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 				},
 			},
 			Action: func(c *clp.Context) error {
-				f := new(CmdFlags)
+				f := new(CmdRunFlags)
 				f.ConfigPath = c.String("config-path")
 				f.SpecDirs = c.StringSlice("spec-dirs")
 				f.manifest = manifest
@@ -126,17 +126,17 @@ type CmdReqFlags struct {
 	Body string
 }
 
-type CmdFlags struct {
+type CmdRunFlags struct {
 	ConfigPath string
 	SpecDirs []string
 	manifest Manifest
 }
 
-func (a *CmdFlags) GetConfigPath() string {
+func (a *CmdRunFlags) GetConfigPath() string {
 	return a.ConfigPath
 }
 
-func (a *CmdFlags) GetSpecDirs() []string {
+func (a *CmdRunFlags) GetSpecDirs() []string {
 	if a.SpecDirs == nil || len(a.SpecDirs) == 0 {
 		testDir := filepath.Join(utils.FindWorkingDir(), "tests")
 		if utils.IsDir(testDir) {
@@ -146,14 +146,14 @@ func (a *CmdFlags) GetSpecDirs() []string {
 	return a.SpecDirs
 }
 
-func (a *CmdFlags) GetRevision() string {
+func (a *CmdRunFlags) GetRevision() string {
 	if a.manifest == nil {
 		return ""
 	}
 	return a.manifest.GetRevision()
 }
 
-func (a *CmdFlags) GetVersion() string {
+func (a *CmdRunFlags) GetVersion() string {
 	if a.manifest == nil {
 		return ""
 	}
