@@ -67,6 +67,37 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 			},
 		},
 		{
+			Name: "req",
+			Aliases: []string{"curl"},
+			Usage: "Make an HTTP request",
+			Flags: []clp.Flag{
+				clp.StringFlag{
+					Name: "request, X",
+					Usage: "Specify request command to use",
+				},
+				clp.StringFlag{
+					Name: "url",
+					Usage: "URL to work with",
+				},
+				clp.StringSliceFlag{
+					Name: "header, H",
+					Usage: "Pass custom header(s) to server",
+				},
+				clp.StringFlag{
+					Name: "data, d",
+					Usage: "HTTP POST data",
+				},
+			},
+			Action: func(c *clp.Context) error {
+				f := new(CmdReqFlags)
+				f.Method = c.String("request")
+				f.Url = c.String("url")
+				f.Header = c.StringSlice("header")
+				f.Body = c.String("data")
+				return nil
+			},
+		},
+		{
 			Name: "help",
 			Usage: "Shows a list of commands or help for one command",
 		},
@@ -86,6 +117,13 @@ type Manifest interface {
 	GetRevision() string
 	GetVersion() string
 	String() (string, bool)
+}
+
+type CmdReqFlags struct {
+	Method string
+	Url string
+	Header []string
+	Body string
 }
 
 type CmdFlags struct {
