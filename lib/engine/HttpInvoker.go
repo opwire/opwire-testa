@@ -125,8 +125,15 @@ func renderRequest(w io.Writer, req *http.Request) error {
 	if len(req.Method) > 0 {
 		line = append(line, req.Method)
 	}
-	if req.URL != nil && len(req.URL.Path) > 0 {
-		line = append(line, req.URL.Path)
+	if req.URL != nil {
+		reqURI := req.URL.RequestURI()
+		if len(reqURI) > 0 {
+			line = append(line, reqURI)
+		} else {
+			if len(req.URL.Path) > 0 {
+				line = append(line, req.URL.Path)
+			}
+		}
 	}
 	if len(req.Proto) > 0 {
 		line = append(line, req.Proto)
