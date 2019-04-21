@@ -52,7 +52,8 @@ func (z *ReqBroker) Execute(args ReqArguments) error {
 }
 
 func (z *ReqBroker) displayResponse(res *engine.HttpResponse) error {
-	line := []string{ "<" }
+	// render status line
+	line := []string{"<"}
 	if len(res.Version) > 0 {
 		line = append(line, res.Version)
 	}
@@ -62,6 +63,15 @@ func (z *ReqBroker) displayResponse(res *engine.HttpResponse) error {
 		line = append(line, fmt.Sprintf("%v", res.StatusCode))
 	}
 	fmt.Fprintln(z.consoleOut, strings.Join(line, " "))
+	// render headers
+	for key, vals := range res.Header {
+		for _, val := range vals {
+			fmt.Fprintln(z.consoleOut, "< " + key + ": " + val)
+		}
+	}
+	fmt.Fprintln(z.consoleOut, "<")
+	// render body
+	fmt.Fprintln(z.consoleOut, string(res.Body))
 	return nil
 }
 
