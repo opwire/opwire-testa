@@ -3,8 +3,10 @@ package engine
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 	"github.com/opwire/opwire-testa/lib/utils"
 )
@@ -28,7 +30,7 @@ func NewHttpInvoker(opts HttpInvokerOptions) (*HttpInvoker, error) {
 	return c, nil
 }
 
-func (c *HttpInvoker) Do(req *HttpRequest) (*HttpResponse, error) {
+func (c *HttpInvoker) Do(req *HttpRequest, interceptors ...Interceptor) (*HttpResponse, error) {
 	if req == nil {
 		return nil, fmt.Errorf("Request must not be nil")
 	}
@@ -73,6 +75,17 @@ func (c *HttpInvoker) Do(req *HttpRequest) (*HttpResponse, error) {
 		}
 	}
 
+	// Pre-processing
+	for _, interceptor := range interceptors {
+		if monitor, ok := interceptor.(ConsoleWriter); monitor != nil && ok {
+			w := monitor.GetConsoleOut()
+			if w != nil {
+				renderRequest(w, lowReq)
+			}
+		}
+	}
+
+	// Make HTTP request
 	lowRes, err := httpClient.Do(lowReq)
 	if lowRes != nil && lowRes.Body != nil {
 		defer lowRes.Body.Close()
@@ -92,7 +105,74 @@ func (c *HttpInvoker) Do(req *HttpRequest) (*HttpResponse, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// Post-processing
+	for _, interceptor := range interceptors {
+		if monitor, ok := interceptor.(ConsoleWriter); monitor != nil && ok {
+			w := monitor.GetConsoleOut()
+			if w != nil {
+				renderResponse(w, res)
+			}
+		}
+	}
+
 	return res, nil
+}
+
+func renderRequest(w io.Writer, req *http.Request) error {
+	// render first line
+	line := []string{">"}
+	if len(req.Method) > 0 {
+		line = append(line, req.Method)
+	}
+	if req.URL != nil && len(req.URL.Path) > 0 {
+		line = append(line, req.URL.Path)
+	}
+	if len(req.Proto) > 0 {
+		line = append(line, req.Proto)
+	}
+	fmt.Fprintln(w, strings.Join(line, " "))
+	// render Host
+	if req.URL != nil && len(req.URL.Host) > 0 {
+		fmt.Fprintln(w, "> Host: " + req.URL.Host)
+	}
+	// render User-Agent
+	userAgent := req.UserAgent()
+	if len(userAgent) > 0 {
+		fmt.Fprintln(w, "> User-Agent: " + userAgent)
+	}
+	// render headers
+	for key, vals := range req.Header {
+		for _, val := range vals {
+			fmt.Fprintln(w, "> " + key + ": " + val)
+		}
+	}
+	fmt.Fprintln(w, ">")
+	return nil
+}
+
+func renderResponse(w io.Writer, res *HttpResponse) error {
+	// render status line
+	line := []string{"<"}
+	if len(res.Version) > 0 {
+		line = append(line, res.Version)
+	}
+	if len(res.Status) > 0 {
+		line = append(line, res.Status)
+	} else {
+		line = append(line, fmt.Sprintf("%v", res.StatusCode))
+	}
+	fmt.Fprintln(w, strings.Join(line, " "))
+	// render headers
+	for key, vals := range res.Header {
+		for _, val := range vals {
+			fmt.Fprintln(w, "< " + key + ": " + val)
+		}
+	}
+	fmt.Fprintln(w, "<")
+	// render body
+	fmt.Fprintln(w, string(res.Body))
+	return nil
 }
 
 const DEFAULT_PDP string = `http://localhost:17779`
@@ -118,4 +198,13 @@ type HttpResponse struct {
 	Header http.Header
 	ContentLength int64
 	Body []byte
+}
+
+type Interceptor interface {
+}
+
+type ConsoleWriter interface {
+	Interceptor
+	GetConsoleOut() io.Writer
+	GetConsoleErr() io.Writer
 }

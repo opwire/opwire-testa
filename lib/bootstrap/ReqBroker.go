@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 	"github.com/opwire/opwire-testa/lib/engine"
+	"github.com/opwire/opwire-testa/lib/utils"
 )
 
 type ReqArguments interface {
@@ -40,39 +40,23 @@ func (z *ReqBroker) Execute(args ReqArguments) error {
 	if args == nil {
 		return fmt.Errorf("ReqBroker.Execute() arguments must not be nil")
 	}
-	
-	res, err := z.httpInvoker.Do(transformReqArgs(args))
+
+	res, err := z.httpInvoker.Do(transformReqArgs(args), z)
 	if err != nil {
 		return err
 	}
 
-	z.displayResponse(res)
+	_ = res
 
 	return nil
 }
 
-func (z *ReqBroker) displayResponse(res *engine.HttpResponse) error {
-	// render status line
-	line := []string{"<"}
-	if len(res.Version) > 0 {
-		line = append(line, res.Version)
-	}
-	if len(res.Status) > 0 {
-		line = append(line, res.Status)
-	} else {
-		line = append(line, fmt.Sprintf("%v", res.StatusCode))
-	}
-	fmt.Fprintln(z.consoleOut, strings.Join(line, " "))
-	// render headers
-	for key, vals := range res.Header {
-		for _, val := range vals {
-			fmt.Fprintln(z.consoleOut, "< " + key + ": " + val)
-		}
-	}
-	fmt.Fprintln(z.consoleOut, "<")
-	// render body
-	fmt.Fprintln(z.consoleOut, string(res.Body))
-	return nil
+func (z *ReqBroker) GetConsoleOut() io.Writer {
+	return z.consoleOut
+}
+
+func (z *ReqBroker) GetConsoleErr() io.Writer {
+	return z.consoleErr
 }
 
 func transformReqArgs(args ReqArguments) *engine.HttpRequest {
@@ -92,7 +76,7 @@ func transformReqArgs(args ReqArguments) *engine.HttpRequest {
 	headerList := args.GetHeader()
 	if headerList != nil {
 		for _, item := range headerList {
-			pair := strings.Split(item, "=")
+			pair := utils.Split(item, ":")
 			if len(pair) == 2 {
 				header := engine.HttpHeader{
 					Name: pair[0],
