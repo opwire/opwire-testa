@@ -2,6 +2,7 @@ package engine
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -209,7 +210,78 @@ func generateTestCase(w io.Writer, req *HttpRequest, res *HttpResponse) error {
 }
 
 func generateExpectation(res *HttpResponse) *Expectation {
-	return nil
+	if res == nil {
+		return nil
+	}
+	e := &Expectation{}
+
+	// status-code
+	sc := res.StatusCode
+	e.StatusCode = &MeasureStatusCode{
+		EqualTo: &sc,
+	}
+
+	// header
+	total := len(res.Header)
+	if total > 0 {
+		e.Headers = &MeasureHeaders{
+			HasTotal: &total,
+			Items: make([]MeasureHeader, 0),
+		}
+		for key, vals := range res.Header {
+			if len(vals) == 1 {
+				name := key
+				value := vals[0]
+				one := MeasureHeader{
+					Name: &name,
+					EqualTo: &value,
+				}
+				e.Headers.Items = append(e.Headers.Items, one)
+			}
+		}
+	}
+
+	// body
+	e.Body = &MeasureBody{}
+
+	obj := make(map[string]interface{}, 0)
+	if e.Body.HasFormat == nil {
+		if err := json.Unmarshal(res.Body, &obj); err == nil {
+			e.Body.HasFormat = RefOfString("json")
+			var content string
+			if out, err := json.MarshalIndent(obj, "", "  "); err == nil {
+				content = string(out)
+			} else {
+				content = string(res.Body)
+			}
+			e.Body.JSONCovers = &content
+		}
+	}
+
+	if e.Body.HasFormat == nil {
+		if err := yaml.Unmarshal(res.Body, &obj); err == nil {
+			e.Body.HasFormat = RefOfString("yaml")
+			var content string
+			if out, err := yaml.Marshal(obj); err == nil {
+				content = string(out)
+			} else {
+				content = string(res.Body)
+			}
+			e.Body.YAMLCovers = &content
+		}
+	}
+
+	if e.Body.HasFormat == nil {
+		e.Body.HasFormat = RefOfString("flat")
+		e.Body.EqualTo = RefOfString(string(res.Body))
+		e.Body.MatchWith = RefOfString(".*")
+	}
+
+	return e
+}
+
+func RefOfString(val string) *string {
+	return &val
 }
 
 const DEFAULT_PDP string = `http://localhost:17779`
