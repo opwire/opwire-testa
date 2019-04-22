@@ -113,7 +113,7 @@ func (e *SpecHandler) Examine(scenario *Scenario) (*ExaminationResult, error) {
 
 type Scenario struct {
 	Title string `yaml:"title"`
-	Skipped bool `yaml:"skipped"`
+	Skipped *bool `yaml:"skipped,omitempty"`
 	OnError string `yaml:"on-error,omitempty"`
 	Request *HttpRequest `yaml:"request"`
 	Expectation *Expectation `yaml:"expectation"`

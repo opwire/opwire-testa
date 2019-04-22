@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"gopkg.in/yaml.v2"
 	"github.com/opwire/opwire-testa/lib/utils"
 )
 
@@ -114,6 +115,12 @@ func (c *HttpInvoker) Do(req *HttpRequest, interceptors ...Interceptor) (*HttpRe
 				renderResponse(w, res)
 			}
 		}
+		if generator, ok := interceptor.(SnapshotGenerator); generator != nil && ok {
+			w := generator.GetTargetWriter()
+			if w != nil {
+				generateTestCase(w, req, res)
+			}
+		}
 	}
 
 	return res, nil
@@ -182,6 +189,29 @@ func renderResponse(w io.Writer, res *HttpResponse) error {
 	return nil
 }
 
+func generateTestCase(w io.Writer, req *HttpRequest, res *HttpResponse) error {
+	s := Scenario{}
+	s.Title = "<Generated testcase/scenario>"
+	s.Request = req
+	s.Expectation = generateExpectation(res)
+
+	r := &GeneratedSnapshot{}
+	r.Scenarios = []Scenario{s}
+	script, err := yaml.Marshal(r)
+	if err != nil {
+		fmt.Fprintln(w, "Cannot marshal generated scenario, error: %s", err)
+		return err
+	}
+	fmt.Fprintln(w)
+	fmt.Fprintln(w, string(script))
+
+	return nil
+}
+
+func generateExpectation(res *HttpResponse) *Expectation {
+	return nil
+}
+
 const DEFAULT_PDP string = `http://localhost:17779`
 
 type HttpHeader struct {
@@ -214,4 +244,13 @@ type ConsoleWriter interface {
 	Interceptor
 	GetConsoleOut() io.Writer
 	GetConsoleErr() io.Writer
+}
+
+type SnapshotGenerator interface {
+	Interceptor
+	GetTargetWriter() io.Writer
+}
+
+type GeneratedSnapshot struct {
+	Scenarios []Scenario `yaml:"testcase-snapshot"`
 }

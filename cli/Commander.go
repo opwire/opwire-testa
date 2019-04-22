@@ -87,6 +87,10 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 					Name: "data, d",
 					Usage: "HTTP POST data",
 				},
+				clp.BoolFlag{
+					Name: "snapshot",
+					Usage: "Create a snapshot of testcase",
+				},
 			},
 			Action: func(c *clp.Context) error {
 				f := new(CmdReqFlags)
@@ -94,6 +98,7 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 				f.Url = c.String("url")
 				f.Header = c.StringSlice("header")
 				f.Body = c.String("data")
+				f.Snapshot = c.Bool("snapshot")
 				broker, err := bootstrap.NewReqBroker(nil)
 				if err != nil {
 					return err
@@ -129,6 +134,7 @@ type CmdReqFlags struct {
 	Url string
 	Header []string
 	Body string
+	Snapshot bool
 }
 
 func (f *CmdReqFlags) GetMethod() string {
@@ -145,6 +151,10 @@ func (f *CmdReqFlags) GetHeader() []string {
 
 func (f *CmdReqFlags) GetBody() string {
 	return f.Body
+}
+
+func (f *CmdReqFlags) GetSnapshot() bool {
+	return f.Snapshot
 }
 
 type CmdRunFlags struct {

@@ -13,6 +13,7 @@ type ReqArguments interface {
 	GetUrl() string
 	GetHeader() []string
 	GetBody() string
+	GetSnapshot() bool
 }
 
 type ReqBrokerOptions interface {}
@@ -22,6 +23,12 @@ type ReqBroker struct {
 	httpInvoker *engine.HttpInvoker
 	consoleOut io.Writer
 	consoleErr io.Writer
+}
+
+type SnapshotOutput struct {}
+
+func (g *SnapshotOutput) GetTargetWriter() io.Writer {
+	return os.Stdout
 }
 
 func NewReqBroker(opts ReqBrokerOptions) (obj *ReqBroker, err error) {
@@ -41,13 +48,18 @@ func (z *ReqBroker) Execute(args ReqArguments) error {
 		return fmt.Errorf("ReqBroker.Execute() arguments must not be nil")
 	}
 
-	res, err := z.httpInvoker.Do(transformReqArgs(args), z)
+	if args.GetSnapshot() {
+		_, err := z.httpInvoker.Do(transformReqArgs(args), &SnapshotOutput{})
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
+	_, err := z.httpInvoker.Do(transformReqArgs(args), z)
 	if err != nil {
 		return err
 	}
-
-	_ = res
-
 	return nil
 }
 
