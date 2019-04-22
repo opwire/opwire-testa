@@ -273,7 +273,7 @@ func generateExpectation(res *HttpResponse) *Expectation {
 
 	if e.Body.HasFormat == nil {
 		e.Body.HasFormat = RefOfString("flat")
-		e.Body.EqualTo = RefOfString(string(res.Body))
+		e.Body.TextEquals = RefOfString(string(res.Body))
 		e.Body.MatchWith = RefOfString(".*")
 	}
 

@@ -63,10 +63,10 @@ func (e *SpecHandler) Examine(scenario *Scenario) (*ExaminationResult, error) {
 		}
 		_eb := expect.Body
 		if _eb != nil {
-			if _eb.EqualTo != nil {
+			if _eb.TextEquals != nil {
 				_rb := string(res.Body)
-				if res.Body == nil || _rb != *_eb.EqualTo {
-					errors["Body"] = fmt.Errorf("Response body is mismatched with expected content.\n    Received: %s\n    Expected: %s", _rb, *_eb.EqualTo)
+				if res.Body == nil || _rb != *_eb.TextEquals {
+					errors["Body"] = fmt.Errorf("Response body is mismatched with expected content.\n    Received: %s\n    Expected: %s", _rb, *_eb.TextEquals)
 				}
 			}
 			if _eb.JSONEquals != nil || _eb.JSONCovers != nil {
@@ -141,8 +141,8 @@ type MeasureHeader struct {
 
 type MeasureBody struct {
 	HasFormat *string `yaml:"has-format,omitempty"`
+	TextEquals *string `yaml:"text-equal,omitempty"`
 	MatchWith *string `yaml:"match-with,omitempty"`
-	EqualTo *string `yaml:"equal-to,omitempty"`
 	JSONEquals *string `yaml:"json-equal,omitempty"`
 	JSONCovers *string `yaml:"json-include,omitempty"`
 	YAMLEquals *string `yaml:"yaml-equal,omitempty"`
