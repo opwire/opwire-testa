@@ -114,24 +114,24 @@ func (e *SpecHandler) Examine(scenario *Scenario) (*ExaminationResult, error) {
 type Scenario struct {
 	Title string `yaml:"title"`
 	Skipped bool `yaml:"skipped"`
-	OnError string `yaml:"on-error"`
+	OnError string `yaml:"on-error,omitempty"`
 	Request *HttpRequest `yaml:"request"`
 	Expectation *Expectation `yaml:"expectation"`
 }
 
 type Expectation struct {
 	StatusCode *MeasureStatusCode `yaml:"status-code"`
-	Headers *MeasureHeaders `yaml:"headers"`
+	Headers *MeasureHeaders `yaml:"headers,omitempty"`
 	Body *MeasureBody `yaml:"body"`
 }
 
 type MeasureStatusCode struct {
-	EqualTo *int `yaml:"equal-to"`
+	EqualTo *int `yaml:"equal-to,omitempty"`
 }
 
 type MeasureHeaders struct {
-	HasTotal *int `yaml:"has-total"`
-	Items []MeasureHeader `yaml:"items"`
+	HasTotal *int `yaml:"has-total,omitempty"`
+	Items []MeasureHeader `yaml:"items,omitempty"`
 }
 
 type MeasureHeader struct {
@@ -140,13 +140,13 @@ type MeasureHeader struct {
 }
 
 type MeasureBody struct {
-	HasFormat *string `yaml:"has-format"`
-	MatchWith *string `yaml:"match-with"`
-	EqualTo *string `yaml:"equal-to"`
-	JSONEquals *string `yaml:"json-equal"`
-	JSONCovers *string `yaml:"json-include"`
-	YAMLEquals *string `yaml:"yaml-equal"`
-	YAMLCovers *string `yaml:"yaml-include"`
+	HasFormat *string `yaml:"has-format,omitempty"`
+	MatchWith *string `yaml:"match-with,omitempty"`
+	EqualTo *string `yaml:"equal-to,omitempty"`
+	JSONEquals *string `yaml:"json-equal,omitempty"`
+	JSONCovers *string `yaml:"json-include,omitempty"`
+	YAMLEquals *string `yaml:"yaml-equal,omitempty"`
+	YAMLCovers *string `yaml:"yaml-include,omitempty"`
 }
 
 type ExaminationResult struct {

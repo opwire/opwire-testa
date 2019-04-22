@@ -190,12 +190,12 @@ type HttpHeader struct {
 }
 
 type HttpRequest struct {
-	Method string `yaml:"method"`
-	Url string `yaml:"url"`
-	PDP string `yaml:"pdp"`
-	Path string `yaml:"path"`
-	Headers []HttpHeader `yaml:"headers"`
-	Body string `yaml:"body"`
+	Method string `yaml:"method,omitempty"`
+	Url string `yaml:"url,omitempty"`
+	PDP string `yaml:"pdp,omitempty"`
+	Path string `yaml:"path,omitempty"`
+	Headers []HttpHeader `yaml:"headers,omitempty"`
+	Body string `yaml:"body,omitempty"`
 }
 
 type HttpResponse struct {
