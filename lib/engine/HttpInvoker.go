@@ -79,7 +79,7 @@ func (c *HttpInvoker) Do(req *HttpRequest, interceptors ...Interceptor) (*HttpRe
 
 	// Pre-processing
 	for _, interceptor := range interceptors {
-		if monitor, ok := interceptor.(ConsoleWriter); monitor != nil && ok {
+		if monitor, ok := interceptor.(ExplanationWriter); monitor != nil && ok {
 			w := monitor.GetConsoleOut()
 			if w != nil {
 				renderRequest(w, lowReq)
@@ -110,14 +110,14 @@ func (c *HttpInvoker) Do(req *HttpRequest, interceptors ...Interceptor) (*HttpRe
 
 	// Post-processing
 	for _, interceptor := range interceptors {
-		if monitor, ok := interceptor.(ConsoleWriter); monitor != nil && ok {
+		if monitor, ok := interceptor.(ExplanationWriter); monitor != nil && ok {
 			w := monitor.GetConsoleOut()
 			if w != nil {
 				renderResponse(w, res)
 			}
 		}
-		if generator, ok := interceptor.(SnapshotGenerator); generator != nil && ok {
-			w := generator.GetTargetWriter()
+		if snapshot, ok := interceptor.(SnapshotGenerator); snapshot != nil && ok {
+			w := snapshot.GetTargetWriter()
 			if w != nil {
 				generateTestCase(w, req, res)
 			}
@@ -312,7 +312,7 @@ type HttpResponse struct {
 type Interceptor interface {
 }
 
-type ConsoleWriter interface {
+type ExplanationWriter interface {
 	Interceptor
 	GetConsoleOut() io.Writer
 	GetConsoleErr() io.Writer

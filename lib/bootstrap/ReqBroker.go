@@ -21,8 +21,6 @@ type ReqBrokerOptions interface {}
 type ReqBroker struct {
 	options ReqBrokerOptions
 	httpInvoker *engine.HttpInvoker
-	consoleOut io.Writer
-	consoleErr io.Writer
 }
 
 type SnapshotOutput struct {}
@@ -31,14 +29,22 @@ func (g *SnapshotOutput) GetTargetWriter() io.Writer {
 	return os.Stdout
 }
 
+type ExplanationWriter struct {}
+
+func (z *ExplanationWriter) GetConsoleOut() io.Writer {
+	return os.Stdout
+}
+
+func (z *ExplanationWriter) GetConsoleErr() io.Writer {
+	return os.Stderr
+}
+
 func NewReqBroker(opts ReqBrokerOptions) (obj *ReqBroker, err error) {
 	obj = &ReqBroker{}
 	obj.httpInvoker, err = engine.NewHttpInvoker(nil)
 	if err != nil {
 		return nil, err
 	}
-	obj.consoleOut = os.Stdout
-	obj.consoleErr = os.Stderr
 	return obj, err
 }
 
@@ -56,19 +62,11 @@ func (z *ReqBroker) Execute(args ReqArguments) error {
 		return nil
 	}
 
-	_, err := z.httpInvoker.Do(transformReqArgs(args), z)
+	_, err := z.httpInvoker.Do(transformReqArgs(args), &ExplanationWriter{})
 	if err != nil {
 		return err
 	}
 	return nil
-}
-
-func (z *ReqBroker) GetConsoleOut() io.Writer {
-	return z.consoleOut
-}
-
-func (z *ReqBroker) GetConsoleErr() io.Writer {
-	return z.consoleErr
 }
 
 func transformReqArgs(args ReqArguments) *engine.HttpRequest {
