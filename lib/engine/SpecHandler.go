@@ -6,6 +6,7 @@ import(
 	"reflect"
 	"strings"
 	"github.com/google/go-cmp/cmp"
+	"github.com/opwire/opwire-testa/lib/utils"
 )
 
 type SpecHandlerOptions interface {
@@ -44,9 +45,14 @@ func (e *SpecHandler) Examine(scenario *Scenario) (*ExaminationResult, error) {
 	if expect != nil {
 		_sc := expect.StatusCode
 		if _sc != nil {
-			if _sc.EqualTo != nil {
-				if res.StatusCode != *_sc.EqualTo {
-					errors["StatusCode"] = fmt.Errorf("Response StatusCode [%d] is not equal to expected value [%d]", res.StatusCode, *_sc.EqualTo)
+			if _sc.IsEqualTo != nil {
+				if res.StatusCode != *_sc.IsEqualTo {
+					errors["StatusCode"] = fmt.Errorf("Response StatusCode [%d] is not equal to expected value [%d]", res.StatusCode, *_sc.IsEqualTo)
+				}
+			}
+			if _sc.BelongsTo != nil {
+				if !utils.Contains(_sc.BelongsTo, res.StatusCode) {
+					errors["StatusCode"] = fmt.Errorf("Response StatusCode [%d] does not belong to expected list %v", res.StatusCode, _sc.BelongsTo)
 				}
 			}
 		}
@@ -55,8 +61,8 @@ func (e *SpecHandler) Examine(scenario *Scenario) (*ExaminationResult, error) {
 			if _hs.Items != nil {
 				for _, item := range _hs.Items {
 					headerVal := res.Header.Get(*item.Name)
-					if item.EqualTo != nil && *item.EqualTo != headerVal {
-						errors[fmt.Sprintf("Header[%s]", *item.Name)] = fmt.Errorf("Returned value: [%s] is mismatched with expected: [%s]", headerVal, *item.EqualTo)
+					if item.IsEqualTo != nil && *item.IsEqualTo != headerVal {
+						errors[fmt.Sprintf("Header[%s]", *item.Name)] = fmt.Errorf("Returned value: [%s] is mismatched with expected: [%s]", headerVal, *item.IsEqualTo)
 					}
 				}
 			}
@@ -120,13 +126,14 @@ type Scenario struct {
 }
 
 type Expectation struct {
-	StatusCode *MeasureStatusCode `yaml:"status-code"`
+	StatusCode *MeasureStatusCode `yaml:"status-code,omitempty"`
 	Headers *MeasureHeaders `yaml:"headers,omitempty"`
-	Body *MeasureBody `yaml:"body"`
+	Body *MeasureBody `yaml:"body,omitempty"`
 }
 
 type MeasureStatusCode struct {
-	EqualTo *int `yaml:"equal-to,omitempty"`
+	IsEqualTo *int `yaml:"is-equal-to,omitempty"`
+	BelongsTo []int `yaml:"belongs-to,omitempty"`
 }
 
 type MeasureHeaders struct {
@@ -136,7 +143,7 @@ type MeasureHeaders struct {
 
 type MeasureHeader struct {
 	Name *string `yaml:"name"`
-	EqualTo *string `yaml:"equal-to"`
+	IsEqualTo *string `yaml:"is-equal-to"`
 }
 
 type MeasureBody struct {

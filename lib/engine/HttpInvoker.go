@@ -218,7 +218,7 @@ func generateExpectation(res *HttpResponse) *Expectation {
 	// status-code
 	sc := res.StatusCode
 	e.StatusCode = &MeasureStatusCode{
-		EqualTo: &sc,
+		IsEqualTo: &sc,
 	}
 
 	// header
@@ -234,7 +234,7 @@ func generateExpectation(res *HttpResponse) *Expectation {
 				value := vals[0]
 				one := MeasureHeader{
 					Name: &name,
-					EqualTo: &value,
+					IsEqualTo: &value,
 				}
 				e.Headers.Items = append(e.Headers.Items, one)
 			}
