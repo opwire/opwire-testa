@@ -69,13 +69,15 @@ func (e *SpecHandler) Examine(scenario *Scenario) (*ExaminationResult, error) {
 		}
 		_eb := expect.Body
 		if _eb != nil {
-			if _eb.TextEquals != nil {
-				_rb := string(res.Body)
-				if res.Body == nil || _rb != *_eb.TextEquals {
-					errors["Body"] = fmt.Errorf("Response body is mismatched with expected content.\n    Received: %s\n    Expected: %s", _rb, *_eb.TextEquals)
+			if *_eb.HasFormat == "flat" {
+				if _eb.IsEqualTo != nil {
+					_rb := string(res.Body)
+					if res.Body == nil || _rb != *_eb.IsEqualTo {
+						errors["Body"] = fmt.Errorf("Response body is mismatched with expected content.\n    Received: %s\n    Expected: %s", _rb, *_eb.IsEqualTo)
+					}
 				}
 			}
-			if _eb.JSONEquals != nil || _eb.JSONCovers != nil {
+			if *_eb.HasFormat == "json" {
 				var receivedJSON, expectedJSON interface{}
 				next := true
 				if (res.Body == nil) {
@@ -85,19 +87,19 @@ func (e *SpecHandler) Examine(scenario *Scenario) (*ExaminationResult, error) {
 					errors["Body/receivedJSON"] = fmt.Errorf("Invalid response content: %s", err)
 					next = false
 				}
-				if next && _eb.JSONEquals != nil {
-					if err := json.Unmarshal([]byte(*_eb.JSONEquals), &expectedJSON); err != nil {
+				if next && _eb.IsEqualTo != nil {
+					if err := json.Unmarshal([]byte(*_eb.IsEqualTo), &expectedJSON); err != nil {
 						errors["Body/expectedJSON"] = fmt.Errorf("Invalid expected content: %s", err)
 						next = false
 					}
 					if next {
 						if diff := cmp.Diff(expectedJSON, receivedJSON); diff != "" {
-							errors["Body/JSONEquals"] = fmt.Errorf("Body mismatch (-expected +received):\n%s", diff)
+							errors["Body/IsEqualTo"] = fmt.Errorf("Body mismatch (-expected +received):\n%s", diff)
 						}
 					}
 				}
-				if next && _eb.JSONCovers != nil {
-					if err := json.Unmarshal([]byte(*_eb.JSONCovers), &expectedJSON); err != nil {
+				if next && _eb.Includes != nil {
+					if err := json.Unmarshal([]byte(*_eb.Includes), &expectedJSON); err != nil {
 						errors["Body/expectedJSON"] = fmt.Errorf("Invalid expected content: %s", err)
 						next = false
 					}
@@ -105,7 +107,7 @@ func (e *SpecHandler) Examine(scenario *Scenario) (*ExaminationResult, error) {
 						var r DiffReporter
 						diff := cmp.Diff(expectedJSON, receivedJSON, cmp.Reporter(&r))
 						if r.HasDiffs() {
-							errors["Body/JSONCovers"] = fmt.Errorf("Body mismatch (-expected +received):\n%s", diff)
+							errors["Body/Includes"] = fmt.Errorf("Body mismatch (-expected +received):\n%s", diff)
 						}
 					}
 				}
@@ -148,12 +150,9 @@ type MeasureHeader struct {
 
 type MeasureBody struct {
 	HasFormat *string `yaml:"has-format,omitempty"`
-	TextEquals *string `yaml:"text-equal,omitempty"`
+	Includes *string `yaml:"includes,omitempty"`
+	IsEqualTo *string `yaml:"is-equal-to,omitempty"`
 	MatchWith *string `yaml:"match-with,omitempty"`
-	JSONEquals *string `yaml:"json-equal,omitempty"`
-	JSONCovers *string `yaml:"json-include,omitempty"`
-	YAMLEquals *string `yaml:"yaml-equal,omitempty"`
-	YAMLCovers *string `yaml:"yaml-include,omitempty"`
 }
 
 type ExaminationResult struct {

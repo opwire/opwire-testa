@@ -254,7 +254,7 @@ func generateExpectation(res *HttpResponse) *Expectation {
 			} else {
 				content = string(res.Body)
 			}
-			e.Body.JSONCovers = &content
+			e.Body.Includes = &content
 		}
 	}
 
@@ -267,13 +267,13 @@ func generateExpectation(res *HttpResponse) *Expectation {
 			} else {
 				content = string(res.Body)
 			}
-			e.Body.YAMLCovers = &content
+			e.Body.Includes = &content
 		}
 	}
 
 	if e.Body.HasFormat == nil {
 		e.Body.HasFormat = RefOfString("flat")
-		e.Body.TextEquals = RefOfString(string(res.Body))
+		e.Body.IsEqualTo = RefOfString(string(res.Body))
 		e.Body.MatchWith = RefOfString(".*")
 	}
 
