@@ -25,15 +25,15 @@ func NewSpecHandler(opts SpecHandlerOptions) (e *SpecHandler, err error) {
 	return e, nil
 }
 
-func (e *SpecHandler) Examine(scenario *Scenario) (*ExaminationResult, error) {
-	if scenario == nil {
-		return nil, fmt.Errorf("Scenario must not be nil")
+func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
+	if testcase == nil {
+		return nil, fmt.Errorf("TestCase must not be nil")
 	}
 
 	result := &ExaminationResult{}
 
 	// make the testing request
-	res, err := e.invoker.Do(scenario.Request)
+	res, err := e.invoker.Do(testcase.Request)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func (e *SpecHandler) Examine(scenario *Scenario) (*ExaminationResult, error) {
 
 	// matching with expectation
 	errors := make(map[string]error, 0)
-	expect := scenario.Expectation
+	expect := testcase.Expectation
 	if expect != nil {
 		_sc := expect.StatusCode
 		if _sc != nil {
@@ -119,7 +119,13 @@ func (e *SpecHandler) Examine(scenario *Scenario) (*ExaminationResult, error) {
 	return result, nil
 }
 
-type Scenario struct {
+type TestSuite struct {
+	Version string `yaml:"version"`
+	Skipped *bool `yaml:"skipped,omitempty"`
+	TestCases []*TestCase `yaml:"testcases"`
+}
+
+type TestCase struct {
 	Title string `yaml:"title"`
 	Skipped *bool `yaml:"skipped,omitempty"`
 	OnError string `yaml:"on-error,omitempty"`

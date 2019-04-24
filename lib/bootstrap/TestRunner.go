@@ -58,29 +58,30 @@ func (r *TestRunner) wrapTestSuites(descriptors map[string]*script.Descriptor) (
 	}
 	tests := make([]testing.InternalTest, 0)
 	for _, descriptor := range descriptors {
-		for _, scenario := range descriptor.Scenarios {
-			tests = append(tests, r.wrapTestCase(scenario))
+		testsuite := descriptor.TestSuite
+		for _, testcase := range testsuite.TestCases {
+			tests = append(tests, r.wrapTestCase(testcase))
 		}
 	}
 	return tests, nil
 }
 
-func (r *TestRunner) wrapTestCase(scenario *engine.Scenario) (testing.InternalTest) {
+func (r *TestRunner) wrapTestCase(testcase *engine.TestCase) (testing.InternalTest) {
 	return testing.InternalTest{
-		Name: scenario.Title,
+		Name: testcase.Title,
 		F: func (t *testing.T) {
-			result, err := r.handler.Examine(scenario)
+			result, err := r.handler.Examine(testcase)
 			if err != nil {
-				t.Fatalf("[%s] got a fatal error. Exit now", scenario.Title)
+				t.Fatalf("[%s] got a fatal error. Exit now", testcase.Title)
 			}
 			if result != nil && len(result.Errors) > 0 {
-				t.Errorf("[%s] has failed:", scenario.Title)
+				t.Errorf("[%s] has failed:", testcase.Title)
 				for key, err := range result.Errors {
 					t.Logf("+ %s", key)
 					t.Logf("|- %s", err)
 				}
 				} else {
-				t.Logf("[%s] OK", scenario.Title)
+				t.Logf("[%s] OK", testcase.Title)
 			}
 		},
 	}

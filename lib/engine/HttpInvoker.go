@@ -191,16 +191,16 @@ func renderResponse(w io.Writer, res *HttpResponse) error {
 }
 
 func generateTestCase(w io.Writer, req *HttpRequest, res *HttpResponse) error {
-	s := Scenario{}
-	s.Title = "<Generated testcase/scenario>"
+	s := TestCase{}
+	s.Title = "<Generated testcase>"
 	s.Request = req
 	s.Expectation = generateExpectation(res)
 
 	r := &GeneratedSnapshot{}
-	r.Scenarios = []Scenario{s}
+	r.TestCases = []TestCase{s}
 	script, err := yaml.Marshal(r)
 	if err != nil {
-		fmt.Fprintln(w, "Cannot marshal generated scenario, error: %s", err)
+		fmt.Fprintln(w, "Cannot marshal generated testcase, error: %s", err)
 		return err
 	}
 	fmt.Fprintln(w)
@@ -324,5 +324,5 @@ type SnapshotGenerator interface {
 }
 
 type GeneratedSnapshot struct {
-	Scenarios []Scenario `yaml:"testcase-snapshot"`
+	TestCases []TestCase `yaml:"testcase-snapshot"`
 }

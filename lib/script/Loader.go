@@ -45,7 +45,7 @@ func (l *Loader) LoadFile(locator *Locator) (*Descriptor, error) {
 		return nil, fmt.Errorf("Descriptor must not be nil")
 	}
 
-	descriptor := &Descriptor{}
+	testsuite := &engine.TestSuite{}
 
 	fs := storages.GetFs()
 	file, err := fs.Open(locator.FullPath)
@@ -55,12 +55,15 @@ func (l *Loader) LoadFile(locator *Locator) (*Descriptor, error) {
 	}
 
 	parser := yaml.NewDecoder(file)
-	err = parser.Decode(descriptor)
+	err = parser.Decode(testsuite)
 	if err != nil {
 		return nil, err
 	}
 
-	descriptor.Locator = locator
+	descriptor := &Descriptor{
+		Locator: locator,
+		TestSuite: testsuite,
+	}
 
 	return descriptor, nil
 }
@@ -103,5 +106,5 @@ type Locator struct {
 
 type Descriptor struct {
 	Locator *Locator
-	Scenarios []*engine.Scenario `yaml:"testcases"`
+	TestSuite *engine.TestSuite
 }
