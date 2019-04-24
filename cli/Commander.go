@@ -56,12 +56,12 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 			Action: func(c *clp.Context) error {
 				o := &ControllerOptions{ manifest: manifest }
 				o.ConfigPath = c.String("config-path")
-				f := new(CmdRunFlags)
-				f.SpecDirs = c.StringSlice("spec-dirs")
-				tester, err := bootstrap.NewTestRunner(o)
+				tester, err := bootstrap.NewRunController(o)
 				if err != nil {
 					return err
 				}
+				f := new(CmdRunFlags)
+				f.SpecDirs = c.StringSlice("spec-dirs")
 				tester.RunTests(f.GetSpecDirs())
 				return nil
 			},
@@ -95,16 +95,16 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 			Action: func(c *clp.Context) error {
 				o := &ControllerOptions{ manifest: manifest }
 				o.ConfigPath = c.String("config-path")
+				broker, err := bootstrap.NewReqController(o)
+				if err != nil {
+					return err
+				}
 				f := new(CmdReqFlags)
 				f.Method = c.String("request")
 				f.Url = c.String("url")
 				f.Header = c.StringSlice("header")
 				f.Body = c.String("data")
 				f.Snapshot = c.Bool("snapshot")
-				broker, err := bootstrap.NewReqBroker(o)
-				if err != nil {
-					return err
-				}
 				broker.Execute(f)
 				return nil
 			},

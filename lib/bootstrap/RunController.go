@@ -8,21 +8,21 @@ import (
 	"github.com/opwire/opwire-testa/lib/script"
 )
 
-type TestRunnerOptions interface {
+type RunControllerOptions interface {
 	GetConfigPath() string
 	GetVersion() string
 	GetRevision() string
 }
 
-type TestRunner struct {
-	options TestRunnerOptions
+type RunController struct {
+	options RunControllerOptions
 	loader *script.Loader
 	handler *engine.SpecHandler
 	storage *TestStateStore
 }
 
-func NewTestRunner(opts TestRunnerOptions) (r *TestRunner, err error) {
-	r = &TestRunner{}
+func NewRunController(opts RunControllerOptions) (r *RunController, err error) {
+	r = &RunController{}
 
 	// testing temporary storage
 	r.storage = &TestStateStore{}
@@ -42,7 +42,7 @@ func NewTestRunner(opts TestRunnerOptions) (r *TestRunner, err error) {
 	return r, nil
 }
 
-func (r *TestRunner) wrapTestSuites(descriptors map[string]*script.Descriptor) ([]testing.InternalTest, error) {
+func (r *RunController) wrapTestSuites(descriptors map[string]*script.Descriptor) ([]testing.InternalTest, error) {
 	if r.handler == nil {
 		return nil, fmt.Errorf("SpecHandler must not be nil")
 	}
@@ -56,7 +56,7 @@ func (r *TestRunner) wrapTestSuites(descriptors map[string]*script.Descriptor) (
 	return tests, nil
 }
 
-func (r *TestRunner) wrapTestCase(testcase *engine.TestCase) (testing.InternalTest) {
+func (r *RunController) wrapTestCase(testcase *engine.TestCase) (testing.InternalTest) {
 	return testing.InternalTest{
 		Name: testcase.Title,
 		F: func (t *testing.T) {
@@ -77,7 +77,7 @@ func (r *TestRunner) wrapTestCase(testcase *engine.TestCase) (testing.InternalTe
 	}
 }
 
-func (r *TestRunner) RunTests(specDirs []string) error {
+func (r *RunController) RunTests(specDirs []string) error {
 	flag.Set("test.v", "false")
 	if specDirs == nil {
 		specDirs = []string{}

@@ -16,11 +16,11 @@ type ReqArguments interface {
 	GetSnapshot() bool
 }
 
-type ReqBrokerOptions interface {
+type ReqControllerOptions interface {
 	GetVersion() string
 }
 
-type ReqBroker struct {
+type ReqController struct {
 	httpInvoker *engine.HttpInvoker
 }
 
@@ -40,8 +40,8 @@ func (z *ExplanationWriter) GetConsoleErr() io.Writer {
 	return os.Stderr
 }
 
-func NewReqBroker(opts ReqBrokerOptions) (obj *ReqBroker, err error) {
-	obj = &ReqBroker{}
+func NewReqController(opts ReqControllerOptions) (obj *ReqController, err error) {
+	obj = &ReqController{}
 	httpInvokerOptions := &engine.HttpInvokerOptions{}
 	if opts != nil {
 		httpInvokerOptions.Version = opts.GetVersion()
@@ -53,10 +53,10 @@ func NewReqBroker(opts ReqBrokerOptions) (obj *ReqBroker, err error) {
 	return obj, err
 }
 
-func (z *ReqBroker) Execute(args ReqArguments) error {
+func (z *ReqController) Execute(args ReqArguments) error {
 	z.assertReady()
 	if args == nil {
-		return fmt.Errorf("ReqBroker.Execute() arguments must not be nil")
+		return fmt.Errorf("ReqController.Execute() arguments must not be nil")
 	}
 
 	if args.GetSnapshot() {
@@ -107,7 +107,7 @@ func transformReqArgs(args ReqArguments) *engine.HttpRequest {
 	return req
 }
 
-func (z *ReqBroker) assertReady() {
+func (z *ReqController) assertReady() {
 	if z.httpInvoker == nil {
 		panic(fmt.Errorf("httpInvoker must not be nil"))
 	}
