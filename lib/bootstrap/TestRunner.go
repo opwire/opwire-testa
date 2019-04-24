@@ -9,12 +9,13 @@ import (
 )
 
 type TestRunnerOptions interface {
-	GetSpecDirs() []string
+	GetConfigPath() string
+	GetVersion() string
+	GetRevision() string
 }
 
 type TestRunner struct {
 	options TestRunnerOptions
-	specDirs []string
 	loader *script.Loader
 	handler *engine.SpecHandler
 	storage *TestStateStore
@@ -22,13 +23,6 @@ type TestRunner struct {
 
 func NewTestRunner(opts TestRunnerOptions) (r *TestRunner, err error) {
 	r = &TestRunner{}
-
-	// determine test specification dirs
-	if opts == nil {
-		r.specDirs = []string{}
-	} else {
-		r.specDirs = opts.GetSpecDirs()
-	}
 
 	// testing temporary storage
 	r.storage = &TestStateStore{}
@@ -46,10 +40,6 @@ func NewTestRunner(opts TestRunnerOptions) (r *TestRunner, err error) {
 	}
 
 	return r, nil
-}
-
-func (r *TestRunner) loadTestSuites() (map[string]*script.Descriptor, error) {
-	return r.loader.LoadScripts(r.specDirs)
 }
 
 func (r *TestRunner) wrapTestSuites(descriptors map[string]*script.Descriptor) ([]testing.InternalTest, error) {
@@ -87,13 +77,16 @@ func (r *TestRunner) wrapTestCase(testcase *engine.TestCase) (testing.InternalTe
 	}
 }
 
-func (a *TestRunner) RunTests() error {
+func (r *TestRunner) RunTests(specDirs []string) error {
 	flag.Set("test.v", "false")
-	descriptors, err := a.loadTestSuites()
+	if specDirs == nil {
+		specDirs = []string{}
+	}
+	descriptors, err := r.loader.LoadScripts(specDirs)
 	if err != nil {
 		return err
 	}
-	internalTests, err2 := a.wrapTestSuites(descriptors)
+	internalTests, err2 := r.wrapTestSuites(descriptors)
 	if err2 != nil {
 		return err2
 	}

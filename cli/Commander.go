@@ -54,15 +54,15 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 				},
 			},
 			Action: func(c *clp.Context) error {
+				o := &ControllerOptions{ manifest: manifest }
+				o.ConfigPath = c.String("config-path")
 				f := new(CmdRunFlags)
-				f.ConfigPath = c.String("config-path")
 				f.SpecDirs = c.StringSlice("spec-dirs")
-				f.manifest = manifest
-				tester, err := bootstrap.NewTestRunner(f)
+				tester, err := bootstrap.NewTestRunner(o)
 				if err != nil {
 					return err
 				}
-				tester.RunTests()
+				tester.RunTests(f.GetSpecDirs())
 				return nil
 			},
 		},
@@ -93,13 +93,15 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 				},
 			},
 			Action: func(c *clp.Context) error {
+				o := &ControllerOptions{ manifest: manifest }
+				o.ConfigPath = c.String("config-path")
 				f := new(CmdReqFlags)
 				f.Method = c.String("request")
 				f.Url = c.String("url")
 				f.Header = c.StringSlice("header")
 				f.Body = c.String("data")
 				f.Snapshot = c.Bool("snapshot")
-				broker, err := bootstrap.NewReqBroker(nil)
+				broker, err := bootstrap.NewReqBroker(o)
 				if err != nil {
 					return err
 				}
@@ -127,6 +129,29 @@ type Manifest interface {
 	GetRevision() string
 	GetVersion() string
 	String() (string, bool)
+}
+
+type ControllerOptions struct {
+	ConfigPath string
+	manifest Manifest
+}
+
+func (a *ControllerOptions) GetConfigPath() string {
+	return a.ConfigPath
+}
+
+func (a *ControllerOptions) GetVersion() string {
+	if a.manifest == nil {
+		return ""
+	}
+	return utils.StandardizeVersion(a.manifest.GetVersion())
+}
+
+func (a *ControllerOptions) GetRevision() string {
+	if a.manifest == nil {
+		return ""
+	}
+	return a.manifest.GetRevision()
 }
 
 type CmdReqFlags struct {
@@ -158,13 +183,7 @@ func (f *CmdReqFlags) GetSnapshot() bool {
 }
 
 type CmdRunFlags struct {
-	ConfigPath string
 	SpecDirs []string
-	manifest Manifest
-}
-
-func (a *CmdRunFlags) GetConfigPath() string {
-	return a.ConfigPath
 }
 
 func (a *CmdRunFlags) GetSpecDirs() []string {
@@ -175,18 +194,4 @@ func (a *CmdRunFlags) GetSpecDirs() []string {
 		}
 	}
 	return a.SpecDirs
-}
-
-func (a *CmdRunFlags) GetRevision() string {
-	if a.manifest == nil {
-		return ""
-	}
-	return a.manifest.GetRevision()
-}
-
-func (a *CmdRunFlags) GetVersion() string {
-	if a.manifest == nil {
-		return ""
-	}
-	return a.manifest.GetVersion()
 }

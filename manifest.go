@@ -25,9 +25,9 @@ func (m *Manifest) String() (string, bool) {
 	ok := false
 	s := ""
 
-	position := gitTag
+	position := m.GetVersion()
 	if len(position) == 0 {
-		position = gitCommit
+		position = m.GetRevision()
 	}
 
 	if len(position) > 0 {

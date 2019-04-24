@@ -16,10 +16,11 @@ type ReqArguments interface {
 	GetSnapshot() bool
 }
 
-type ReqBrokerOptions interface {}
+type ReqBrokerOptions interface {
+	GetVersion() string
+}
 
 type ReqBroker struct {
-	options ReqBrokerOptions
 	httpInvoker *engine.HttpInvoker
 }
 
@@ -41,7 +42,11 @@ func (z *ExplanationWriter) GetConsoleErr() io.Writer {
 
 func NewReqBroker(opts ReqBrokerOptions) (obj *ReqBroker, err error) {
 	obj = &ReqBroker{}
-	obj.httpInvoker, err = engine.NewHttpInvoker(nil)
+	httpInvokerOptions := &engine.HttpInvokerOptions{}
+	if opts != nil {
+		httpInvokerOptions.Version = opts.GetVersion()
+	}
+	obj.httpInvoker, err = engine.NewHttpInvoker(httpInvokerOptions)
 	if err != nil {
 		return nil, err
 	}

@@ -120,17 +120,17 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 }
 
 type TestSuite struct {
-	Version string `yaml:"version"`
-	Skipped *bool `yaml:"skipped,omitempty"`
 	TestCases []*TestCase `yaml:"testcases"`
+	Skipped *bool `yaml:"skipped,omitempty"`
 }
 
 type TestCase struct {
 	Title string `yaml:"title"`
-	Skipped *bool `yaml:"skipped,omitempty"`
+	Version string `yaml:"version,omitempty"`
 	OnError string `yaml:"on-error,omitempty"`
 	Request *HttpRequest `yaml:"request"`
 	Expectation *Expectation `yaml:"expectation"`
+	Skipped *bool `yaml:"skipped,omitempty"`
 }
 
 type Expectation struct {

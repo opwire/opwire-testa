@@ -13,22 +13,26 @@ import (
 	"github.com/opwire/opwire-testa/lib/utils"
 )
 
-type HttpInvokerOptions interface {
-	GetPDP() string
+type HttpInvokerOptions struct {
+	PDP string
+	Version string
 }
 
 type HttpInvoker struct {
 	pdp string
+	generator *TestGenerator
 }
 
-func NewHttpInvoker(opts HttpInvokerOptions) (*HttpInvoker, error) {
+func NewHttpInvoker(opts *HttpInvokerOptions) (*HttpInvoker, error) {
 	c := &HttpInvoker{}
 	if opts != nil {
-		c.pdp = opts.GetPDP()
+		c.pdp = opts.PDP
 	}
 	if len(c.pdp) == 0 {
 		c.pdp = DEFAULT_PDP
 	}
+	c.generator = &TestGenerator{}
+	c.generator.Version = opts.Version
 	return c, nil
 }
 
@@ -119,7 +123,7 @@ func (c *HttpInvoker) Do(req *HttpRequest, interceptors ...Interceptor) (*HttpRe
 		if snapshot, ok := interceptor.(SnapshotGenerator); snapshot != nil && ok {
 			w := snapshot.GetTargetWriter()
 			if w != nil {
-				generateTestCase(w, req, res)
+				c.generator.generateTestCase(w, req, res)
 			}
 		}
 	}
@@ -190,11 +194,16 @@ func renderResponse(w io.Writer, res *HttpResponse) error {
 	return nil
 }
 
-func generateTestCase(w io.Writer, req *HttpRequest, res *HttpResponse) error {
+type TestGenerator struct {
+	Version string
+}
+
+func (g *TestGenerator) generateTestCase(w io.Writer, req *HttpRequest, res *HttpResponse) error {
 	s := TestCase{}
 	s.Title = "<Generated testcase>"
+	s.Version = g.Version
 	s.Request = req
-	s.Expectation = generateExpectation(res)
+	s.Expectation = g.generateExpectation(res)
 
 	r := &GeneratedSnapshot{}
 	r.TestCases = []TestCase{s}
@@ -209,7 +218,7 @@ func generateTestCase(w io.Writer, req *HttpRequest, res *HttpResponse) error {
 	return nil
 }
 
-func generateExpectation(res *HttpResponse) *Expectation {
+func (g *TestGenerator) generateExpectation(res *HttpResponse) *Expectation {
 	if res == nil {
 		return nil
 	}
@@ -247,7 +256,7 @@ func generateExpectation(res *HttpResponse) *Expectation {
 	obj := make(map[string]interface{}, 0)
 	if e.Body.HasFormat == nil {
 		if err := json.Unmarshal(res.Body, &obj); err == nil {
-			e.Body.HasFormat = RefOfString("json")
+			e.Body.HasFormat = utils.RefOfString("json")
 			var content string
 			if out, err := json.MarshalIndent(obj, "", "  "); err == nil {
 				content = string(out)
@@ -260,7 +269,7 @@ func generateExpectation(res *HttpResponse) *Expectation {
 
 	if e.Body.HasFormat == nil {
 		if err := yaml.Unmarshal(res.Body, &obj); err == nil {
-			e.Body.HasFormat = RefOfString("yaml")
+			e.Body.HasFormat = utils.RefOfString("yaml")
 			var content string
 			if out, err := yaml.Marshal(obj); err == nil {
 				content = string(out)
@@ -272,16 +281,12 @@ func generateExpectation(res *HttpResponse) *Expectation {
 	}
 
 	if e.Body.HasFormat == nil {
-		e.Body.HasFormat = RefOfString("flat")
-		e.Body.IsEqualTo = RefOfString(string(res.Body))
-		e.Body.MatchWith = RefOfString(".*")
+		e.Body.HasFormat = utils.RefOfString("flat")
+		e.Body.IsEqualTo = utils.RefOfString(string(res.Body))
+		e.Body.MatchWith = utils.RefOfString(".*")
 	}
 
 	return e
-}
-
-func RefOfString(val string) *string {
-	return &val
 }
 
 const DEFAULT_PDP string = `http://localhost:17779`
