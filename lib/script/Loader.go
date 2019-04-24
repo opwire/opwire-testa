@@ -303,6 +303,87 @@ const scriptSchema string = `{
 											"type": "integer"
 										}
 									]
+								},
+								"items": {
+									"oneOf": [
+										{
+											"type": "null"
+										},
+										{
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"name": {
+														"type": "string"
+													},
+													"is-equal-to": {
+														"oneOf": [
+															{
+																"type": "null"
+															},
+															{
+																"type": "string"
+															}
+														]
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						}
+					]
+				},
+				"body": {
+					"oneOf": [
+						{
+							"type": "null"
+						},
+						{
+							"type": "object",
+							"properties": {
+								"has-format": {
+									"oneOf": [
+										{
+											"type": "null"
+										},
+										{
+											"type": "string",
+											"enum": ["json", "yaml", "flat"]
+										}
+									]
+								},
+								"includes": {
+									"oneOf": [
+										{
+											"type": "null"
+										},
+										{
+											"type": "string"
+										}
+									]
+								},
+								"is-equal-to": {
+									"oneOf": [
+										{
+											"type": "null"
+										},
+										{
+											"type": "string"
+										}
+									]
+								},
+								"match-with": {
+									"oneOf": [
+										{
+											"type": "null"
+										},
+										{
+											"type": "string"
+										}
+									]
 								}
 							}
 						}
