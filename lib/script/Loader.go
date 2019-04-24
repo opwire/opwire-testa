@@ -8,64 +8,96 @@ import (
 	"strings"
 	"gopkg.in/yaml.v2"
 	"github.com/opwire/opwire-testa/lib/engine"
+	"github.com/opwire/opwire-testa/lib/schema"
 	"github.com/opwire/opwire-testa/lib/storages"
+	"github.com/opwire/opwire-testa/lib/utils"
 )
 
 type LoaderOptions interface {}
 
 type Loader struct {
-	options LoaderOptions
+	validator *schema.Validator
 	skipInvalidSpecs bool
 }
 
-func NewLoader(opts LoaderOptions) (*Loader, error) {
-	l := new(Loader)
+func NewLoader(opts LoaderOptions) (l *Loader, err error) {
+	l = new(Loader)
+	l.validator, err = schema.NewValidator(&schema.ValidatorOptions{ Schema: scriptSchema })
+	if err != nil {
+		return nil, err
+	}
 	return l, nil
 }
 
-func (l *Loader) LoadScripts(sourceDirs []string) (map[string]*Descriptor, error) {
+func (l *Loader) LoadScripts(sourceDirs []string) (map[string]*Descriptor) {
 	locators, _ := l.ReadDirs(sourceDirs, ".yml")
-	descriptors, _ := l.LoadFiles(locators)
-	return descriptors, nil
+	descriptors := l.LoadFiles(locators)
+	return descriptors
 }
 
-func (l *Loader) LoadFiles(locators []*Locator) (descriptors map[string]*Descriptor, err error) {
+func (l *Loader) LoadFiles(locators []*Locator) (descriptors map[string]*Descriptor) {
 	descriptors = make(map[string]*Descriptor, 0)
 	for _, locator := range locators {
-		descriptor, err := l.LoadFile(locator)
-		if err == nil {
-			descriptors[locator.FullPath] = descriptor
-		}
+		descriptors[locator.FullPath] = l.LoadFile(locator)
 	}
-	return descriptors, nil
+	return descriptors
 }
 
-func (l *Loader) LoadFile(locator *Locator) (*Descriptor, error) {
+func (l *Loader) LoadFile(locator *Locator) (*Descriptor) {
 	if locator == nil {
-		return nil, fmt.Errorf("Descriptor must not be nil")
+		panic(fmt.Errorf("Descriptor must not be nil"))
 	}
 
+	// load Test Suite from path
 	testsuite := &engine.TestSuite{}
 
 	fs := storages.GetFs()
-	file, err := fs.Open(locator.FullPath)
-	defer file.Close()
-	if err != nil {
-		return nil, err
+	file, err1 := fs.Open(locator.FullPath)
+	if file != nil {
+		defer file.Close()
+	}
+	if err1 != nil {
+		return &Descriptor{
+			Locator: locator,
+			Error: err1,
+		}
 	}
 
 	parser := yaml.NewDecoder(file)
-	err = parser.Decode(testsuite)
-	if err != nil {
-		return nil, err
+	err2 := parser.Decode(testsuite)
+	if err2 != nil {
+		return &Descriptor{
+			Locator: locator,
+			Error: err2,
+		}
 	}
 
-	descriptor := &Descriptor{
+	// validate Test Suite by schema
+	result, err3 := l.validator.Validate(testsuite)
+	if err3 != nil {
+		return &Descriptor{
+			Locator: locator,
+			TestSuite: testsuite,
+			Error: err3,
+		}
+	}
+
+	if result != nil && !result.Valid() {
+		errs := make([]string, len(result.Errors()))
+		for i, arg := range result.Errors() {
+			errs[i] = arg.String()
+		}
+		return &Descriptor{
+			Locator: locator,
+			TestSuite: testsuite,
+			Error: utils.CombineErrors("", errs),
+		}
+	}
+
+	return &Descriptor{
 		Locator: locator,
 		TestSuite: testsuite,
 	}
-
-	return descriptor, nil
 }
 
 func (l *Loader) ReadDirs(sourceDirs []string, ext string) (locators []*Locator, err error) {
@@ -101,10 +133,183 @@ type Locator struct {
 	FullPath string
 	Home string
 	Path string
-	Error error
 }
 
 type Descriptor struct {
 	Locator *Locator
 	TestSuite *engine.TestSuite
+	Error error
 }
+
+const scriptSchema string = `{
+	"type": "object",
+	"properties": {
+		"testcases": {
+			"type": "array",
+			"items": {
+				"$ref": "#/definitions/TestCase"
+			}
+		},
+		"skipped": {
+			"oneOf": [
+				{
+					"type": "null"
+				},
+				{
+					"type": "boolean"
+				}
+			]
+		}
+	},
+	"definitions": {
+		"TestCase": {
+			"type": "object",
+			"properties": {
+				"title": {
+					"type": "string",
+					"minLength": 1
+				},
+				"version": {
+					"oneOf": [
+						{
+							"type": "null"
+						},
+						{
+							"type": "string"
+						}
+					]
+				},
+				"request": {
+					"oneOf": [
+						{
+							"type": "null"
+						},
+						{
+							"$ref": "#/definitions/Request"
+						}
+					]
+				},
+				"expectation": {
+					"oneOf": [
+						{
+							"type": "null"
+						},
+						{
+							"$ref": "#/definitions/Expectation"
+						}
+					]
+				},
+				"skipped": {
+					"oneOf": [
+						{
+							"type": "null"
+						},
+						{
+							"type": "boolean"
+						}
+					]
+				}
+			},
+			"additionalProperties": false
+		},
+		"Request": {
+			"type": "object",
+			"properties": {
+				"method": {
+					"type": "string",
+					"enum": [ "GET", "PUT", "POST", "PATCH", "DELETE" ]
+				},
+				"url": {
+					"type": "string"
+				},
+				"pdp": {
+					"type": "string"
+				},
+				"path": {
+					"type": "string"
+				},
+				"headers": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {
+							"name": {
+								"type": "string"
+							},
+							"value": {
+								"type": "string"
+							}
+						}
+					}
+				},
+				"body": {
+					"type": "string"
+				}
+			},
+			"additionalProperties": false
+		},
+		"Expectation": {
+			"type": "object",
+			"properties": {
+				"status-code": {
+					"oneOf": [
+						{
+							"type": "null"
+						},
+						{
+							"type": "object",
+							"properties": {
+								"is-equal-to": {
+									"oneOf": [
+										{
+											"type": "null"
+										},
+										{
+											"type": "integer"
+										}
+									]
+								},
+								"belongs-to": {
+									"oneOf": [
+										{
+											"type": "null"
+										},
+										{
+											"type": "array",
+											"items": {
+												"type": "integer"
+											}
+										}
+									]
+								}
+							}
+						}
+					]
+				},
+				"headers": {
+					"oneOf": [
+						{
+							"type": "null"
+						},
+						{
+							"type": "object",
+							"properties": {
+								"has-total": {
+									"oneOf": [
+										{
+											"type": "null"
+										},
+										{
+											"type": "integer"
+										}
+									]
+								}
+							}
+						}
+					]
+				}
+			}
+		}
+	},
+	"additionalProperties": false
+}`

@@ -49,8 +49,10 @@ func (r *RunController) wrapTestSuites(descriptors map[string]*script.Descriptor
 	tests := make([]testing.InternalTest, 0)
 	for _, descriptor := range descriptors {
 		testsuite := descriptor.TestSuite
-		for _, testcase := range testsuite.TestCases {
-			tests = append(tests, r.wrapTestCase(testcase))
+		if testsuite != nil {
+			for _, testcase := range testsuite.TestCases {
+				tests = append(tests, r.wrapTestCase(testcase))
+			}
 		}
 	}
 	return tests, nil
@@ -70,26 +72,37 @@ func (r *RunController) wrapTestCase(testcase *engine.TestCase) (testing.Interna
 					t.Logf("+ %s", key)
 					t.Logf("|- %s", err)
 				}
-				} else {
-				t.Logf("[%s] OK", testcase.Title)
 			}
 		},
 	}
 }
 
 func (r *RunController) RunTests(specDirs []string) error {
-	flag.Set("test.v", "false")
-	if specDirs == nil {
-		specDirs = []string{}
+	flag.Set("test.v", "true")
+
+	// load test specifications
+	allscripts := r.loader.LoadScripts(specDirs)
+
+	// filter valid descriptors and display errors
+	descriptors := make(map[string]*script.Descriptor, 0)
+	for key, descriptor := range allscripts {
+		if descriptor.Error != nil {
+			fmt.Printf("Load [%s] + [%s] has been failed, error: %s\n",
+				descriptor.Locator.Home,
+				descriptor.Locator.Path,
+				descriptor.Error)
+		} else {
+			descriptors[key] = descriptor
+		}
 	}
-	descriptors, err := r.loader.LoadScripts(specDirs)
-	if err != nil {
-		return err
-	}
+
+	// create the test runners
 	internalTests, err2 := r.wrapTestSuites(descriptors)
 	if err2 != nil {
 		return err2
 	}
+
+	// Run the tests
 	testing.Main(defaultMatchString, internalTests, []testing.InternalBenchmark{}, []testing.InternalExample{})
 	return nil
 }

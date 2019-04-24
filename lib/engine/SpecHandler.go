@@ -120,45 +120,44 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 }
 
 type TestSuite struct {
-	TestCases []*TestCase `yaml:"testcases"`
-	Skipped *bool `yaml:"skipped,omitempty"`
+	TestCases []*TestCase `yaml:"testcases" json:"testcases"`
+	Skipped *bool `yaml:"skipped,omitempty" json:"skipped"`
 }
 
 type TestCase struct {
-	Title string `yaml:"title"`
-	Version string `yaml:"version,omitempty"`
-	OnError string `yaml:"on-error,omitempty"`
-	Request *HttpRequest `yaml:"request"`
-	Expectation *Expectation `yaml:"expectation"`
-	Skipped *bool `yaml:"skipped,omitempty"`
+	Title string `yaml:"title" json:"title"`
+	Version *string `yaml:"version,omitempty" json:"version"`
+	Request *HttpRequest `yaml:"request" json:"request"`
+	Expectation *Expectation `yaml:"expectation" json:"expectation"`
+	Skipped *bool `yaml:"skipped,omitempty" json:"skipped"`
 }
 
 type Expectation struct {
-	StatusCode *MeasureStatusCode `yaml:"status-code,omitempty"`
-	Headers *MeasureHeaders `yaml:"headers,omitempty"`
-	Body *MeasureBody `yaml:"body,omitempty"`
+	StatusCode *MeasureStatusCode `yaml:"status-code,omitempty" json:"status-code"`
+	Headers *MeasureHeaders `yaml:"headers,omitempty" json:"headers"`
+	Body *MeasureBody `yaml:"body,omitempty" json:"body"`
 }
 
 type MeasureStatusCode struct {
-	IsEqualTo *int `yaml:"is-equal-to,omitempty"`
-	BelongsTo []int `yaml:"belongs-to,omitempty"`
+	IsEqualTo *int `yaml:"is-equal-to,omitempty" json:"is-equal-to"`
+	BelongsTo []int `yaml:"belongs-to,omitempty" json:"belongs-to"`
 }
 
 type MeasureHeaders struct {
-	HasTotal *int `yaml:"has-total,omitempty"`
-	Items []MeasureHeader `yaml:"items,omitempty"`
+	HasTotal *int `yaml:"has-total,omitempty" json:"has-total"`
+	Items []MeasureHeader `yaml:"items,omitempty" json:"items"`
 }
 
 type MeasureHeader struct {
-	Name *string `yaml:"name"`
-	IsEqualTo *string `yaml:"is-equal-to"`
+	Name *string `yaml:"name" json:"name"`
+	IsEqualTo *string `yaml:"is-equal-to" json:"is-equal-to"`
 }
 
 type MeasureBody struct {
-	HasFormat *string `yaml:"has-format,omitempty"`
-	Includes *string `yaml:"includes,omitempty"`
-	IsEqualTo *string `yaml:"is-equal-to,omitempty"`
-	MatchWith *string `yaml:"match-with,omitempty"`
+	HasFormat *string `yaml:"has-format,omitempty" json:"has-format"`
+	Includes *string `yaml:"includes,omitempty" json:"includes"`
+	IsEqualTo *string `yaml:"is-equal-to,omitempty" json:"is-equal-to"`
+	MatchWith *string `yaml:"match-with,omitempty" json:"match-with"`
 }
 
 type ExaminationResult struct {

@@ -32,7 +32,9 @@ func NewHttpInvoker(opts *HttpInvokerOptions) (*HttpInvoker, error) {
 		c.pdp = DEFAULT_PDP
 	}
 	c.generator = &TestGenerator{}
-	c.generator.Version = opts.Version
+	if opts != nil {
+		c.generator.Version = opts.Version
+	}
 	return c, nil
 }
 
@@ -201,7 +203,7 @@ type TestGenerator struct {
 func (g *TestGenerator) generateTestCase(w io.Writer, req *HttpRequest, res *HttpResponse) error {
 	s := TestCase{}
 	s.Title = "<Generated testcase>"
-	s.Version = g.Version
+	s.Version = utils.RefOfString(g.Version)
 	s.Request = req
 	s.Expectation = g.generateExpectation(res)
 
@@ -292,17 +294,17 @@ func (g *TestGenerator) generateExpectation(res *HttpResponse) *Expectation {
 const DEFAULT_PDP string = `http://localhost:17779`
 
 type HttpHeader struct {
-	Name string `yaml:"name"`
-	Value string `yaml:"value"`
+	Name string `yaml:"name" json:"version"`
+	Value string `yaml:"value" json:"version"`
 }
 
 type HttpRequest struct {
-	Method string `yaml:"method,omitempty"`
-	Url string `yaml:"url,omitempty"`
-	PDP string `yaml:"pdp,omitempty"`
-	Path string `yaml:"path,omitempty"`
-	Headers []HttpHeader `yaml:"headers,omitempty"`
-	Body string `yaml:"body,omitempty"`
+	Method string `yaml:"method,omitempty" json:"method"`
+	Url string `yaml:"url,omitempty" json:"url"`
+	PDP string `yaml:"pdp,omitempty" json:"pdp"`
+	Path string `yaml:"path,omitempty" json:"path"`
+	Headers []HttpHeader `yaml:"headers,omitempty" json:"headers"`
+	Body string `yaml:"body,omitempty" json:"body"`
 }
 
 type HttpResponse struct {
