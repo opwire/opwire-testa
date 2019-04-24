@@ -103,5 +103,5 @@ type Locator struct {
 
 type Descriptor struct {
 	Locator *Locator
-	Scenarios []*engine.Scenario `yaml:"scenarios"`
+	Scenarios []*engine.Scenario `yaml:"testcases"`
 }
