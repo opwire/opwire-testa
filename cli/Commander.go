@@ -62,7 +62,7 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 				}
 				f := new(CmdRunFlags)
 				f.SpecDirs = c.StringSlice("spec-dirs")
-				tester.RunTests(f.GetSpecDirs())
+				tester.Execute(f)
 				return nil
 			},
 		},

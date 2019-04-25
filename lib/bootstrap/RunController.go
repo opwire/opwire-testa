@@ -43,8 +43,17 @@ func NewRunController(opts RunControllerOptions) (r *RunController, err error) {
 	return r, nil
 }
 
-func (r *RunController) RunTests(specDirs []string) error {
+type RunArguments interface {
+	GetSpecDirs() []string
+}
+
+func (r *RunController) Execute(args RunArguments) error {
 	flag.Set("test.v", "true")
+
+	var specDirs []string
+	if args != nil {
+		specDirs = args.GetSpecDirs()
+	}
 
 	// load test specifications
 	allscripts := r.loader.LoadScripts(specDirs)
