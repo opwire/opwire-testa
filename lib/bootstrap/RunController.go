@@ -6,6 +6,7 @@ import (
 	"testing"
 	"github.com/opwire/opwire-testa/lib/engine"
 	"github.com/opwire/opwire-testa/lib/script"
+	"github.com/opwire/opwire-testa/lib/utils"
 )
 
 type RunControllerOptions interface {
@@ -52,10 +53,8 @@ func (r *RunController) RunTests(specDirs []string) error {
 	descriptors := make(map[string]*script.Descriptor, 0)
 	for key, descriptor := range allscripts {
 		if descriptor.Error != nil {
-			fmt.Printf("Load [%s] + [%s] has been failed, error: %s\n",
-				descriptor.Locator.Home,
-				descriptor.Locator.Path,
-				descriptor.Error)
+			rel, _ := utils.DetectRelativePath(descriptor.Locator.FullPath)
+			fmt.Printf("Load [%s] has been failed, error: %s\n", rel, descriptor.Error)
 		} else {
 			descriptors[key] = descriptor
 		}

@@ -1,7 +1,9 @@
 package utils
 
 import (
+	"fmt"
 	"os"
+	"path/filepath"
 )
 
 func IsDir(name string) bool {
@@ -17,4 +19,15 @@ func FindWorkingDir() string {
 		return ""
 	}
 	return dir
+}
+
+func DetectRelativePath(p string) (string, error) {
+	cwd := FindWorkingDir()
+	if len(cwd) > 0 {
+		rel, err := filepath.Rel(cwd, p)
+		if err == nil {
+			return rel, nil
+		}
+	}
+	return p, fmt.Errorf("Relative path detecting failed")
 }
