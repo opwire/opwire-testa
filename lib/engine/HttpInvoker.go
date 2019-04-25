@@ -2,14 +2,12 @@ package engine
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
-	"gopkg.in/yaml.v2"
 	"github.com/opwire/opwire-testa/lib/utils"
 )
 
@@ -23,18 +21,23 @@ type HttpInvoker struct {
 	generator *TestGenerator
 }
 
-func NewHttpInvoker(opts *HttpInvokerOptions) (*HttpInvoker, error) {
-	c := &HttpInvoker{}
+func NewHttpInvoker(opts *HttpInvokerOptions) (c *HttpInvoker, err error) {
+	c = &HttpInvoker{}
 	if opts != nil {
 		c.pdp = opts.PDP
 	}
 	if len(c.pdp) == 0 {
 		c.pdp = DEFAULT_PDP
 	}
-	c.generator = &TestGenerator{}
+
+	c.generator, err = NewTestGenerator()
+	if err != nil {
+		return nil, err
+	}
 	if opts != nil {
 		c.generator.Version = opts.Version
 	}
+
 	return c, nil
 }
 
@@ -194,101 +197,6 @@ func renderResponse(w io.Writer, res *HttpResponse) error {
 	// render body
 	fmt.Fprintln(w, string(res.Body))
 	return nil
-}
-
-type TestGenerator struct {
-	Version string
-}
-
-func (g *TestGenerator) generateTestCase(w io.Writer, req *HttpRequest, res *HttpResponse) error {
-	s := TestCase{}
-	s.Title = "<Generated testcase>"
-	s.Version = utils.RefOfString(g.Version)
-	s.Request = req
-	s.Expectation = g.generateExpectation(res)
-
-	r := &GeneratedSnapshot{}
-	r.TestCases = []TestCase{s}
-	script, err := yaml.Marshal(r)
-	if err != nil {
-		fmt.Fprintln(w, "Cannot marshal generated testcase, error: %s", err)
-		return err
-	}
-	fmt.Fprintln(w)
-	fmt.Fprintln(w, string(script))
-
-	return nil
-}
-
-func (g *TestGenerator) generateExpectation(res *HttpResponse) *Expectation {
-	if res == nil {
-		return nil
-	}
-	e := &Expectation{}
-
-	// status-code
-	sc := res.StatusCode
-	e.StatusCode = &MeasureStatusCode{
-		IsEqualTo: &sc,
-	}
-
-	// header
-	total := len(res.Header)
-	if total > 0 {
-		e.Headers = &MeasureHeaders{
-			HasTotal: &total,
-			Items: make([]MeasureHeader, 0),
-		}
-		for key, vals := range res.Header {
-			if len(vals) == 1 {
-				name := key
-				value := vals[0]
-				one := MeasureHeader{
-					Name: &name,
-					IsEqualTo: &value,
-				}
-				e.Headers.Items = append(e.Headers.Items, one)
-			}
-		}
-	}
-
-	// body
-	e.Body = &MeasureBody{}
-
-	obj := make(map[string]interface{}, 0)
-	if e.Body.HasFormat == nil {
-		if err := json.Unmarshal(res.Body, &obj); err == nil {
-			e.Body.HasFormat = utils.RefOfString("json")
-			var content string
-			if out, err := json.MarshalIndent(obj, "", "  "); err == nil {
-				content = string(out)
-			} else {
-				content = string(res.Body)
-			}
-			e.Body.Includes = &content
-		}
-	}
-
-	if e.Body.HasFormat == nil {
-		if err := yaml.Unmarshal(res.Body, &obj); err == nil {
-			e.Body.HasFormat = utils.RefOfString("yaml")
-			var content string
-			if out, err := yaml.Marshal(obj); err == nil {
-				content = string(out)
-			} else {
-				content = string(res.Body)
-			}
-			e.Body.Includes = &content
-		}
-	}
-
-	if e.Body.HasFormat == nil {
-		e.Body.HasFormat = utils.RefOfString("flat")
-		e.Body.IsEqualTo = utils.RefOfString(string(res.Body))
-		e.Body.MatchWith = utils.RefOfString(".*")
-	}
-
-	return e
 }
 
 const DEFAULT_PDP string = `http://localhost:17779`

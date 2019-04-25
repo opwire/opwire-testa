@@ -51,7 +51,7 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 				}
 			}
 			if _sc.BelongsTo != nil {
-				if !utils.Contains(_sc.BelongsTo, res.StatusCode) {
+				if !utils.ContainsInt(_sc.BelongsTo, res.StatusCode) {
 					errors["StatusCode"] = fmt.Errorf("Response StatusCode [%d] does not belong to expected list %v", res.StatusCode, _sc.BelongsTo)
 				}
 			}

@@ -4,6 +4,23 @@ import (
 	"strings"
 )
 
+func Index(vs []string, t string) int {
+	for i, v := range vs {
+		if v == t {
+			return i
+		}
+	}
+	return -1
+}
+
+func Contains(vs []string, t string) bool {
+	return Index(vs, t) >= 0
+}
+
+func ContainsInsensitiveCase(vs []string, t string) bool {
+	return Index(vs, strings.ToLower(t)) >= 0
+}
+
 func IndexInt(vs []int, t int) int {
 	for i, v := range vs {
 		if v == t {
@@ -13,7 +30,7 @@ func IndexInt(vs []int, t int) int {
 	return -1
 }
 
-func Contains(vs []int, t int) bool {
+func ContainsInt(vs []int, t int) bool {
 	return IndexInt(vs, t) >= 0
 }
 
