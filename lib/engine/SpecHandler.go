@@ -142,6 +142,8 @@ type TestCase struct {
 	Request *HttpRequest `yaml:"request" json:"request"`
 	Expectation *Expectation `yaml:"expectation" json:"expectation"`
 	Skipped *bool `yaml:"skipped,omitempty" json:"skipped"`
+	Tags []string `yaml:"tags,omitempty" json:"tags"`
+	CreatedTime *string `yaml:"created-time,omitempty" json:"created-time"`
 }
 
 type Expectation struct {

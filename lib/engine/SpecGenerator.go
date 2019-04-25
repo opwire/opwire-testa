@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"time"
 	"gopkg.in/yaml.v2"
 	"github.com/opwire/opwire-testa/lib/utils"
 )
@@ -29,6 +30,12 @@ func (g *SpecGenerator) generateTestCase(w io.Writer, req *HttpRequest, res *Htt
 	s.Version = utils.RefOfString(g.Version)
 	s.Request = req
 	s.Expectation = g.generateExpectation(res)
+	s.CreatedTime = utils.RefOfString(time.Now().Format(time.RFC3339))
+	s.Tags = []string {"snapshot"}
+	username, err := utils.FindUsername()
+	if err == nil {
+		s.Tags = append(s.Tags, username)
+	}
 
 	r := &GeneratedSnapshot{}
 	r.TestCases = []TestCase{s}

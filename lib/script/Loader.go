@@ -141,6 +141,9 @@ type Descriptor struct {
 	Error error
 }
 
+const TAG_PATTERN string = `[a-zA-Z][a-zA-Z0-9]*([_-][a-zA-Z0-9]*)*`
+const TIME_RFC3339 string = `([0-9]+)-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])[Tt]([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9]|60)(\\.[0-9]+)?(([Zz])|([\\+|\\-]([01][0-9]|2[0-3]):[0-5][0-9]))`
+
 const scriptSchema string = `{
 	"type": "object",
 	"properties": {
@@ -208,6 +211,31 @@ const scriptSchema string = `{
 							"type": "boolean"
 						}
 					]
+				},
+				"tags": {
+					"oneOf": [
+						{
+							"type": "null"
+						},
+						{
+							"type": "array",
+							"items": {
+								"type": "string",
+								"pattern": "^` + TAG_PATTERN + `$"
+							}
+						}
+					]
+				},
+				"created-time": {
+					"oneOf": [
+						{
+							"type": "null"
+						},
+						{
+							"type": "string",
+							"pattern": "^` + TIME_RFC3339 + `$"
+						}
+					]
 				}
 			},
 			"additionalProperties": false
@@ -217,7 +245,7 @@ const scriptSchema string = `{
 			"properties": {
 				"method": {
 					"type": "string",
-					"enum": [ "GET", "PUT", "POST", "PATCH", "DELETE" ]
+					"enum": [ "", "GET", "PUT", "POST", "PATCH", "DELETE" ]
 				},
 				"url": {
 					"type": "string"
