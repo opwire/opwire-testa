@@ -32,6 +32,12 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 
 	result := &ExaminationResult{}
 
+	// check if testcase is skipped
+	if testcase.Skipped != nil && *testcase.Skipped == true {
+		result.Status = "skipped"
+		return result, nil
+	}
+
 	// make the testing request
 	res, err := e.invoker.Do(testcase.Request)
 	if err != nil {
@@ -116,6 +122,12 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 	}
 	result.Errors = errors
 
+	if len(errors) == 0 {
+		result.Status = "ok"
+	} else {
+		result.Status = "error"
+	}
+
 	return result, nil
 }
 
@@ -171,6 +183,7 @@ type MeasureBody struct {
 type ExaminationResult struct {
 	Errors map[string]error
 	Response *HttpResponse
+	Status string
 }
 
 type DiffReporter struct {

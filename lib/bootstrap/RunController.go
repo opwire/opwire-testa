@@ -58,12 +58,12 @@ func (r *RunController) Execute(args RunArguments) error {
 	// load test specifications
 	allscripts := r.loader.LoadScripts(specDirs)
 
-	// filter valid descriptors and display errors
+	// filter invalid descriptors and display errors
 	descriptors := make(map[string]*script.Descriptor, 0)
 	for key, descriptor := range allscripts {
 		if descriptor.Error != nil {
 			rel, _ := utils.DetectRelativePath(descriptor.Locator.FullPath)
-			fmt.Printf("Load [%s] has been failed, error: %s\n", rel, descriptor.Error)
+			fmt.Printf("[%s] loading has been failed, error: %s\n", rel, descriptor.Error)
 		} else {
 			descriptors[key] = descriptor
 		}

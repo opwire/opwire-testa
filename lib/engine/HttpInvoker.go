@@ -18,7 +18,7 @@ type HttpInvokerOptions struct {
 
 type HttpInvoker struct {
 	pdp string
-	generator *TestGenerator
+	generator *SpecGenerator
 }
 
 func NewHttpInvoker(opts *HttpInvokerOptions) (c *HttpInvoker, err error) {
@@ -30,7 +30,7 @@ func NewHttpInvoker(opts *HttpInvokerOptions) (c *HttpInvoker, err error) {
 		c.pdp = DEFAULT_PDP
 	}
 
-	c.generator, err = NewTestGenerator()
+	c.generator, err = NewSpecGenerator()
 	if err != nil {
 		return nil, err
 	}

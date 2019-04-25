@@ -8,13 +8,13 @@ import (
 	"github.com/opwire/opwire-testa/lib/utils"
 )
 
-type TestGenerator struct {
+type SpecGenerator struct {
 	ExcludedHeaders []string
 	Version string
 }
 
-func NewTestGenerator() (*TestGenerator, error) {
-	ref := new(TestGenerator)
+func NewSpecGenerator() (*SpecGenerator, error) {
+	ref := new(SpecGenerator)
 	ref.ExcludedHeaders = []string {
 		"content-length",
 		"date",
@@ -23,7 +23,7 @@ func NewTestGenerator() (*TestGenerator, error) {
 	return ref, nil
 }
 
-func (g *TestGenerator) generateTestCase(w io.Writer, req *HttpRequest, res *HttpResponse) error {
+func (g *SpecGenerator) generateTestCase(w io.Writer, req *HttpRequest, res *HttpResponse) error {
 	s := TestCase{}
 	s.Title = "<Generated testcase>"
 	s.Version = utils.RefOfString(g.Version)
@@ -43,7 +43,7 @@ func (g *TestGenerator) generateTestCase(w io.Writer, req *HttpRequest, res *Htt
 	return nil
 }
 
-func (g *TestGenerator) generateExpectation(res *HttpResponse) *Expectation {
+func (g *SpecGenerator) generateExpectation(res *HttpResponse) *Expectation {
 	if res == nil {
 		return nil
 	}
