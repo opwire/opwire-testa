@@ -119,6 +119,7 @@ func (l *Loader) ReadDir(sourceDir string, ext string) ([]*Locator, error) {
 			if err == nil && r {
 				locator := &Locator{}
 				locator.FullPath = path
+				locator.RelativePath, _ = utils.DetectRelativePath(path)
 				locator.Home = sourceDir
 				locator.Path = strings.TrimPrefix(path, sourceDir)
 				locators = append(locators, locator)
@@ -131,6 +132,7 @@ func (l *Loader) ReadDir(sourceDir string, ext string) ([]*Locator, error) {
 
 type Locator struct {
 	FullPath string
+	RelativePath string
 	Home string
 	Path string
 }

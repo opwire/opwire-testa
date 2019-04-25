@@ -61,7 +61,7 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 					return err
 				}
 				f := new(CmdRunFlags)
-				f.SpecDirs = c.StringSlice("spec-dirs")
+				f.TestDirs = c.StringSlice("test-dirs")
 				tester.Execute(f)
 				return nil
 			},
@@ -94,7 +94,6 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 			},
 			Action: func(c *clp.Context) error {
 				o := &ControllerOptions{ manifest: manifest }
-				o.ConfigPath = c.String("config-path")
 				broker, err := bootstrap.NewReqController(o)
 				if err != nil {
 					return err
@@ -107,6 +106,49 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 				f.Snapshot = c.Bool("snapshot")
 				broker.Execute(f)
 				return nil
+			},
+		},
+		{
+			Name: "gen",
+			Usage: "Generation commands",
+			Subcommands: []clp.Command{
+				{
+					Name: "curl",
+					Usage: "Generate curl style of a testcase",
+					Flags: []clp.Flag{
+						clp.StringFlag{
+							Name: "config-path, c",
+							Usage: "Explicit configuration file",
+						},
+						clp.StringSliceFlag{
+							Name: "spec-dirs, test-dirs, d",
+							Usage: "The testcases directories",
+						},
+						clp.StringFlag{
+							Name: "test-file, f",
+							Usage: "Suffix of path to testing script file (.i.e ... your-test.yml)",
+						},
+						clp.StringFlag{
+							Name: "test-case, t",
+							Usage: "Prefix of testcase title/name",
+						},
+					},
+					Action: func(c *clp.Context) error {
+						o := &ControllerOptions{ manifest: manifest }
+						o.ConfigPath = c.String("config-path")
+						ctl, err := bootstrap.NewGenController(o)
+						if err != nil {
+							return err
+						}
+						f := &CmdGenFlags{
+							TestDirs: c.StringSlice("test-dirs"),
+							TestFile: c.String("test-file"),
+							TestCase: c.String("test-case"),
+						}
+						ctl.Execute(f)
+						return nil
+					},
+				},
 			},
 		},
 		{
@@ -183,15 +225,39 @@ func (f *CmdReqFlags) GetSnapshot() bool {
 }
 
 type CmdRunFlags struct {
-	SpecDirs []string
+	TestDirs []string
 }
 
-func (a *CmdRunFlags) GetSpecDirs() []string {
-	if a.SpecDirs == nil || len(a.SpecDirs) == 0 {
+func (a *CmdRunFlags) GetTestDirs() []string {
+	a.TestDirs = initDefaultDirs(a.TestDirs)
+	return a.TestDirs
+}
+
+type CmdGenFlags struct {
+	TestDirs []string
+	TestFile string
+	TestCase string
+}
+
+func (a *CmdGenFlags) GetTestDirs() []string {
+	a.TestDirs = initDefaultDirs(a.TestDirs)
+	return a.TestDirs
+}
+
+func (a *CmdGenFlags) GetTestFile() string {
+	return a.TestFile
+}
+
+func (a *CmdGenFlags) GetTestCase() string {
+	return a.TestCase
+}
+
+func initDefaultDirs(testDirs []string) []string {
+	if testDirs == nil || len(testDirs) == 0 {
 		testDir := filepath.Join(utils.FindWorkingDir(), "tests")
 		if utils.IsDir(testDir) {
-			a.SpecDirs = []string{testDir}
+			testDirs = []string{testDir}
 		}
 	}
-	return a.SpecDirs
+	return testDirs
 }

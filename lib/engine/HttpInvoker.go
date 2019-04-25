@@ -46,18 +46,7 @@ func (c *HttpInvoker) Do(req *HttpRequest, interceptors ...Interceptor) (*HttpRe
 		return nil, fmt.Errorf("Request must not be nil")
 	}
 
-	url := req.Url
-	if len(url) == 0 {
-		pdp := c.pdp
-		if len(req.PDP) > 0 {
-			pdp = req.PDP
-		}
-		basePath := "/$"
-		if len(req.Path) > 0 {
-			basePath = req.Path
-		}
-		url, _ = utils.UrlJoin(pdp, basePath)
-	}
+	url := BuildUrl(req, c.pdp, "")
 
 	reqTimeout := time.Second * 10
 	var httpClient *http.Client = &http.Client{
@@ -199,11 +188,34 @@ func renderResponse(w io.Writer, res *HttpResponse) error {
 	return nil
 }
 
+func BuildUrl(req *HttpRequest, defaultPDP string, defaultPath string) string {
+	if len(defaultPDP) == 0 {
+		defaultPDP = DEFAULT_PDP
+	}
+	if len(defaultPath) == 0 {
+		defaultPath = DEFAULT_PATH
+	}
+	url := req.Url
+	if len(url) == 0 {
+		pdp := defaultPDP
+		if len(req.PDP) > 0 {
+			pdp = req.PDP
+		}
+		basePath := defaultPath
+		if len(req.Path) > 0 {
+			basePath = req.Path
+		}
+		url, _ = utils.UrlJoin(pdp, basePath)
+	}
+	return url
+}
+
 const DEFAULT_PDP string = `http://localhost:17779`
+const DEFAULT_PATH string = `/$`
 
 type HttpHeader struct {
-	Name string `yaml:"name" json:"version"`
-	Value string `yaml:"value" json:"version"`
+	Name string `yaml:"name" json:"name"`
+	Value string `yaml:"value" json:"value"`
 }
 
 type HttpRequest struct {

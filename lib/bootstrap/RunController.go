@@ -6,7 +6,6 @@ import (
 	"testing"
 	"github.com/opwire/opwire-testa/lib/engine"
 	"github.com/opwire/opwire-testa/lib/script"
-	"github.com/opwire/opwire-testa/lib/utils"
 )
 
 type RunControllerOptions interface {
@@ -16,7 +15,6 @@ type RunControllerOptions interface {
 }
 
 type RunController struct {
-	options RunControllerOptions
 	loader *script.Loader
 	handler *engine.SpecHandler
 	storage *TestStateStore
@@ -44,26 +42,25 @@ func NewRunController(opts RunControllerOptions) (r *RunController, err error) {
 }
 
 type RunArguments interface {
-	GetSpecDirs() []string
+	GetTestDirs() []string
 }
 
 func (r *RunController) Execute(args RunArguments) error {
 	flag.Set("test.v", "true")
 
-	var specDirs []string
+	var testDirs []string
 	if args != nil {
-		specDirs = args.GetSpecDirs()
+		testDirs = args.GetTestDirs()
 	}
 
 	// load test specifications
-	allscripts := r.loader.LoadScripts(specDirs)
+	allscripts := r.loader.LoadScripts(testDirs)
 
 	// filter invalid descriptors and display errors
 	descriptors := make(map[string]*script.Descriptor, 0)
 	for key, descriptor := range allscripts {
 		if descriptor.Error != nil {
-			rel, _ := utils.DetectRelativePath(descriptor.Locator.FullPath)
-			fmt.Printf("[%s] loading has been failed, error: %s\n", rel, descriptor.Error)
+			fmt.Printf("[%s] loading has been failed, error: %s\n", descriptor.Locator.RelativePath, descriptor.Error)
 		} else {
 			descriptors[key] = descriptor
 		}
