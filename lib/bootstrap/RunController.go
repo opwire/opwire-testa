@@ -42,41 +42,6 @@ func NewRunController(opts RunControllerOptions) (r *RunController, err error) {
 	return r, nil
 }
 
-func (r *RunController) wrapTestSuites(descriptors map[string]*script.Descriptor) ([]testing.InternalTest, error) {
-	if r.handler == nil {
-		return nil, fmt.Errorf("SpecHandler must not be nil")
-	}
-	tests := make([]testing.InternalTest, 0)
-	for _, descriptor := range descriptors {
-		testsuite := descriptor.TestSuite
-		if testsuite != nil {
-			for _, testcase := range testsuite.TestCases {
-				tests = append(tests, r.wrapTestCase(testcase))
-			}
-		}
-	}
-	return tests, nil
-}
-
-func (r *RunController) wrapTestCase(testcase *engine.TestCase) (testing.InternalTest) {
-	return testing.InternalTest{
-		Name: testcase.Title,
-		F: func (t *testing.T) {
-			result, err := r.handler.Examine(testcase)
-			if err != nil {
-				t.Fatalf("[%s] got a fatal error. Exit now", testcase.Title)
-			}
-			if result != nil && len(result.Errors) > 0 {
-				t.Errorf("[%s] has failed:", testcase.Title)
-				for key, err := range result.Errors {
-					t.Logf("+ %s", key)
-					t.Logf("|- %s", err)
-				}
-			}
-		},
-	}
-}
-
 func (r *RunController) RunTests(specDirs []string) error {
 	flag.Set("test.v", "true")
 
@@ -113,3 +78,37 @@ func defaultMatchString(pat, str string) (bool, error) {
 
 type TestStateStore struct {}
 
+func (r *RunController) wrapTestSuites(descriptors map[string]*script.Descriptor) ([]testing.InternalTest, error) {
+	if r.handler == nil {
+		return nil, fmt.Errorf("SpecHandler must not be nil")
+	}
+	tests := make([]testing.InternalTest, 0)
+	for _, descriptor := range descriptors {
+		testsuite := descriptor.TestSuite
+		if testsuite != nil {
+			for _, testcase := range testsuite.TestCases {
+				tests = append(tests, r.wrapTestCase(testcase))
+			}
+		}
+	}
+	return tests, nil
+}
+
+func (r *RunController) wrapTestCase(testcase *engine.TestCase) (testing.InternalTest) {
+	return testing.InternalTest{
+		Name: testcase.Title,
+		F: func (t *testing.T) {
+			result, err := r.handler.Examine(testcase)
+			if err != nil {
+				t.Fatalf("[%s] got a fatal error. Exit now", testcase.Title)
+			}
+			if result != nil && len(result.Errors) > 0 {
+				t.Errorf("[%s] has failed:", testcase.Title)
+				for key, err := range result.Errors {
+					t.Logf("+ %s", key)
+					t.Logf("|- %s", err)
+				}
+			}
+		},
+	}
+}
