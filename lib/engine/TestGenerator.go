@@ -53,15 +53,17 @@ func (g *TestGenerator) generateExpectation(res *HttpResponse) *Expectation {
 	sc := res.StatusCode
 	e.StatusCode = &MeasureStatusCode{
 		IsEqualTo: &sc,
+		BelongsTo: []int{sc},
 	}
 
 	// header
 	total := len(res.Header)
 	if total > 0 {
 		e.Headers = &MeasureHeaders{
-			HasTotal: &total,
+			Total: &MeasureNumber{IsEqualTo: &total},
 			Items: make([]MeasureHeader, 0),
 		}
+		count := 0
 		for key, vals := range res.Header {
 			if utils.ContainsInsensitiveCase(g.ExcludedHeaders, key) {
 				continue
@@ -74,7 +76,11 @@ func (g *TestGenerator) generateExpectation(res *HttpResponse) *Expectation {
 					IsEqualTo: &value,
 				}
 				e.Headers.Items = append(e.Headers.Items, one)
+				count = count + 1
 			}
+		}
+		if count > 0 {
+			e.Headers.Total.IsGTE = &count
 		}
 	}
 
@@ -115,4 +121,8 @@ func (g *TestGenerator) generateExpectation(res *HttpResponse) *Expectation {
 	}
 
 	return e
+}
+
+type GeneratedSnapshot struct {
+	TestCases []TestCase `yaml:"testcase-snapshot"`
 }

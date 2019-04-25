@@ -237,7 +237,3 @@ type SnapshotGenerator interface {
 	Interceptor
 	GetTargetWriter() io.Writer
 }
-
-type GeneratedSnapshot struct {
-	TestCases []TestCase `yaml:"testcase-snapshot"`
-}

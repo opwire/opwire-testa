@@ -294,6 +294,16 @@ const scriptSchema string = `{
 						{
 							"type": "object",
 							"properties": {
+								"total": {
+									"oneOf": [
+										{
+											"type": "null"
+										},
+										{
+											"$ref": "#/definitions/IntegerComparator"
+										}
+									]
+								},
 								"has-total": {
 									"oneOf": [
 										{
@@ -386,6 +396,61 @@ const scriptSchema string = `{
 									]
 								}
 							}
+						}
+					]
+				}
+			}
+		},
+		"IntegerComparator": {
+			"type": "object",
+			"properties": {
+				"is-equal-to": {
+					"oneOf": [
+						{
+							"type": "null"
+						},
+						{
+							"type": "integer"
+						}
+					]
+				},
+				"is-lt": {
+					"oneOf": [
+						{
+							"type": "null"
+						},
+						{
+							"type": "integer"
+						}
+					]
+				},
+				"is-lte": {
+					"oneOf": [
+						{
+							"type": "null"
+						},
+						{
+							"type": "integer"
+						}
+					]
+				},
+				"is-gt": {
+					"oneOf": [
+						{
+							"type": "null"
+						},
+						{
+							"type": "integer"
+						}
+					]
+				},
+				"is-gte": {
+					"oneOf": [
+						{
+							"type": "null"
+						},
+						{
+							"type": "integer"
 						}
 					]
 				}

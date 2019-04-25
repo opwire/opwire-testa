@@ -144,8 +144,16 @@ type MeasureStatusCode struct {
 }
 
 type MeasureHeaders struct {
-	HasTotal *int `yaml:"has-total,omitempty" json:"has-total"`
+	Total *MeasureNumber `yaml:"total,omitempty" json:"total"`
 	Items []MeasureHeader `yaml:"items,omitempty" json:"items"`
+}
+
+type MeasureNumber struct {
+	IsEqualTo *int `yaml:"is-equal-to,omitempty" json:"is-equal-to"`
+	IsLT *int `yaml:"is-lt,omitempty" json:"is-lt"`
+	IsLTE *int `yaml:"is-lte,omitempty" json:"is-lte"`
+	IsGT *int `yaml:"is-gt,omitempty" json:"is-gt"`
+	IsGTE *int `yaml:"is-gte,omitempty" json:"is-gte"`
 }
 
 type MeasureHeader struct {
