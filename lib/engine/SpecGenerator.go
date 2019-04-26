@@ -41,7 +41,7 @@ func (g *SpecGenerator) generateTestCase(w io.Writer, req *HttpRequest, res *Htt
 	r.TestCases = []TestCase{s}
 	script, err := yaml.Marshal(r)
 	if err != nil {
-		fmt.Fprintln(w, "Cannot marshal generated testcase, error: %s", err)
+		fmt.Fprintf(w, "Cannot marshal generated testcase, error: %s\n", err)
 		return err
 	}
 	fmt.Fprintln(w)
