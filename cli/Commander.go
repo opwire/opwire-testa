@@ -91,6 +91,10 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 							Name: "data, d",
 							Usage: "HTTP POST data",
 						},
+						clp.StringFlag{
+							Name: "export",
+							Usage: "Output format (testcase syntax)",
+						},
 						clp.BoolFlag{
 							Name: "snapshot",
 							Usage: "Create a snapshot of testcase",
@@ -107,6 +111,7 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 						f.Url = c.String("url")
 						f.Header = c.StringSlice("header")
 						f.Body = c.String("data")
+						f.Format = c.String("export")
 						f.Snapshot = c.Bool("snapshot")
 						broker.Execute(f)
 						return nil
@@ -207,6 +212,7 @@ type CmdReqFlags struct {
 	Url string
 	Header []string
 	Body string
+	Format string
 	Snapshot bool
 }
 
@@ -224,6 +230,10 @@ func (f *CmdReqFlags) GetHeader() []string {
 
 func (f *CmdReqFlags) GetBody() string {
 	return f.Body
+}
+
+func (f *CmdReqFlags) GetFormat() string {
+	return f.Format
 }
 
 func (f *CmdReqFlags) GetSnapshot() bool {
