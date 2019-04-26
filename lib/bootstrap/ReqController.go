@@ -14,7 +14,6 @@ type ReqArguments interface {
 	GetHeader() []string
 	GetBody() string
 	GetFormat() string
-	GetSnapshot() bool
 }
 
 type ReqControllerOptions interface {
@@ -60,7 +59,7 @@ func (z *ReqController) Execute(args ReqArguments) error {
 		return fmt.Errorf("ReqController.Execute() arguments must not be nil")
 	}
 
-	if args.GetSnapshot() || args.GetFormat() == "testcase" {
+	if args.GetFormat() == "testcase" {
 		_, err := z.httpInvoker.Do(transformReqArgs(args), &SnapshotOutput{})
 		if err != nil {
 			return err

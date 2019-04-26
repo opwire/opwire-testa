@@ -243,11 +243,10 @@ func (f *CmdReqFlags) GetBody() string {
 }
 
 func (f *CmdReqFlags) GetFormat() string {
+	if f.Snapshot {
+		return "testcase"
+	}
 	return f.Format
-}
-
-func (f *CmdReqFlags) GetSnapshot() bool {
-	return f.Snapshot
 }
 
 type CmdRunFlags struct {
