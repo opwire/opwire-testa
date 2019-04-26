@@ -10,13 +10,15 @@ import (
 
 type RunControllerOptions interface {
 	GetConfigPath() string
+	GetConditionalTags() []string
 	GetVersion() string
 	GetRevision() string
 }
 
 type RunController struct {
 	loader *script.Loader
-	handler *engine.SpecHandler
+	specHandler *engine.SpecHandler
+	tagManager *engine.TagManager
 	storage *TestStateStore
 }
 
@@ -33,7 +35,13 @@ func NewRunController(opts RunControllerOptions) (r *RunController, err error) {
 	}
 
 	// create a Spec Handler instance
-	r.handler, err = engine.NewSpecHandler(r.storage)
+	r.specHandler, err = engine.NewSpecHandler(r.storage)
+	if err != nil {
+		return nil, err
+	}
+
+	// create a TagManager instance
+	r.tagManager, err = engine.NewTagManager(opts)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +92,7 @@ func defaultMatchString(pat, str string) (bool, error) {
 type TestStateStore struct {}
 
 func (r *RunController) wrapTestSuites(descriptors map[string]*script.Descriptor) ([]testing.InternalTest, error) {
-	if r.handler == nil {
+	if r.specHandler == nil {
 		return nil, fmt.Errorf("SpecHandler must not be nil")
 	}
 	tests := make([]testing.InternalTest, 0)
@@ -103,7 +111,12 @@ func (r *RunController) wrapTestCase(testcase *engine.TestCase) (testing.Interna
 	return testing.InternalTest{
 		Name: testcase.Title,
 		F: func (t *testing.T) {
-			result, err := r.handler.Examine(testcase)
+			if len(testcase.Tags) > 0 {
+				if !r.tagManager.IsActive(testcase.Tags) {
+					t.Skipf("[%s] is disabled by conditional tags", testcase.Title)
+				}
+			}
+			result, err := r.specHandler.Examine(testcase)
 			if err != nil {
 				t.Fatalf("[%s] got a fatal error. Exit now", testcase.Title)
 			}

@@ -52,10 +52,15 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 					Name: "spec-dirs, test-dirs, d",
 					Usage: "The testcases directories",
 				},
+				clp.StringSliceFlag{
+					Name: "tags, g",
+					Usage: "Selecting tags expression",
+				},
 			},
 			Action: func(c *clp.Context) error {
 				o := &ControllerOptions{ manifest: manifest }
 				o.ConfigPath = c.String("config-path")
+				o.Tags = c.StringSlice("tags")
 				ctl, err := bootstrap.NewRunController(o)
 				if err != nil {
 					return err
@@ -186,11 +191,16 @@ type Manifest interface {
 
 type ControllerOptions struct {
 	ConfigPath string
+	Tags []string
 	manifest Manifest
 }
 
 func (a *ControllerOptions) GetConfigPath() string {
 	return a.ConfigPath
+}
+
+func (a *ControllerOptions) GetConditionalTags() []string {
+	return a.Tags
 }
 
 func (a *ControllerOptions) GetVersion() string {
