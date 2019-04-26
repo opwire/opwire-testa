@@ -69,44 +69,49 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 		},
 		{
 			Name: "req",
-			Aliases: []string{"curl"},
 			Usage: "Make an HTTP request",
-			Flags: []clp.Flag{
-				clp.StringFlag{
-					Name: "request, X",
-					Usage: "Specify request command to use",
+			Subcommands: []clp.Command{
+				{
+					Name: "curl",
+					Usage: "Make an HTTP request using curl syntax",
+					Flags: []clp.Flag{
+						clp.StringFlag{
+							Name: "request, X",
+							Usage: "Specify request command to use",
+						},
+						clp.StringFlag{
+							Name: "url",
+							Usage: "URL to work with",
+						},
+						clp.StringSliceFlag{
+							Name: "header, H",
+							Usage: "Pass custom header(s) to server",
+						},
+						clp.StringFlag{
+							Name: "data, d",
+							Usage: "HTTP POST data",
+						},
+						clp.BoolFlag{
+							Name: "snapshot",
+							Usage: "Create a snapshot of testcase",
+						},
+					},
+					Action: func(c *clp.Context) error {
+						o := &ControllerOptions{ manifest: manifest }
+						broker, err := bootstrap.NewReqController(o)
+						if err != nil {
+							return err
+						}
+						f := new(CmdReqFlags)
+						f.Method = c.String("request")
+						f.Url = c.String("url")
+						f.Header = c.StringSlice("header")
+						f.Body = c.String("data")
+						f.Snapshot = c.Bool("snapshot")
+						broker.Execute(f)
+						return nil
+					},
 				},
-				clp.StringFlag{
-					Name: "url",
-					Usage: "URL to work with",
-				},
-				clp.StringSliceFlag{
-					Name: "header, H",
-					Usage: "Pass custom header(s) to server",
-				},
-				clp.StringFlag{
-					Name: "data, d",
-					Usage: "HTTP POST data",
-				},
-				clp.BoolFlag{
-					Name: "snapshot",
-					Usage: "Create a snapshot of testcase",
-				},
-			},
-			Action: func(c *clp.Context) error {
-				o := &ControllerOptions{ manifest: manifest }
-				broker, err := bootstrap.NewReqController(o)
-				if err != nil {
-					return err
-				}
-				f := new(CmdReqFlags)
-				f.Method = c.String("request")
-				f.Url = c.String("url")
-				f.Header = c.StringSlice("header")
-				f.Body = c.String("data")
-				f.Snapshot = c.Bool("snapshot")
-				broker.Execute(f)
-				return nil
 			},
 		},
 		{
