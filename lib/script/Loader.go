@@ -38,7 +38,7 @@ func (l *Loader) LoadScripts(sourceDirs []string) (map[string]*Descriptor) {
 func (l *Loader) LoadFiles(locators []*Locator) (descriptors map[string]*Descriptor) {
 	descriptors = make(map[string]*Descriptor, 0)
 	for _, locator := range locators {
-		descriptors[locator.FullPath] = l.LoadFile(locator)
+		descriptors[locator.AbsolutePath] = l.LoadFile(locator)
 	}
 	return descriptors
 }
@@ -52,7 +52,7 @@ func (l *Loader) LoadFile(locator *Locator) (*Descriptor) {
 	testsuite := &engine.TestSuite{}
 
 	fs := storages.GetFs()
-	file, err1 := fs.Open(locator.FullPath)
+	file, err1 := fs.Open(locator.AbsolutePath)
 	if file != nil {
 		defer file.Close()
 	}
@@ -118,7 +118,7 @@ func (l *Loader) ReadDir(sourceDir string, ext string) ([]*Locator, error) {
 			r, err := regexp.MatchString(ext, f.Name())
 			if err == nil && r {
 				locator := &Locator{}
-				locator.FullPath = path
+				locator.AbsolutePath = path
 				locator.RelativePath, _ = utils.DetectRelativePath(path)
 				locator.Home = sourceDir
 				locator.Path = strings.TrimPrefix(path, sourceDir)
@@ -131,7 +131,7 @@ func (l *Loader) ReadDir(sourceDir string, ext string) ([]*Locator, error) {
 }
 
 type Locator struct {
-	FullPath string
+	AbsolutePath string
 	RelativePath string
 	Home string
 	Path string

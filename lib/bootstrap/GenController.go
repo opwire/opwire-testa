@@ -112,11 +112,11 @@ func filterInvalidDescriptors(src map[string]*script.Descriptor) map[string]*scr
 func filterDescriptorsBySuffix(src map[string]*script.Descriptor, suffix string) map[string]*script.Descriptor {
 	dst := make(map[string]*script.Descriptor, 0)
 	for key, d := range src {
-		if strings.HasSuffix(d.Locator.FullPath, suffix) {
+		if strings.HasSuffix(d.Locator.AbsolutePath, suffix) {
 			dst[key] = d
 			continue
 		}
-		matched, err := filepath.Match(suffix, d.Locator.FullPath)
+		matched, err := filepath.Match(suffix, d.Locator.AbsolutePath)
 		if (err == nil && matched) {
 			dst[key] = d
 			continue

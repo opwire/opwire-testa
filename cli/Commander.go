@@ -56,13 +56,14 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 			Action: func(c *clp.Context) error {
 				o := &ControllerOptions{ manifest: manifest }
 				o.ConfigPath = c.String("config-path")
-				tester, err := bootstrap.NewRunController(o)
+				ctl, err := bootstrap.NewRunController(o)
 				if err != nil {
 					return err
 				}
-				f := new(CmdRunFlags)
-				f.TestDirs = c.StringSlice("test-dirs")
-				tester.Execute(f)
+				f := &CmdRunFlags{
+					TestDirs: c.StringSlice("test-dirs"),
+				}
+				ctl.Execute(f)
 				return nil
 			},
 		},
