@@ -32,7 +32,7 @@ func NewGenController(opts GenControllerOptions) (ref *GenController, err error)
 type GenArguments interface {
 	GetTestDirs() []string
 	GetTestFile() string
-	GetTestCase() string
+	GetTestName() string
 }
 
 func (c *GenController) Execute(args GenArguments) error {
@@ -55,10 +55,10 @@ func (c *GenController) Execute(args GenArguments) error {
 		descriptors = filterDescriptorsBySuffix(descriptors, testFile)
 	}
 
-	// filter target testcase by "test-case" title/name
+	// filter target testcase by "test-name" title/name
 	var testName string
 	if args != nil {
-		testName = args.GetTestCase()
+		testName = args.GetTestName()
 	}
 	if len(testName) > 0 {
 		testName = standardizeName(testName)

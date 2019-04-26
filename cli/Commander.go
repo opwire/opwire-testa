@@ -135,7 +135,7 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 							Usage: "Suffix of path to testing script file (.i.e ... your-test.yml)",
 						},
 						clp.StringFlag{
-							Name: "test-case, t",
+							Name: "test-name, n",
 							Usage: "Prefix of testcase title/name",
 						},
 					},
@@ -149,7 +149,7 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 						f := &CmdGenFlags{
 							TestDirs: c.StringSlice("test-dirs"),
 							TestFile: c.String("test-file"),
-							TestCase: c.String("test-case"),
+							TestName: c.String("test-name"),
 						}
 						ctl.Execute(f)
 						return nil
@@ -242,7 +242,7 @@ func (a *CmdRunFlags) GetTestDirs() []string {
 type CmdGenFlags struct {
 	TestDirs []string
 	TestFile string
-	TestCase string
+	TestName string
 }
 
 func (a *CmdGenFlags) GetTestDirs() []string {
@@ -254,8 +254,8 @@ func (a *CmdGenFlags) GetTestFile() string {
 	return a.TestFile
 }
 
-func (a *CmdGenFlags) GetTestCase() string {
-	return a.TestCase
+func (a *CmdGenFlags) GetTestName() string {
+	return a.TestName
 }
 
 func initDefaultDirs(testDirs []string) []string {
