@@ -62,6 +62,8 @@ func (c *HttpInvoker) Do(req *HttpRequest, interceptors ...Interceptor) (*HttpRe
 	
 	if len(req.Body) > 0 {
 		body = bytes.NewBufferString(req.Body)
+	} else {
+		body = bytes.NewBuffer([]byte{})
 	}
 	
 	lowReq, err := http.NewRequest(method, url, body)
