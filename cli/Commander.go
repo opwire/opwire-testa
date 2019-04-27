@@ -56,10 +56,15 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 					Name: "tags, g",
 					Usage: "Selecting tags expression",
 				},
+				clp.BoolFlag{
+					Name: "no-color",
+					Usage: "Display output in plain text, without color",
+				},
 			},
 			Action: func(c *clp.Context) error {
 				o := &ControllerOptions{ manifest: manifest }
 				o.ConfigPath = c.String("config-path")
+				o.NoColor = c.Bool("no-color")
 				o.Tags = c.StringSlice("tags")
 				ctl, err := bootstrap.NewRunController(o)
 				if err != nil {
@@ -192,6 +197,7 @@ type Manifest interface {
 type ControllerOptions struct {
 	ConfigPath string
 	Tags []string
+	NoColor bool
 	manifest Manifest
 }
 
@@ -201,6 +207,10 @@ func (a *ControllerOptions) GetConfigPath() string {
 
 func (a *ControllerOptions) GetConditionalTags() []string {
 	return a.Tags
+}
+
+func (a *ControllerOptions) GetNoColor() bool {
+	return a.NoColor
 }
 
 func (a *ControllerOptions) GetVersion() string {

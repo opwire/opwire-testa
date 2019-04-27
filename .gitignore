@@ -2,6 +2,7 @@
 .vscode
 build
 docs/public
+logs
 opwire-testa
 opwire-testa.exe
 opwire-testa.iml

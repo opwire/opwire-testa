@@ -7,13 +7,17 @@ import (
 	"github.com/opwire/opwire-testa/lib/utils"
 )
 
-type OutputPrinterOptions struct {}
-
-type OutputPrinter struct {
+type OutputPrinterOptions interface {
+	GetNoColor() bool
 }
 
-func NewOutputPrinter(opts *OutputPrinterOptions) (ref *OutputPrinter, err error) {
+type OutputPrinter struct {
+	options OutputPrinterOptions
+}
+
+func NewOutputPrinter(opts OutputPrinterOptions) (ref *OutputPrinter, err error) {
 	ref = new(OutputPrinter)
+	ref.options = opts
 	return ref, err
 }
 
@@ -26,18 +30,12 @@ func (w *OutputPrinter) Println(a ...interface{}) (n int, err error) {
 }
 
 func (w *OutputPrinter) Heading(title string) string {
-	if HeadingPen == nil {
-		HeadingPen = color.Style{color.FgCyan, color.OpUnderscore, color.OpBold}.Render
-	}
-	pen := HeadingPen
+	pen := w.GetPen(HeadingPen)
 	return pen(title)
 }
 
 func (w *OutputPrinter) ContextInfo(name string, values ...string) string {
-	if ContextNamePen == nil {
-		ContextNamePen = color.Style{color.FgCyan, color.OpBold}.Render
-	}
-	pen := ContextNamePen
+	pen := w.GetPen(ContextNamePen)
 	text := "[+] " + pen(name)
 	number := len(values)
 	if number == 1 && len(values[0]) > 0 {
@@ -54,50 +52,32 @@ func (w *OutputPrinter) ContextInfo(name string, values ...string) string {
 }
 
 func (w *OutputPrinter) TestSuiteTitle(filepath string) string {
-	if TestSuiteTitlePen == nil {
-		TestSuiteTitlePen = color.Style{color.FgYellow}.Render
-	}
-	pen := TestSuiteTitlePen
+	pen := w.GetPen(TestSuiteTitlePen)
 	return fmt.Sprintf("[#] %s", pen(filepath))
 }
 
 func (w *OutputPrinter) TestCase(title string) string {
-	if TestCaseTitlePen == nil {
-		TestCaseTitlePen = color.Style{color.FgLightYellow}.Render
-	}
-	pen := TestCaseTitlePen
+	pen := w.GetPen(TestCaseTitlePen)
 	return fmt.Sprintf("[=] %s", pen(title))
 }
 
 func (w *OutputPrinter) Skipped(title string) string {
-	if SkippedPen == nil {
-		SkippedPen = color.Style{color.FgGreen}.Render
-	}
-	pen := SkippedPen
+	pen := w.GetPen(SkippedPen)
 	return fmt.Sprintf("[%s] %s", pen("-"), title)
 }
 
 func (w *OutputPrinter) Success(title string) string {
-	if SuccessPen == nil {
-		SuccessPen = color.Style{color.FgGreen}.Render
-	}
-	pen := SuccessPen
+	pen := w.GetPen(SuccessPen)
 	return fmt.Sprintf("[%s] %s", pen("v"), title)
 }
 
 func (w *OutputPrinter) Failure(title string) string {
-	if FailurePen == nil {
-		FailurePen = color.Style{color.FgRed}.Render
-	}
-	pen := FailurePen
+	pen := w.GetPen(FailurePen)
 	return fmt.Sprintf("[%s] %s", pen("x"), title)
 }
 
 func (w *OutputPrinter) Cracked(title string) string {
-	if CrackedPen == nil {
-		CrackedPen = color.Style{color.FgGreen}.Render
-	}
-	pen := CrackedPen
+	pen := w.GetPen(CrackedPen)
 	return fmt.Sprintf("[%s] %s", pen("~"), title)
 }
 
@@ -113,9 +93,73 @@ func (w *OutputPrinter) Section(block string) string {
 	return strings.Join(lines, "\n")
 }
 
+func (w *OutputPrinter) IsColorized() bool {
+	if w.options != nil && w.options.GetNoColor() {
+		return false
+	}
+	return true
+}
+
+func (w *OutputPrinter) GetPen(name PenType) Renderer {
+	pen := ColorlessPen
+	if w.IsColorized() {
+		if Pens == nil {
+			Pens = make(map[PenType]Renderer, 0)
+		}
+		if val, ok := Pens[name]; ok {
+			pen = val
+		} else {
+			switch(name) {
+			case HeadingPen:
+				pen = color.Style{color.FgCyan, color.OpUnderscore, color.OpBold}.Render
+			case ContextNamePen:
+				pen = color.Style{color.FgCyan, color.OpBold}.Render
+			case TestSuiteTitlePen:
+				pen = color.Style{color.FgYellow}.Render
+			case TestCaseTitlePen:
+				pen = color.Style{color.FgLightYellow}.Render
+			case SkippedPen:
+				pen = color.Style{color.FgYellow}.Render
+			case SuccessPen:
+				pen = color.Style{color.FgGreen}.Render
+			case FailurePen:
+				pen = color.Style{color.FgRed}.Render
+			case CrackedPen:
+				pen = color.Style{color.FgRed}.Render
+			}
+			Pens[name] = pen
+		}
+	}
+	return pen
+}
+
 type Renderer func(a ...interface{}) string
 
-var ContextNamePen Renderer
-var SectionTitlePen, SectionBodyPen Renderer
-var HeadingPen, TestSuiteTitlePen, TestCaseTitlePen Renderer
-var SuccessPen, FailurePen, CrackedPen, SkippedPen Renderer
+var ColorlessPen = func(a ...interface{}) string {
+	text := ""
+	if a == nil || len(a) == 0 {
+		return text
+	}
+	for _, s := range a {
+		text = text + fmt.Sprintf("%v", s)
+	}
+	return text
+}
+
+type PenType int
+
+const (
+	_ PenType = iota
+	ContextNamePen
+	SectionTitlePen
+	SectionBodyPen
+	HeadingPen
+	TestSuiteTitlePen
+	TestCaseTitlePen
+	SuccessPen
+	FailurePen
+	CrackedPen
+	SkippedPen
+)
+
+var Pens map[PenType]Renderer

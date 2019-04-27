@@ -13,6 +13,7 @@ import (
 type RunControllerOptions interface {
 	GetConfigPath() string
 	GetConditionalTags() []string
+	GetNoColor() bool
 	GetVersion() string
 	GetRevision() string
 }
@@ -50,7 +51,7 @@ func NewRunController(opts RunControllerOptions) (r *RunController, err error) {
 	}
 
 	// create a TagManager instance
-	r.outputPrinter, err = format.NewOutputPrinter(nil)
+	r.outputPrinter, err = format.NewOutputPrinter(opts)
 	if err != nil {
 		return nil, err
 	}
