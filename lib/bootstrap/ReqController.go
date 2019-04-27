@@ -54,24 +54,26 @@ func NewReqController(opts ReqControllerOptions) (obj *ReqController, err error)
 }
 
 func (z *ReqController) Execute(args ReqArguments) error {
-	z.assertReady()
-	if args == nil {
-		return fmt.Errorf("ReqController.Execute() arguments must not be nil")
-	}
+	z.assertReady(args)
 
 	if args.GetFormat() == "testcase" {
 		_, err := z.httpInvoker.Do(transformReqArgs(args), &SnapshotOutput{})
 		if err != nil {
-			return err
+			return displayError(err)
 		}
 		return nil
 	}
 
 	_, err := z.httpInvoker.Do(transformReqArgs(args), &ExplanationWriter{})
 	if err != nil {
-		return err
+		return displayError(err)
 	}
 	return nil
+}
+
+func displayError(err error) error {
+	fmt.Printf("* %s\n", err.Error())
+	return err
 }
 
 func transformReqArgs(args ReqArguments) *engine.HttpRequest {
@@ -107,8 +109,15 @@ func transformReqArgs(args ReqArguments) *engine.HttpRequest {
 	return req
 }
 
-func (z *ReqController) assertReady() {
+func (z *ReqController) assertReady(a ...interface{}) {
 	if z.httpInvoker == nil {
 		panic(fmt.Errorf("httpInvoker must not be nil"))
+	}
+	if len(a) > 0 {
+		for i, s := range a {
+			if s == nil {
+				panic(fmt.Errorf("argument[%d] must not be nil", i))
+			}
+		}
 	}
 }
