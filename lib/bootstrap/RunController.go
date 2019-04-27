@@ -8,6 +8,7 @@ import (
 	"github.com/opwire/opwire-testa/lib/format"
 	"github.com/opwire/opwire-testa/lib/engine"
 	"github.com/opwire/opwire-testa/lib/script"
+	"github.com/opwire/opwire-testa/lib/utils"
 )
 
 type RunControllerOptions interface {
@@ -74,10 +75,17 @@ func (r *RunController) Execute(args RunArguments) error {
 	if args != nil {
 		testDirs = args.GetTestDirs()
 	}
-	if testDirs != nil && len(testDirs) > 0 {
-		r.outputPrinter.Println(r.outputPrinter.ContextInfo("Test script directories", testDirs...))
+	relaDirs := utils.Map(testDirs, func(dir string, i int) string {
+		newPath, err := utils.DetectRelativePath(dir)
+		if err == nil {
+			return newPath
+		}
+		return dir
+	})
+	if relaDirs != nil && len(relaDirs) > 0 {
+		r.outputPrinter.Println(r.outputPrinter.ContextInfo("Test directories", relaDirs...))
 	} else {
-		r.outputPrinter.Println(r.outputPrinter.ContextInfo("Test script directories", "Unspecified"))
+		r.outputPrinter.Println(r.outputPrinter.ContextInfo("Test directories", "Unspecified"))
 	}
 
 	inclTags := r.tagManager.GetIncludedTags()
