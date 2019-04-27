@@ -34,15 +34,18 @@ func (w *OutputPrinter) Heading(title string) string {
 	return pen(title)
 }
 
-func (w *OutputPrinter) ContextInfo(name string, values ...string) string {
+func (w *OutputPrinter) ContextInfo(name string, message string, values ...string) string {
 	pen := w.GetPen(ContextNamePen)
 	text := "[+] " + pen(name)
-	number := len(values)
-	if number == 1 && len(values[0]) > 0 {
-		text = fmt.Sprintf("%s: %s", text, values[0])
+	if len(message) > 0 {
+		text = fmt.Sprintf("%s: %s", text, message)
 	}
-	if number > 1 {
-		lines := []string{text + ":"}
+	number := len(values)
+	if number > 0 {
+		if len(message) == 0 {
+			text = text + ":"
+		}
+		lines := []string{text}
 		for _, val := range values {
 			lines = append(lines, "    - " + val)
 		}

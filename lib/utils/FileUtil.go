@@ -31,3 +31,13 @@ func DetectRelativePath(p string) (string, error) {
 	}
 	return p, fmt.Errorf("Relative path detecting failed")
 }
+
+func DetectRelativePaths(p []string) []string {
+	return Map(p, func(dir string, i int) string {
+		newPath, err := DetectRelativePath(dir)
+		if err == nil {
+			return newPath
+		}
+		return dir
+	})
+}

@@ -51,7 +51,7 @@ func NewRunController(opts RunControllerOptions) (r *RunController, err error) {
 		return nil, err
 	}
 
-	// create a TagManager instance
+	// create a OutputPrinter instance
 	r.outputPrinter, err = format.NewOutputPrinter(opts)
 	if err != nil {
 		return nil, err
@@ -75,15 +75,9 @@ func (r *RunController) Execute(args RunArguments) error {
 	if args != nil {
 		testDirs = args.GetTestDirs()
 	}
-	relaDirs := utils.Map(testDirs, func(dir string, i int) string {
-		newPath, err := utils.DetectRelativePath(dir)
-		if err == nil {
-			return newPath
-		}
-		return dir
-	})
+	relaDirs := utils.DetectRelativePaths(testDirs)
 	if relaDirs != nil && len(relaDirs) > 0 {
-		r.outputPrinter.Println(r.outputPrinter.ContextInfo("Test directories", relaDirs...))
+		r.outputPrinter.Println(r.outputPrinter.ContextInfo("Test directories", "", relaDirs...))
 	} else {
 		r.outputPrinter.Println(r.outputPrinter.ContextInfo("Test directories", "Unspecified"))
 	}

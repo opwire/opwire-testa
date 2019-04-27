@@ -7,21 +7,32 @@ import (
 	"path/filepath"
 	"strings"
 	"github.com/opwire/opwire-testa/lib/engine"
+	"github.com/opwire/opwire-testa/lib/format"
 	"github.com/opwire/opwire-testa/lib/script"
+	"github.com/opwire/opwire-testa/lib/utils"
 )
 
 type GenControllerOptions interface {
+	GetNoColor() bool
 	GetVersion() string
 }
 
 type GenController struct {
 	loader *script.Loader
+	outputPrinter *format.OutputPrinter
 }
 
 func NewGenController(opts GenControllerOptions) (ref *GenController, err error) {
 	ref = &GenController{}
 
+	// create a Script Loader instance
 	ref.loader, err = script.NewLoader(nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// create a OutputPrinter instance
+	ref.outputPrinter, err = format.NewOutputPrinter(opts)
 	if err != nil {
 		return nil, err
 	}
@@ -36,34 +47,56 @@ type GenArguments interface {
 }
 
 func (c *GenController) Execute(args GenArguments) error {
-	// Load testing script files from "test-dirs"
 	var testDirs []string
 	if args != nil {
 		testDirs = args.GetTestDirs()
 	}
-	descriptors := c.loader.LoadScripts(testDirs)
 
-	// filter invalid descriptors and display errors
-	descriptors = filterInvalidDescriptors(descriptors)
-
-	// filter testing script files by "test-file"
 	var testFile string
 	if args != nil {
 		testFile = args.GetTestFile()
 	}
+
+	var testName string
+	if args != nil {
+		testName = standardizeName(args.GetTestName())
+	}
+
+	// display environment of command
+	c.outputPrinter.Println()
+	c.outputPrinter.Println(c.outputPrinter.Heading("Context"))
+
+	relaDirs := utils.DetectRelativePaths(testDirs)
+	if relaDirs != nil && len(relaDirs) > 0 {
+		c.outputPrinter.Println(c.outputPrinter.ContextInfo("Test directories", "", relaDirs...))
+	} else {
+		c.outputPrinter.Println(c.outputPrinter.ContextInfo("Test directories", "Unspecified"))
+	}
+
+	if len(testFile) > 0 {
+		c.outputPrinter.Println(c.outputPrinter.ContextInfo("File filter", testFile))
+	}
+
+	if len(testName) > 0 {
+		c.outputPrinter.Println(c.outputPrinter.ContextInfo("Testcase filter", testName))
+	}
+
+	// display prerequisites
+	c.outputPrinter.Println()
+	c.outputPrinter.Println(c.outputPrinter.Heading("Loading"))
+
+	// Load testing script files from "test-dirs"
+	descriptors := c.loader.LoadScripts(testDirs)
+
+	// filter invalid descriptors and display errors
+	descriptors = c.filterInvalidDescriptors(descriptors)
+
+	// filter testing script files by "test-file"
 	if len(testFile) > 0 {
 		descriptors = filterDescriptorsBySuffix(descriptors, testFile)
 	}
 
 	// filter target testcase by "test-name" title/name
-	var testName string
-	if args != nil {
-		testName = args.GetTestName()
-	}
-	if len(testName) > 0 {
-		testName = standardizeName(testName)
-	}
-
 	testcases := make([]*engine.TestCase, 0)
 	for _, d := range descriptors {
 		testsuite := d.TestSuite
@@ -77,31 +110,44 @@ func (c *GenController) Execute(args GenArguments) error {
 		}
 	}
 
+	// running & result
+	c.outputPrinter.Println()
+	c.outputPrinter.Println(c.outputPrinter.Heading("Running"))
+
 	// raise an error if testcase not found or more than one found
 	if len(testcases) == 0 {
-		fmt.Printf("There are no testcases matched [%s]\n", testName)
-		return nil
+		c.outputPrinter.Println(c.outputPrinter.ContextInfo("Error", "There is no testcase satisfied criteria"))
 	}
 	if len(testcases) > 1 {
-		fmt.Printf("There are more than one testcase matched [%s]\n", testName)
-		return nil
+		testinfo := make([]string, len(testcases))
+		for i, test := range testcases {
+			testinfo[i] = test.Title
+			if len(test.Tags) > 0 {
+				testinfo[i] += " (" + strings.Join(test.Tags, ", ") + ")"
+			}
+		}
+		c.outputPrinter.Println(c.outputPrinter.ContextInfo("Error", "There are more than one testcases satisfied criteria", testinfo...))
 	}
 
 	// generate curl statement from testcase's request
-	testcase := testcases[0]
-	request := testcase.Request
+	if len(testcases) == 1 {
+		testcase := testcases[0]
+		request := testcase.Request
 
-	generator := new(CurlGenerator)
-	generator.generateCommand(os.Stdout, request)
+		generator := new(CurlGenerator)
+		generator.generateCommand(os.Stdout, request)
+	}
 
+	c.outputPrinter.Println()
 	return nil
 }
 
-func filterInvalidDescriptors(src map[string]*script.Descriptor) map[string]*script.Descriptor {
+func (c *GenController) filterInvalidDescriptors(src map[string]*script.Descriptor) map[string]*script.Descriptor {
 	dst := make(map[string]*script.Descriptor, 0)
 	for key, d := range src {
 		if d.Error != nil {
-			fmt.Printf("[%s] loading has been failed, error: %s\n", d.Locator.RelativePath, d.Error)
+			c.outputPrinter.Println(c.outputPrinter.TestSuiteTitle(d.Locator.RelativePath))
+			c.outputPrinter.Println(c.outputPrinter.Section(d.Error.Error()))
 		} else {
 			dst[key] = d
 		}
@@ -126,6 +172,9 @@ func filterDescriptorsBySuffix(src map[string]*script.Descriptor, suffix string)
 }
 
 func standardizeName(name string) string {
+	if len(name) == 0 {
+		return name
+	}
 	name = strings.ToLower(name)
 	name = strings.Join(strings.Fields(strings.TrimSpace(name)), " ")
 	return name

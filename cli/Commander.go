@@ -153,10 +153,15 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 							Name: "test-name, n",
 							Usage: "Prefix of testcase title/name",
 						},
+						clp.BoolFlag{
+							Name: "no-color",
+							Usage: "Display output in plain text, without color",
+						},
 					},
 					Action: func(c *clp.Context) error {
 						o := &ControllerOptions{ manifest: manifest }
 						o.ConfigPath = c.String("config-path")
+						o.NoColor = c.Bool("no-color")
 						ctl, err := bootstrap.NewGenController(o)
 						if err != nil {
 							return err
