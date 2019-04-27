@@ -43,11 +43,11 @@ func (g *TagManager) IsActive(tags []string) bool {
 	return true
 }
 
-func (g *TagManager) Initialize(tagExps []string) {
+func (g *TagManager) Initialize(tagexps []string) {
 	pTags := make([]string, 0)
 	nTags := make([]string, 0)
-	for _, exp := range tagExps {
-		signedTags := utils.Split(exp, ",")
+	for _, tagexp := range tagexps {
+		signedTags := utils.Split(tagexp, ",")
 		for _, tag := range signedTags {
 			if strings.HasPrefix(tag, "-") {
 				nTags = append(nTags, strings.TrimPrefix(tag, "-"))
@@ -58,4 +58,12 @@ func (g *TagManager) Initialize(tagExps []string) {
 	}
 	g.includedTags = pTags
 	g.excludedTags = nTags
+}
+
+func (g *TagManager) GetIncludedTags() []string {
+	return g.includedTags
+}
+
+func (g *TagManager) GetExcludedTags() []string {
+	return g.excludedTags
 }
