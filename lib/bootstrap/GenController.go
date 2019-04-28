@@ -67,7 +67,7 @@ func (c *GenController) Execute(args GenArguments) error {
 	if utils.TEST_CASE_TITLE_REGEXP.MatchString(testName) {
 		testName = standardizeName(testName)
 	} else {
-		re, err := regexp.Compile(testName)
+		re, err := regexp.Compile(strings.ToLower(testName))
 		if err == nil {
 			testNameRe = re
 		}
@@ -89,7 +89,11 @@ func (c *GenController) Execute(args GenArguments) error {
 	}
 
 	if len(testName) > 0 {
-		c.outputPrinter.Println(c.outputPrinter.ContextInfo("Name filter", testName))
+		more := ""
+		if testNameRe != nil {
+			more = " (regexp)"
+		}
+		c.outputPrinter.Println(c.outputPrinter.ContextInfo("Name filter" + more, testName))
 	}
 
 	// display prerequisites
@@ -104,7 +108,7 @@ func (c *GenController) Execute(args GenArguments) error {
 
 	// filter testing script files by "test-file"
 	if len(testFile) > 0 {
-		descriptors = filterDescriptorsBySuffix(descriptors, testFile)
+		descriptors = c.filterDescriptorsByFilePattern(descriptors, testFile)
 	}
 
 	// filter target testcase by "test-name" title/name
@@ -115,15 +119,16 @@ func (c *GenController) Execute(args GenArguments) error {
 			for _, testcase := range testsuite.TestCases {
 				if len(testName) == 0 {
 					testcases = append(testcases, testcase)
-				}
-				if testNameRe == nil {
-					name := standardizeName(testcase.Title)
-					if strings.Contains(name, testName) {
-						testcases = append(testcases, testcase)
-					}
 				} else {
-					if testNameRe.MatchString(testcase.Title) {
-						testcases = append(testcases, testcase)
+					name := standardizeName(testcase.Title)
+					if testNameRe == nil {
+						if strings.Contains(name, testName) {
+							testcases = append(testcases, testcase)
+						}
+					} else {
+						if testNameRe.MatchString(name) {
+							testcases = append(testcases, testcase)
+						}
 					}
 				}
 			}
@@ -175,7 +180,7 @@ func (c *GenController) filterInvalidDescriptors(src map[string]*script.Descript
 	return dst
 }
 
-func filterDescriptorsBySuffix(src map[string]*script.Descriptor, suffix string) map[string]*script.Descriptor {
+func (c *GenController) filterDescriptorsByFilePattern(src map[string]*script.Descriptor, suffix string) map[string]*script.Descriptor {
 	dst := make(map[string]*script.Descriptor, 0)
 	for key, d := range src {
 		if strings.HasSuffix(d.Locator.AbsolutePath, suffix) {
