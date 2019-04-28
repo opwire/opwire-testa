@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"github.com/opwire/opwire-testa/lib/engine"
 	"github.com/opwire/opwire-testa/lib/format"
@@ -59,7 +60,17 @@ func (c *GenController) Execute(args GenArguments) error {
 
 	var testName string
 	if args != nil {
-		testName = standardizeName(args.GetTestName())
+		testName = args.GetTestName()
+	}
+
+	var testNameRe *regexp.Regexp
+	if utils.TEST_CASE_TITLE_REGEXP.MatchString(testName) {
+		testName = standardizeName(testName)
+	} else {
+		re, err := regexp.Compile(testName)
+		if err == nil {
+			testNameRe = re
+		}
 	}
 
 	// display environment of command
@@ -78,7 +89,7 @@ func (c *GenController) Execute(args GenArguments) error {
 	}
 
 	if len(testName) > 0 {
-		c.outputPrinter.Println(c.outputPrinter.ContextInfo("Testcase filter", testName))
+		c.outputPrinter.Println(c.outputPrinter.ContextInfo("Name filter", testName))
 	}
 
 	// display prerequisites
@@ -102,9 +113,18 @@ func (c *GenController) Execute(args GenArguments) error {
 		testsuite := d.TestSuite
 		if testsuite != nil {
 			for _, testcase := range testsuite.TestCases {
-				name := standardizeName(testcase.Title)
-				if len(testName) == 0 || strings.HasPrefix(name, testName) {
+				if len(testName) == 0 {
 					testcases = append(testcases, testcase)
+				}
+				if testNameRe == nil {
+					name := standardizeName(testcase.Title)
+					if strings.Contains(name, testName) {
+						testcases = append(testcases, testcase)
+					}
+				} else {
+					if testNameRe.MatchString(testcase.Title) {
+						testcases = append(testcases, testcase)
+					}
 				}
 			}
 		}
@@ -123,7 +143,7 @@ func (c *GenController) Execute(args GenArguments) error {
 		for i, test := range testcases {
 			testinfo[i] = test.Title
 			if len(test.Tags) > 0 {
-				testinfo[i] += " (" + strings.Join(test.Tags, ", ") + ")"
+				testinfo[i] += " (tags: " + strings.Join(test.Tags, ", ") + ")"
 			}
 		}
 		c.outputPrinter.Println(c.outputPrinter.ContextInfo("Error", "There are more than one testcases satisfied criteria", testinfo...))
