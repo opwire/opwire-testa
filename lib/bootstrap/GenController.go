@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"github.com/opwire/opwire-testa/lib/engine"
 	"github.com/opwire/opwire-testa/lib/format"
@@ -58,19 +57,9 @@ func (c *GenController) Execute(args GenArguments) error {
 		testFile = args.GetTestFile()
 	}
 
-	var testName string
-	if args != nil {
-		testName = args.GetTestName()
-	}
-
-	var testNameRe *regexp.Regexp
-	if utils.TEST_CASE_TITLE_REGEXP.MatchString(testName) {
-		testName = standardizeName(testName)
-	} else {
-		re, err := regexp.Compile(strings.ToLower(testName))
-		if err == nil {
-			testNameRe = re
-		}
+	scriptSelector, err := script.NewSelector(args)
+	if err != nil {
+		return err
 	}
 
 	// display environment of command
@@ -88,13 +77,7 @@ func (c *GenController) Execute(args GenArguments) error {
 		c.outputPrinter.Println(c.outputPrinter.ContextInfo("File filter", testFile))
 	}
 
-	if len(testName) > 0 {
-		more := ""
-		if testNameRe != nil {
-			more = " (regexp)"
-		}
-		c.outputPrinter.Println(c.outputPrinter.ContextInfo("Name filter" + more, testName))
-	}
+	c.outputPrinter.Println(c.outputPrinter.ContextInfo("Name filter (" + scriptSelector.TypeOfTestNameFilter() + ")", scriptSelector.GetTestNameFilter()))
 
 	// display prerequisites
 	c.outputPrinter.Println()
@@ -104,36 +87,18 @@ func (c *GenController) Execute(args GenArguments) error {
 	descriptors := c.loader.LoadScripts(testDirs)
 
 	// filter invalid descriptors and display errors
-	descriptors = c.filterInvalidDescriptors(descriptors)
+	descriptors, rejected := filterInvalidDescriptors(descriptors)
+
+	for _, d := range rejected {
+		c.outputPrinter.Println(c.outputPrinter.TestSuiteTitle(d.Locator.RelativePath))
+		c.outputPrinter.Println(c.outputPrinter.Section(d.Error.Error()))
+	}
 
 	// filter testing script files by "test-file"
-	if len(testFile) > 0 {
-		descriptors = c.filterDescriptorsByFilePattern(descriptors, testFile)
-	}
+	descriptors = filterDescriptorsByFilePattern(descriptors, testFile)
 
 	// filter target testcase by "test-name" title/name
-	testcases := make([]*engine.TestCase, 0)
-	for _, d := range descriptors {
-		testsuite := d.TestSuite
-		if testsuite != nil {
-			for _, testcase := range testsuite.TestCases {
-				if len(testName) == 0 {
-					testcases = append(testcases, testcase)
-				} else {
-					name := standardizeName(testcase.Title)
-					if testNameRe == nil {
-						if strings.Contains(name, testName) {
-							testcases = append(testcases, testcase)
-						}
-					} else {
-						if testNameRe.MatchString(name) {
-							testcases = append(testcases, testcase)
-						}
-					}
-				}
-			}
-		}
-	}
+	testcases := scriptSelector.GetTestCases(descriptors)
 
 	// running & result
 	c.outputPrinter.Println()
@@ -167,20 +132,23 @@ func (c *GenController) Execute(args GenArguments) error {
 	return nil
 }
 
-func (c *GenController) filterInvalidDescriptors(src map[string]*script.Descriptor) map[string]*script.Descriptor {
-	dst := make(map[string]*script.Descriptor, 0)
+func filterInvalidDescriptors(src map[string]*script.Descriptor) (map[string]*script.Descriptor, []*script.Descriptor) {
+	selected := make(map[string]*script.Descriptor, 0)
+	rejected := make([]*script.Descriptor, 0)
 	for key, d := range src {
-		if d.Error != nil {
-			c.outputPrinter.Println(c.outputPrinter.TestSuiteTitle(d.Locator.RelativePath))
-			c.outputPrinter.Println(c.outputPrinter.Section(d.Error.Error()))
+		if d.Error == nil {
+			selected[key] = d
 		} else {
-			dst[key] = d
+			rejected = append(rejected, d)
 		}
 	}
-	return dst
+	return selected, rejected
 }
 
-func (c *GenController) filterDescriptorsByFilePattern(src map[string]*script.Descriptor, suffix string) map[string]*script.Descriptor {
+func filterDescriptorsByFilePattern(src map[string]*script.Descriptor, suffix string) map[string]*script.Descriptor {
+	if len(suffix) == 0 {
+		return src
+	}
 	dst := make(map[string]*script.Descriptor, 0)
 	for key, d := range src {
 		if strings.HasSuffix(d.Locator.AbsolutePath, suffix) {
@@ -194,15 +162,6 @@ func (c *GenController) filterDescriptorsByFilePattern(src map[string]*script.De
 		}
 	}
 	return dst
-}
-
-func standardizeName(name string) string {
-	if len(name) == 0 {
-		return name
-	}
-	name = strings.ToLower(name)
-	name = strings.Join(strings.Fields(strings.TrimSpace(name)), " ")
-	return name
 }
 
 type CurlGenerator struct {
