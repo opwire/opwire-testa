@@ -41,6 +41,14 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 			Name: "test-dirs, spec-dirs, d",
 			Usage: "The testcases directories",
 		},
+		clp.StringSliceFlag{
+			Name: "incl-files, included-files, i",
+			Usage: "Matching sub-string/pattern to include files",
+		},
+		clp.StringSliceFlag{
+			Name: "excl-files, excluded-files, e",
+			Usage: "Matching sub-string/pattern to exclude files",
+		},
 		clp.StringFlag{
 			Name: "test-file, f",
 			Usage: "Suffix of path to testing script file (.i.e ... your-test.yml)",
@@ -68,7 +76,7 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 		{
 			Name: "run",
 			Aliases: []string{"start"},
-			Usage: "Run the testcases",
+			Usage: "Run tests",
 			Flags: append([]clp.Flag{}, testSourceFlags...),
 			Action: func(c *clp.Context) error {
 				o := readScriptSourceFlags(manifest, c)
@@ -174,6 +182,8 @@ func readScriptSourceFlags(manifest Manifest, c *clp.Context) *ControllerOptions
 	o := &ControllerOptions{ manifest: manifest }
 	o.ConfigPath = c.String("config-path")
 	o.TestDirs = c.StringSlice("test-dirs")
+	o.InclFiles = c.StringSlice("incl-files")
+	o.ExclFiles = c.StringSlice("excl-files")
 	o.TestName = c.String("test-name")
 	o.Tags = c.StringSlice("tags")
 	o.NoColor = c.Bool("no-color")

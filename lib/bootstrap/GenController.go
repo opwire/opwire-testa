@@ -9,7 +9,6 @@ import (
 	"github.com/opwire/opwire-testa/lib/format"
 	"github.com/opwire/opwire-testa/lib/script"
 	"github.com/opwire/opwire-testa/lib/tag"
-	"github.com/opwire/opwire-testa/lib/utils"
 )
 
 type GenControllerOptions interface {
@@ -66,11 +65,6 @@ type GenArguments interface {
 }
 
 func (r *GenController) Execute(args GenArguments) error {
-	var testDirs []string
-	if r.scriptSource != nil {
-		testDirs = r.scriptSource.GetTestDirs()
-	}
-
 	var testFile string
 	if args != nil {
 		testFile = args.GetTestFile()
@@ -79,19 +73,11 @@ func (r *GenController) Execute(args GenArguments) error {
 	// display environment of command
 	r.outputPrinter.Println()
 	r.outputPrinter.Println(r.outputPrinter.Heading("Context"))
-
-	relaDirs := utils.DetectRelativePaths(testDirs)
-	if relaDirs != nil && len(relaDirs) > 0 {
-		r.outputPrinter.Println(r.outputPrinter.ContextInfo("Test directories", "", relaDirs...))
-	} else {
-		r.outputPrinter.Println(r.outputPrinter.ContextInfo("Test directories", "Unspecified"))
-	}
+	printScriptSourceArgs(r.outputPrinter, r.scriptSource, r.scriptSelector, r.tagManager)
 
 	if len(testFile) > 0 {
 		r.outputPrinter.Println(r.outputPrinter.ContextInfo("File filter", testFile))
 	}
-
-	r.outputPrinter.Println(r.outputPrinter.ContextInfo("Name filter (" + r.scriptSelector.TypeOfTestNameFilter() + ")", r.scriptSelector.GetTestNameFilter()))
 
 	// display prerequisites
 	r.outputPrinter.Println()

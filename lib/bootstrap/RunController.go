@@ -18,6 +18,7 @@ type RunControllerOptions interface {
 
 type RunController struct {
 	scriptLoader *script.Loader
+	scriptSelector *script.Selector
 	scriptSource script.Source
 	tagManager *tag.Manager
 	specHandler *engine.SpecHandler
@@ -35,6 +36,12 @@ func NewRunController(opts RunControllerOptions) (r *RunController, err error) {
 
 	// create a Script Loader instance
 	r.scriptLoader, err = script.NewLoader(r.scriptSource)
+	if err != nil {
+		return nil, err
+	}
+
+	// create a Script Selector instance
+	r.scriptSelector, err = script.NewSelector(r.scriptSource)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +75,7 @@ func (r *RunController) Execute(args RunArguments) error {
 	// begin environments
 	r.outputPrinter.Println()
 	r.outputPrinter.Println(r.outputPrinter.Heading("Context"))
-	printScriptSourceArgs(r.outputPrinter, r.scriptSource, nil, r.tagManager)
+	printScriptSourceArgs(r.outputPrinter, r.scriptSource, r.scriptSelector, r.tagManager)
 
 	// begin prerequisites
 	r.outputPrinter.Println()
