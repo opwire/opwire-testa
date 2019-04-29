@@ -13,41 +13,50 @@ import (
 )
 
 type RunControllerOptions interface {
-	GetConfigPath() string
-	GetConditionalTags() []string
-	GetNoColor() bool
+	script.Source
 	GetVersion() string
 	GetRevision() string
+	GetConfigPath() string
+	GetNoColor() bool
 }
 
 type RunController struct {
-	loader *script.Loader
+	scriptLoader *script.Loader
+	scriptSelector *script.Selector
+	scriptSource script.Source
 	specHandler *engine.SpecHandler
 	tagManager *tag.Manager
 	outputPrinter *format.OutputPrinter
-	storage *TestStateStore
 }
 
 func NewRunController(opts RunControllerOptions) (r *RunController, err error) {
 	r = &RunController{}
 
 	// testing temporary storage
-	r.storage = &TestStateStore{}
+	r.scriptSource, err = script.NewSource(opts)
+	if err != nil {
+		return nil, err
+	}
 
 	// create a Script Loader instance
-	r.loader, err = script.NewLoader(r.storage)
+	r.scriptLoader, err = script.NewLoader(r.scriptSource)
+	if err != nil {
+		return nil, err
+	}
+
+	r.scriptSelector, err = script.NewSelector(r.scriptSource)
 	if err != nil {
 		return nil, err
 	}
 
 	// create a Spec Handler instance
-	r.specHandler, err = engine.NewSpecHandler(r.storage)
+	r.specHandler, err = engine.NewSpecHandler(r.scriptSource)
 	if err != nil {
 		return nil, err
 	}
 
 	// create a Manager instance
-	r.tagManager, err = tag.NewManager(opts)
+	r.tagManager, err = tag.NewManager(r.scriptSource)
 	if err != nil {
 		return nil, err
 	}
@@ -61,10 +70,7 @@ func NewRunController(opts RunControllerOptions) (r *RunController, err error) {
 	return r, nil
 }
 
-type RunArguments interface {
-	GetTestDirs() []string
-	GetTestName() string
-}
+type RunArguments interface {}
 
 func (r *RunController) Execute(args RunArguments) error {
 	flag.Set("test.v", "false")
@@ -74,8 +80,8 @@ func (r *RunController) Execute(args RunArguments) error {
 	r.outputPrinter.Println(r.outputPrinter.Heading("Context"))
 
 	var testDirs []string
-	if args != nil {
-		testDirs = args.GetTestDirs()
+	if r.scriptSource != nil {
+		testDirs = r.scriptSource.GetTestDirs()
 	}
 	relaDirs := utils.DetectRelativePaths(testDirs)
 	if relaDirs != nil && len(relaDirs) > 0 {
@@ -98,18 +104,12 @@ func (r *RunController) Execute(args RunArguments) error {
 		r.outputPrinter.Println(r.outputPrinter.ContextInfo("Excluded tags", "Unspecified"))
 	}
 
-	scriptSelector, err := script.NewSelector(args)
-	if err != nil {
-		return err
-	}
-	_ = scriptSelector
-
 	// begin prerequisites
 	r.outputPrinter.Println()
 	r.outputPrinter.Println(r.outputPrinter.Heading("Loading"))
 
 	// load test specifications
-	allscripts := r.loader.LoadScripts(testDirs)
+	allscripts := r.scriptLoader.Load()
 
 	// filter invalid descriptors and display errors
 	descriptors := make(map[string]*script.Descriptor, 0)
@@ -144,8 +144,6 @@ func (r *RunController) Execute(args RunArguments) error {
 func defaultMatchString(pat, str string) (bool, error) {
 	return true, nil
 }
-
-type TestStateStore struct {}
 
 func (r *RunController) wrapTestSuites(descriptors map[string]*script.Descriptor) ([]testing.InternalTest, error) {
 	if r.specHandler == nil {

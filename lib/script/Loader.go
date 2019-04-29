@@ -13,15 +13,19 @@ import (
 	"github.com/opwire/opwire-testa/lib/utils"
 )
 
-type LoaderOptions interface {}
+type LoaderOptions interface {
+	GetTestDirs() []string
+}
 
 type Loader struct {
+	source LoaderOptions
 	validator *schema.Validator
 	skipInvalidSpecs bool
 }
 
 func NewLoader(opts LoaderOptions) (l *Loader, err error) {
 	l = new(Loader)
+	l.source = opts
 	l.validator, err = schema.NewValidator(&schema.ValidatorOptions{ Schema: scriptSchema })
 	if err != nil {
 		return nil, err
@@ -29,7 +33,16 @@ func NewLoader(opts LoaderOptions) (l *Loader, err error) {
 	return l, nil
 }
 
-func (l *Loader) LoadScripts(sourceDirs []string) (map[string]*Descriptor) {
+func (l *Loader) Load() (map[string]*Descriptor) {
+	return l.LoadFrom(nil)
+}
+
+func (l *Loader) LoadFrom(sourceDirs []string) (map[string]*Descriptor) {
+	if sourceDirs == nil {
+		if l.source != nil {
+			sourceDirs = l.source.GetTestDirs()
+		}
+	}
 	locators, _ := l.ReadDirs(sourceDirs, ".yml")
 	descriptors := l.LoadFiles(locators)
 	return descriptors

@@ -64,16 +64,14 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 			Action: func(c *clp.Context) error {
 				o := &ControllerOptions{ manifest: manifest }
 				o.ConfigPath = c.String("config-path")
-				o.NoColor = c.Bool("no-color")
+				o.TestDirs = c.StringSlice("test-dirs")
 				o.Tags = c.StringSlice("tags")
+				o.NoColor = c.Bool("no-color")
 				ctl, err := bootstrap.NewRunController(o)
 				if err != nil {
 					return err
 				}
-				f := &CmdRunFlags{
-					TestDirs: c.StringSlice("test-dirs"),
-				}
-				ctl.Execute(f)
+				ctl.Execute(&CmdRunFlags{})
 				return nil
 			},
 		},
@@ -161,15 +159,15 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 					Action: func(c *clp.Context) error {
 						o := &ControllerOptions{ manifest: manifest }
 						o.ConfigPath = c.String("config-path")
+						o.TestDirs = c.StringSlice("test-dirs")
+						o.TestName = c.String("test-name")
 						o.NoColor = c.Bool("no-color")
 						ctl, err := bootstrap.NewGenController(o)
 						if err != nil {
 							return err
 						}
 						f := &CmdGenFlags{
-							TestDirs: c.StringSlice("test-dirs"),
 							TestFile: c.String("test-file"),
-							TestName: c.String("test-name"),
 						}
 						ctl.Execute(f)
 						return nil
@@ -201,6 +199,8 @@ type Manifest interface {
 
 type ControllerOptions struct {
 	ConfigPath string
+	TestDirs []string
+	TestName string
 	Tags []string
 	NoColor bool
 	manifest Manifest
@@ -208,6 +208,15 @@ type ControllerOptions struct {
 
 func (a *ControllerOptions) GetConfigPath() string {
 	return a.ConfigPath
+}
+
+func (a *ControllerOptions) GetTestDirs() []string {
+	a.TestDirs = initDefaultDirs(a.TestDirs)
+	return a.TestDirs
+}
+
+func (a *ControllerOptions) GetTestName() string {
+	return a.TestName
 }
 
 func (a *ControllerOptions) GetConditionalTags() []string {
@@ -265,36 +274,14 @@ func (f *CmdReqFlags) GetFormat() string {
 }
 
 type CmdRunFlags struct {
-	TestDirs []string
-	TestName string
-}
-
-func (a *CmdRunFlags) GetTestDirs() []string {
-	a.TestDirs = initDefaultDirs(a.TestDirs)
-	return a.TestDirs
-}
-
-func (a *CmdRunFlags) GetTestName() string {
-	return a.TestName
 }
 
 type CmdGenFlags struct {
-	TestDirs []string
 	TestFile string
-	TestName string
-}
-
-func (a *CmdGenFlags) GetTestDirs() []string {
-	a.TestDirs = initDefaultDirs(a.TestDirs)
-	return a.TestDirs
 }
 
 func (a *CmdGenFlags) GetTestFile() string {
 	return a.TestFile
-}
-
-func (a *CmdGenFlags) GetTestName() string {
-	return a.TestName
 }
 
 func initDefaultDirs(testDirs []string) []string {

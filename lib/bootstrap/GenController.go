@@ -12,20 +12,35 @@ import (
 )
 
 type GenControllerOptions interface {
+	script.Source
 	GetNoColor() bool
 	GetVersion() string
 }
 
 type GenController struct {
-	loader *script.Loader
+	scriptLoader *script.Loader
+	scriptSelector *script.Selector
+	scriptSource script.Source
 	outputPrinter *format.OutputPrinter
 }
 
 func NewGenController(opts GenControllerOptions) (ref *GenController, err error) {
 	ref = &GenController{}
 
+	// testing temporary storage
+	ref.scriptSource, err = script.NewSource(opts)
+	if err != nil {
+		return nil, err
+	}
+
 	// create a Script Loader instance
-	ref.loader, err = script.NewLoader(nil)
+	ref.scriptLoader, err = script.NewLoader(nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// create a Script Selector instance
+	ref.scriptSelector, err = script.NewSelector(opts)
 	if err != nil {
 		return nil, err
 	}
@@ -40,25 +55,18 @@ func NewGenController(opts GenControllerOptions) (ref *GenController, err error)
 }
 
 type GenArguments interface {
-	GetTestDirs() []string
 	GetTestFile() string
-	GetTestName() string
 }
 
 func (c *GenController) Execute(args GenArguments) error {
 	var testDirs []string
-	if args != nil {
-		testDirs = args.GetTestDirs()
+	if c.scriptSource != nil {
+		testDirs = c.scriptSource.GetTestDirs()
 	}
 
 	var testFile string
 	if args != nil {
 		testFile = args.GetTestFile()
-	}
-
-	scriptSelector, err := script.NewSelector(args)
-	if err != nil {
-		return err
 	}
 
 	// display environment of command
@@ -76,14 +84,14 @@ func (c *GenController) Execute(args GenArguments) error {
 		c.outputPrinter.Println(c.outputPrinter.ContextInfo("File filter", testFile))
 	}
 
-	c.outputPrinter.Println(c.outputPrinter.ContextInfo("Name filter (" + scriptSelector.TypeOfTestNameFilter() + ")", scriptSelector.GetTestNameFilter()))
+	c.outputPrinter.Println(c.outputPrinter.ContextInfo("Name filter (" + c.scriptSelector.TypeOfTestNameFilter() + ")", c.scriptSelector.GetTestNameFilter()))
 
 	// display prerequisites
 	c.outputPrinter.Println()
 	c.outputPrinter.Println(c.outputPrinter.Heading("Loading"))
 
 	// Load testing script files from "test-dirs"
-	descriptors := c.loader.LoadScripts(testDirs)
+	descriptors := c.scriptLoader.LoadFrom(testDirs)
 
 	// filter invalid descriptors and display errors
 	descriptors, rejected := filterInvalidDescriptors(descriptors)
@@ -97,7 +105,7 @@ func (c *GenController) Execute(args GenArguments) error {
 	descriptors = filterDescriptorsByFilePattern(descriptors, testFile)
 
 	// filter target testcase by "test-name" title/name
-	testcases := scriptSelector.GetTestCases(descriptors)
+	testcases := c.scriptSelector.GetTestCases(descriptors)
 
 	// running & result
 	c.outputPrinter.Println()
