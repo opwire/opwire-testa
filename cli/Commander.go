@@ -266,11 +266,16 @@ func (f *CmdReqFlags) GetFormat() string {
 
 type CmdRunFlags struct {
 	TestDirs []string
+	TestName string
 }
 
 func (a *CmdRunFlags) GetTestDirs() []string {
 	a.TestDirs = initDefaultDirs(a.TestDirs)
 	return a.TestDirs
+}
+
+func (a *CmdRunFlags) GetTestName() string {
+	return a.TestName
 }
 
 type CmdGenFlags struct {

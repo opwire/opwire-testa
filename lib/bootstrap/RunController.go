@@ -62,6 +62,7 @@ func NewRunController(opts RunControllerOptions) (r *RunController, err error) {
 
 type RunArguments interface {
 	GetTestDirs() []string
+	GetTestName() string
 }
 
 func (r *RunController) Execute(args RunArguments) error {
@@ -95,6 +96,12 @@ func (r *RunController) Execute(args RunArguments) error {
 	} else {
 		r.outputPrinter.Println(r.outputPrinter.ContextInfo("Excluded tags", "Unspecified"))
 	}
+
+	scriptSelector, err := script.NewSelector(args)
+	if err != nil {
+		return err
+	}
+	_ = scriptSelector
 
 	// begin prerequisites
 	r.outputPrinter.Println()
