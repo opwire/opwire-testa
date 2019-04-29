@@ -11,11 +11,18 @@ import (
 
 func printMarkedTags(outputPrinter *format.OutputPrinter, tags []string, mark map[string]int8) string {
 	if len(tags) > 0 && len(mark) > 0 {
+		noColor := !outputPrinter.IsColorized()
 		tags = utils.Map(tags, func(tag string, pos int) string {
 			if mark[tag] == -1 {
+				if noColor {
+					return "-" + tag
+				}
 				return outputPrinter.NegativeTag(tag)
 			}
 			if mark[tag] == +1 {
+				if noColor {
+					return "+" + tag
+				}
 				return outputPrinter.PositiveTag(tag)
 			}
 			return outputPrinter.RegularTag(tag)
