@@ -24,26 +24,29 @@ func NewManager(opts ManagerOptions) (ref *Manager, err error) {
 	return ref, err
 }
 
-func (g *Manager) IsActive(tags []string) bool {
+func (g *Manager) IsActive(tags []string) (bool, map[string]int8) {
+	mark := make(map[string]int8, 0)
 	if len(tags) == 0 {
-		return true
+		return true, mark
 	}
 	if len(g.excludedTags) > 0 {
 		for _, tag := range tags {
 			if utils.Contains(g.excludedTags, tag) {
-				return false
+				mark[tag] = -1
+				return false, mark
 			}
 		}
 	}
 	if len(g.includedTags) > 0 {
 		for _, tag := range tags {
 			if utils.Contains(g.includedTags, tag) {
-				return true
+				mark[tag] = +1
+				return true, mark
 			}
 		}
-		return false
+		return false, mark
 	}
-	return true
+	return true, mark
 }
 
 func (g *Manager) Initialize(tagexps []string) {

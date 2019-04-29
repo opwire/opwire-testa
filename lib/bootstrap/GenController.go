@@ -138,7 +138,7 @@ func (r *GenController) filterTestCasesByTags(testcases []*engine.TestCase) (acc
 	accepted = make([]*engine.TestCase, 0)
 	rejected = make([]*engine.TestCase, 0)
 	for _, testcase := range testcases {
-		if !r.tagManager.IsActive(testcase.Tags) {
+		if active, _ := r.tagManager.IsActive(testcase.Tags); !active {
 			rejected = append(rejected, testcase)
 			continue
 		}

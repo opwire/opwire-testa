@@ -9,6 +9,22 @@ import (
 	"github.com/opwire/opwire-testa/lib/utils"
 )
 
+func printMarkedTags(outputPrinter *format.OutputPrinter, tags []string, mark map[string]int8) string {
+	if len(tags) > 0 && len(mark) > 0 {
+		tags = utils.Map(tags, func(tag string, pos int) string {
+			if mark[tag] == -1 {
+				return outputPrinter.NegativeTag(tag)
+			}
+			if mark[tag] == +1 {
+				return outputPrinter.PositiveTag(tag)
+			}
+			return outputPrinter.RegularTag(tag)
+		})
+		return "(" + strings.Join(tags, ", ") + ")"
+	}
+	return ""
+}
+
 func printScriptSourceArgs(outputPrinter *format.OutputPrinter, scriptSource script.Source, scriptSelector *script.Selector, tagManager *tag.Manager) {
 	var testDirs []string
 	if scriptSource != nil {

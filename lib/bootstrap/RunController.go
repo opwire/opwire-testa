@@ -155,24 +155,26 @@ func (r *RunController) wrapTestCase(testcase *engine.TestCase) (testing.Interna
 				r.outputPrinter.Println(r.outputPrinter.Pending(testcase.Title))
 				return
 			}
-			if !r.tagManager.IsActive(testcase.Tags) {
-				r.outputPrinter.Println(r.outputPrinter.Skipped(testcase.Title))
+			active, mark := r.tagManager.IsActive(testcase.Tags)
+			tagstr := printMarkedTags(r.outputPrinter, testcase.Tags, mark)
+			if !active {
+				r.outputPrinter.Println(r.outputPrinter.Skipped(testcase.Title), tagstr)
 				return
 			}
 			result, err := r.specHandler.Examine(testcase)
 			if err != nil {
-				r.outputPrinter.Println(r.outputPrinter.Cracked(testcase.Title))
+				r.outputPrinter.Println(r.outputPrinter.Cracked(testcase.Title), tagstr)
 				return
 			}
 			if result != nil && len(result.Errors) > 0 {
-				r.outputPrinter.Println(r.outputPrinter.Failure(testcase.Title))
+				r.outputPrinter.Println(r.outputPrinter.Failure(testcase.Title), tagstr)
 				for key, err := range result.Errors {
 					r.outputPrinter.Printf(r.outputPrinter.SectionTitle(key))
 					r.outputPrinter.Printf(r.outputPrinter.Section(err.Error()))
 				}
 				return
 			}
-			r.outputPrinter.Println(r.outputPrinter.Success(testcase.Title))
+			r.outputPrinter.Println(r.outputPrinter.Success(testcase.Title), tagstr)
 		},
 	}
 }

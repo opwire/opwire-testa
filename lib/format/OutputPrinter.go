@@ -64,6 +64,21 @@ func (w *OutputPrinter) TestCase(title string) string {
 	return fmt.Sprintf("[=] %s", pen(title))
 }
 
+func (w *OutputPrinter) PositiveTag(tag string) string {
+	pen := w.GetPen(PositiveTagPen)
+	return pen(tag)
+}
+
+func (w *OutputPrinter) NegativeTag(tag string) string {
+	pen := w.GetPen(NegativeTagPen)
+	return pen(tag)
+}
+
+func (w *OutputPrinter) RegularTag(tag string) string {
+	pen := w.GetPen(RegularTagPen)
+	return pen(tag)
+}
+
 func (w *OutputPrinter) Pending(title string) string {
 	pen := w.GetPen(PendingPen)
 	return fmt.Sprintf("[%s] %s", pen("|"), title)
@@ -126,6 +141,12 @@ func (w *OutputPrinter) GetPen(name PenType) Renderer {
 				pen = color.Style{color.FgYellow}.Render
 			case TestCaseTitlePen:
 				pen = color.Style{color.FgLightYellow}.Render
+			case PositiveTagPen:
+				pen = color.Style{color.FgGreen}.Render
+			case NegativeTagPen:
+				pen = color.Style{color.FgRed}.Render
+			case RegularTagPen:
+				pen = color.Style{color.FgGray}.Render
 			case PendingPen:
 				pen = color.Style{color.FgYellow, color.OpBold}.Render
 			case SkippedPen:
@@ -166,6 +187,9 @@ const (
 	HeadingPen
 	TestSuiteTitlePen
 	TestCaseTitlePen
+	PositiveTagPen
+	NegativeTagPen
+	RegularTagPen
 	PendingPen
 	SkippedPen
 	SuccessPen
