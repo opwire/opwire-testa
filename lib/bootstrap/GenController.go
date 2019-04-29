@@ -112,10 +112,10 @@ func (r *GenController) Execute(args GenArguments) error {
 	}
 	if len(testcases) > 1 {
 		testinfo := make([]string, len(testcases))
-		for i, test := range testcases {
-			testinfo[i] = test.Title
-			if len(test.Tags) > 0 {
-				testinfo[i] += " (tags: " + strings.Join(test.Tags, ", ") + ")"
+		for i, testcase := range testcases {
+			testinfo[i] = testcase.Title
+			if len(testcase.Tags) > 0 {
+				testinfo[i] += " (tags: " + strings.Join(testcase.Tags, ", ") + ")"
 			}
 		}
 		r.outputPrinter.Println(r.outputPrinter.ContextInfo("Error", "There are more than one testcases satisfied criteria", testinfo...))
@@ -138,11 +138,15 @@ func (r *GenController) filterTestCasesByTags(testcases []*engine.TestCase) (acc
 	accepted = make([]*engine.TestCase, 0)
 	rejected = make([]*engine.TestCase, 0)
 	for _, testcase := range testcases {
-		if len(testcase.Tags) == 0 || r.tagManager.IsActive(testcase.Tags) {
-			accepted = append(accepted, testcase)
-		} else {
+		if !r.tagManager.IsActive(testcase.Tags) {
 			rejected = append(rejected, testcase)
+			continue
 		}
+		if testcase.Pending != nil && *testcase.Pending {
+			rejected = append(rejected, testcase)
+			continue
+		}
+		accepted = append(accepted, testcase)
 	}
 	return accepted, rejected
 }
