@@ -14,13 +14,13 @@
   --test-dirs=... \
   --incl-files=file-name-pattern-or-regexp \
   --excl-files=file-name-pattern-or-regexp \
-  --tags="+tag1,+tag2,-skipped-case1,-skipped-case2"
+  --tags="+tag1,+tag2,-pending-case1,-pending-case2"
 ```
 
-Use `help` sub-command to see more details for arguments:
+Use `--help` flag to see more details for arguments:
 
 ```shell
-./opwire-testa help run
+./opwire-testa run --help
 ```
 
 ### Generating a testcase from a curl command
@@ -54,10 +54,10 @@ Use `help` sub-command to see more details for arguments:
 --export "testcase"
 ```
 
-Use `help` sub-command to see more details for arguments:
+Use `--help` flag to see more details for arguments:
 
 ```shell
-./opwire-testa req help curl
+./opwire-testa req curl --help
 ```
 
 ### Extracting curl command from a testcase
@@ -72,10 +72,10 @@ Use `help` sub-command to see more details for arguments:
     --test-name=test-case-name-pattern
 ```
 
-Use `help` sub-command to see more details for arguments:
+Use `--help` flag to see more details for arguments:
 
 ```shell
-./opwire-testa gen help curl
+./opwire-testa gen curl --help
 ```
 
 ## License
