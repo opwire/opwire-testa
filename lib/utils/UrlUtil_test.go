@@ -14,7 +14,7 @@ func GetErr(out string, err error) error {
 }
 
 func TestUrlJoin(t *testing.T) {
-	t.Run("", func(t *testing.T) {
+	t.Run("Ok", func(t *testing.T) {
 		assert.Equal(t, GetOut(UrlJoin("http://localhost", "")), "http://localhost")
 		assert.Equal(t, GetOut(UrlJoin("http://localhost/", "")), "http://localhost/")
 		assert.Equal(t, GetOut(UrlJoin("http://localhost", "/")), "http://localhost/")

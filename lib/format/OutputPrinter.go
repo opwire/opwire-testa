@@ -167,14 +167,17 @@ func (w *OutputPrinter) GetPen(name PenType) Renderer {
 type Renderer func(a ...interface{}) string
 
 var ColorlessPen = func(a ...interface{}) string {
-	text := ""
 	if a == nil || len(a) == 0 {
-		return text
+		return ""
 	}
-	for _, s := range a {
-		text = text + fmt.Sprintf("%v", s)
+	items := make([]string, 0, len(a))
+	for _, v := range a {
+		s := fmt.Sprintf("%v", v)
+		if len(s) > 0 {
+			items = append(items, s)
+		}
 	}
-	return text
+	return strings.Join(items, " ")
 }
 
 type PenType int
