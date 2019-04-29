@@ -18,13 +18,22 @@ func NewSource(opts Source) (ref *SourceBuffer, err error) {
 
 type SourceBuffer struct {
 	TestDirs []string
-	Tags []string
-	TestFile string
+	InclFiles []string
+	ExclFiles []string
 	TestName string
+	Tags []string
 }
 
 func (a *SourceBuffer) GetTestDirs() []string {
 	return a.TestDirs
+}
+
+func (a *SourceBuffer) GetInclFiles() []string {
+	return a.InclFiles
+}
+
+func (a *SourceBuffer) GetExclFiles() []string {
+	return a.ExclFiles
 }
 
 func (a *SourceBuffer) GetTestName() string {

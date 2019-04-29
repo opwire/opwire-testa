@@ -52,9 +52,13 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 					Name: "spec-dirs, test-dirs, d",
 					Usage: "The testcases directories",
 				},
+				clp.StringFlag{
+					Name: "test-name, n",
+					Usage: "Test title/name matching pattern",
+				},
 				clp.StringSliceFlag{
 					Name: "tags, g",
-					Usage: "Selecting tags expression",
+					Usage: "Conditional tags for selecting tests",
 				},
 				clp.BoolFlag{
 					Name: "no-color",
@@ -65,6 +69,7 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 				o := &ControllerOptions{ manifest: manifest }
 				o.ConfigPath = c.String("config-path")
 				o.TestDirs = c.StringSlice("test-dirs")
+				o.TestName = c.String("test-name")
 				o.Tags = c.StringSlice("tags")
 				o.NoColor = c.Bool("no-color")
 				ctl, err := bootstrap.NewRunController(o)
@@ -149,7 +154,11 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 						},
 						clp.StringFlag{
 							Name: "test-name, n",
-							Usage: "Prefix of testcase title/name",
+							Usage: "Test title/name matching pattern",
+						},
+						clp.StringSliceFlag{
+							Name: "tags, g",
+							Usage: "Conditional tags for selecting tests",
 						},
 						clp.BoolFlag{
 							Name: "no-color",
@@ -161,15 +170,15 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 						o.ConfigPath = c.String("config-path")
 						o.TestDirs = c.StringSlice("test-dirs")
 						o.TestName = c.String("test-name")
+						o.Tags = c.StringSlice("tags")
 						o.NoColor = c.Bool("no-color")
 						ctl, err := bootstrap.NewGenController(o)
 						if err != nil {
 							return err
 						}
-						f := &CmdGenFlags{
+						ctl.Execute(&CmdGenFlags{
 							TestFile: c.String("test-file"),
-						}
-						ctl.Execute(f)
+						})
 						return nil
 					},
 				},

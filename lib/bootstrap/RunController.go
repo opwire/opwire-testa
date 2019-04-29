@@ -21,8 +21,8 @@ type RunControllerOptions interface {
 type RunController struct {
 	scriptLoader *script.Loader
 	scriptSource script.Source
-	specHandler *engine.SpecHandler
 	tagManager *tag.Manager
+	specHandler *engine.SpecHandler
 	outputPrinter *format.OutputPrinter
 }
 
@@ -41,14 +41,14 @@ func NewRunController(opts RunControllerOptions) (r *RunController, err error) {
 		return nil, err
 	}
 
-	// create a Spec Handler instance
-	r.specHandler, err = engine.NewSpecHandler(r.scriptSource)
+	// create a Manager instance
+	r.tagManager, err = tag.NewManager(r.scriptSource)
 	if err != nil {
 		return nil, err
 	}
 
-	// create a Manager instance
-	r.tagManager, err = tag.NewManager(r.scriptSource)
+	// create a Spec Handler instance
+	r.specHandler, err = engine.NewSpecHandler(r.scriptSource)
 	if err != nil {
 		return nil, err
 	}
@@ -85,15 +85,11 @@ func (r *RunController) Execute(args RunArguments) error {
 	inclTags := r.tagManager.GetIncludedTags()
 	if inclTags != nil && len(inclTags) > 0 {
 		r.outputPrinter.Println(r.outputPrinter.ContextInfo("Selected tags", strings.Join(inclTags, ", ")))
-	} else {
-		r.outputPrinter.Println(r.outputPrinter.ContextInfo("Selected tags", "Unspecified"))
 	}
 
 	exclTags := r.tagManager.GetExcludedTags()
 	if exclTags != nil && len(exclTags) > 0 {
 		r.outputPrinter.Println(r.outputPrinter.ContextInfo("Excluded tags", strings.Join(exclTags, ", ")))
-	} else {
-		r.outputPrinter.Println(r.outputPrinter.ContextInfo("Excluded tags", "Unspecified"))
 	}
 
 	// begin prerequisites

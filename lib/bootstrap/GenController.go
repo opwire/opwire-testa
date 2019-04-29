@@ -8,6 +8,7 @@ import (
 	"github.com/opwire/opwire-testa/lib/engine"
 	"github.com/opwire/opwire-testa/lib/format"
 	"github.com/opwire/opwire-testa/lib/script"
+	"github.com/opwire/opwire-testa/lib/tag"
 	"github.com/opwire/opwire-testa/lib/utils"
 )
 
@@ -20,6 +21,7 @@ type GenController struct {
 	scriptLoader *script.Loader
 	scriptSelector *script.Selector
 	scriptSource script.Source
+	tagManager *tag.Manager
 	outputPrinter *format.OutputPrinter
 }
 
@@ -33,13 +35,19 @@ func NewGenController(opts GenControllerOptions) (ref *GenController, err error)
 	}
 
 	// create a Script Loader instance
-	ref.scriptLoader, err = script.NewLoader(nil)
+	ref.scriptLoader, err = script.NewLoader(ref.scriptSource)
 	if err != nil {
 		return nil, err
 	}
 
 	// create a Script Selector instance
-	ref.scriptSelector, err = script.NewSelector(opts)
+	ref.scriptSelector, err = script.NewSelector(ref.scriptSource)
+	if err != nil {
+		return nil, err
+	}
+
+	// create a Manager instance
+	ref.tagManager, err = tag.NewManager(ref.scriptSource)
 	if err != nil {
 		return nil, err
 	}
@@ -57,10 +65,10 @@ type GenArguments interface {
 	GetTestFile() string
 }
 
-func (c *GenController) Execute(args GenArguments) error {
+func (r *GenController) Execute(args GenArguments) error {
 	var testDirs []string
-	if c.scriptSource != nil {
-		testDirs = c.scriptSource.GetTestDirs()
+	if r.scriptSource != nil {
+		testDirs = r.scriptSource.GetTestDirs()
 	}
 
 	var testFile string
@@ -69,49 +77,52 @@ func (c *GenController) Execute(args GenArguments) error {
 	}
 
 	// display environment of command
-	c.outputPrinter.Println()
-	c.outputPrinter.Println(c.outputPrinter.Heading("Context"))
+	r.outputPrinter.Println()
+	r.outputPrinter.Println(r.outputPrinter.Heading("Context"))
 
 	relaDirs := utils.DetectRelativePaths(testDirs)
 	if relaDirs != nil && len(relaDirs) > 0 {
-		c.outputPrinter.Println(c.outputPrinter.ContextInfo("Test directories", "", relaDirs...))
+		r.outputPrinter.Println(r.outputPrinter.ContextInfo("Test directories", "", relaDirs...))
 	} else {
-		c.outputPrinter.Println(c.outputPrinter.ContextInfo("Test directories", "Unspecified"))
+		r.outputPrinter.Println(r.outputPrinter.ContextInfo("Test directories", "Unspecified"))
 	}
 
 	if len(testFile) > 0 {
-		c.outputPrinter.Println(c.outputPrinter.ContextInfo("File filter", testFile))
+		r.outputPrinter.Println(r.outputPrinter.ContextInfo("File filter", testFile))
 	}
 
-	c.outputPrinter.Println(c.outputPrinter.ContextInfo("Name filter (" + c.scriptSelector.TypeOfTestNameFilter() + ")", c.scriptSelector.GetTestNameFilter()))
+	r.outputPrinter.Println(r.outputPrinter.ContextInfo("Name filter (" + r.scriptSelector.TypeOfTestNameFilter() + ")", r.scriptSelector.GetTestNameFilter()))
 
 	// display prerequisites
-	c.outputPrinter.Println()
-	c.outputPrinter.Println(c.outputPrinter.Heading("Loading"))
+	r.outputPrinter.Println()
+	r.outputPrinter.Println(r.outputPrinter.Heading("Loading"))
 
 	// Load testing script files from "test-dirs"
-	descriptors := c.scriptLoader.LoadFrom(testDirs)
+	descriptors := r.scriptLoader.Load()
 
 	// filter invalid descriptors and display errors
 	descriptors, rejected := filterInvalidDescriptors(descriptors)
 	for _, d := range rejected {
-		c.outputPrinter.Println(c.outputPrinter.TestSuiteTitle(d.Locator.RelativePath))
-		c.outputPrinter.Println(c.outputPrinter.Section(d.Error.Error()))
+		r.outputPrinter.Println(r.outputPrinter.TestSuiteTitle(d.Locator.RelativePath))
+		r.outputPrinter.Println(r.outputPrinter.Section(d.Error.Error()))
 	}
 
 	// filter testing script files by "test-file"
 	descriptors = filterDescriptorsByFilePattern(descriptors, testFile)
 
 	// filter target testcase by "test-name" title/name
-	testcases := c.scriptSelector.GetTestCases(descriptors)
+	testcases := r.scriptSelector.GetTestCases(descriptors)
+
+	// filter testcases by conditional tags
+	testcases, _ = r.filterTestCasesByTags(testcases)
 
 	// running & result
-	c.outputPrinter.Println()
-	c.outputPrinter.Println(c.outputPrinter.Heading("Running"))
+	r.outputPrinter.Println()
+	r.outputPrinter.Println(r.outputPrinter.Heading("Running"))
 
 	// raise an error if testcase not found or more than one found
 	if len(testcases) == 0 {
-		c.outputPrinter.Println(c.outputPrinter.ContextInfo("Error", "There is no testcase satisfied criteria"))
+		r.outputPrinter.Println(r.outputPrinter.ContextInfo("Error", "There is no testcase satisfied criteria"))
 	}
 	if len(testcases) > 1 {
 		testinfo := make([]string, len(testcases))
@@ -121,7 +132,7 @@ func (c *GenController) Execute(args GenArguments) error {
 				testinfo[i] += " (tags: " + strings.Join(test.Tags, ", ") + ")"
 			}
 		}
-		c.outputPrinter.Println(c.outputPrinter.ContextInfo("Error", "There are more than one testcases satisfied criteria", testinfo...))
+		r.outputPrinter.Println(r.outputPrinter.ContextInfo("Error", "There are more than one testcases satisfied criteria", testinfo...))
 	}
 
 	// generate curl statement from testcase's request
@@ -133,8 +144,21 @@ func (c *GenController) Execute(args GenArguments) error {
 		generator.generateCommand(os.Stdout, request)
 	}
 
-	c.outputPrinter.Println()
+	r.outputPrinter.Println()
 	return nil
+}
+
+func (r *GenController) filterTestCasesByTags(testcases []*engine.TestCase) (accepted []*engine.TestCase, rejected []*engine.TestCase) {
+	accepted = make([]*engine.TestCase, 0)
+	rejected = make([]*engine.TestCase, 0)
+	for _, testcase := range testcases {
+		if len(testcase.Tags) == 0 || r.tagManager.IsActive(testcase.Tags) {
+			accepted = append(accepted, testcase)
+		} else {
+			rejected = append(rejected, testcase)
+		}
+	}
+	return accepted, rejected
 }
 
 type CurlGenerator struct {
