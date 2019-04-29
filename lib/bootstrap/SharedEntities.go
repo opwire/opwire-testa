@@ -9,6 +9,13 @@ import (
 	"github.com/opwire/opwire-testa/lib/utils"
 )
 
+func printUnmatchedPattern(outputPrinter *format.OutputPrinter, label string) string {
+	if outputPrinter.IsColorized() {
+		label = outputPrinter.NegativeTag(label)
+	}
+	return "(" + label + ")"
+}
+
 func printMarkedTags(outputPrinter *format.OutputPrinter, tags []string, mark map[string]int8) string {
 	if len(tags) > 0 && len(mark) > 0 {
 		noColor := !outputPrinter.IsColorized()

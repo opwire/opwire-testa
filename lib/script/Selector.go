@@ -53,6 +53,24 @@ func (r *Selector) GetTestNameFilter() string {
 	return r.testName
 }
 
+func (r *Selector) IsMatched(testcase *engine.TestCase) bool {
+	if len(r.testName) == 0 {
+		return true
+	} else {
+		name := standardizeName(testcase.Title)
+		if r.testNameRe == nil {
+			if strings.Contains(name, r.testName) {
+				return true
+			}
+		} else {
+			if r.testNameRe.MatchString(name) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func (r *Selector) GetTestCases(descriptors map[string]*Descriptor) []*engine.TestCase {
 	testcases := make([]*engine.TestCase, 0)
 	for _, d := range descriptors {

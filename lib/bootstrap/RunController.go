@@ -155,6 +155,11 @@ func (r *RunController) wrapTestCase(testcase *engine.TestCase) (testing.Interna
 				r.outputPrinter.Println(r.outputPrinter.Pending(testcase.Title))
 				return
 			}
+			if !r.scriptSelector.IsMatched(testcase) {
+				label := printUnmatchedPattern(r.outputPrinter, "unmatched")
+				r.outputPrinter.Println(r.outputPrinter.Skipped(testcase.Title), label)
+				return
+			}
 			active, mark := r.tagManager.IsActive(testcase.Tags)
 			tagstr := printMarkedTags(r.outputPrinter, testcase.Tags, mark)
 			if !active {
