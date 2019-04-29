@@ -3,13 +3,11 @@ package bootstrap
 import (
 	"flag"
 	"fmt"
-	"strings"
 	"testing"
 	"github.com/opwire/opwire-testa/lib/format"
 	"github.com/opwire/opwire-testa/lib/engine"
 	"github.com/opwire/opwire-testa/lib/script"
 	"github.com/opwire/opwire-testa/lib/tag"
-	"github.com/opwire/opwire-testa/lib/utils"
 )
 
 type RunControllerOptions interface {
@@ -70,27 +68,7 @@ func (r *RunController) Execute(args RunArguments) error {
 	// begin environments
 	r.outputPrinter.Println()
 	r.outputPrinter.Println(r.outputPrinter.Heading("Context"))
-
-	var testDirs []string
-	if r.scriptSource != nil {
-		testDirs = r.scriptSource.GetTestDirs()
-	}
-	relaDirs := utils.DetectRelativePaths(testDirs)
-	if relaDirs != nil && len(relaDirs) > 0 {
-		r.outputPrinter.Println(r.outputPrinter.ContextInfo("Test directories", "", relaDirs...))
-	} else {
-		r.outputPrinter.Println(r.outputPrinter.ContextInfo("Test directories", "Unspecified"))
-	}
-
-	inclTags := r.tagManager.GetIncludedTags()
-	if inclTags != nil && len(inclTags) > 0 {
-		r.outputPrinter.Println(r.outputPrinter.ContextInfo("Selected tags", strings.Join(inclTags, ", ")))
-	}
-
-	exclTags := r.tagManager.GetExcludedTags()
-	if exclTags != nil && len(exclTags) > 0 {
-		r.outputPrinter.Println(r.outputPrinter.ContextInfo("Excluded tags", strings.Join(exclTags, ", ")))
-	}
+	printScriptSourceArgs(r.outputPrinter, r.scriptSource, nil, r.tagManager)
 
 	// begin prerequisites
 	r.outputPrinter.Println()
@@ -166,27 +144,24 @@ func (r *RunController) wrapTestCase(testcase *engine.TestCase) (testing.Interna
 	return testing.InternalTest{
 		Name: testcase.Title,
 		F: func (t *testing.T) {
-			ok := true
 			if len(testcase.Tags) > 0 && !r.tagManager.IsActive(testcase.Tags) {
-				ok = false
 				r.outputPrinter.Println(r.outputPrinter.Skipped(testcase.Title))
+				return
 			}
 			result, err := r.specHandler.Examine(testcase)
 			if err != nil {
-				ok = false
 				r.outputPrinter.Println(r.outputPrinter.Cracked(testcase.Title))
+				return
 			}
 			if result != nil && len(result.Errors) > 0 {
-				ok = false
 				r.outputPrinter.Println(r.outputPrinter.Failure(testcase.Title))
 				for key, err := range result.Errors {
 					r.outputPrinter.Printf(r.outputPrinter.SectionTitle(key))
 					r.outputPrinter.Printf(r.outputPrinter.Section(err.Error()))
 				}
+				return
 			}
-			if ok {
-				r.outputPrinter.Println(r.outputPrinter.Success(testcase.Title))
-			}
+			r.outputPrinter.Println(r.outputPrinter.Success(testcase.Title))
 		},
 	}
 }
