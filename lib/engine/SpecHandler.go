@@ -32,9 +32,9 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 
 	result := &ExaminationResult{}
 
-	// check if testcase is skipped
-	if testcase.Skipped != nil && *testcase.Skipped == true {
-		result.Status = "skipped"
+	// check if testcase is pending
+	if testcase.Pending != nil && *testcase.Pending == true {
+		result.Status = "pending"
 		return result, nil
 	}
 
@@ -133,7 +133,7 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 
 type TestSuite struct {
 	TestCases []*TestCase `yaml:"testcases" json:"testcases"`
-	Skipped *bool `yaml:"skipped,omitempty" json:"skipped"`
+	Pending *bool `yaml:"pending,omitempty" json:"pending"`
 }
 
 type TestCase struct {
@@ -141,7 +141,7 @@ type TestCase struct {
 	Version *string `yaml:"version,omitempty" json:"version"`
 	Request *HttpRequest `yaml:"request" json:"request"`
 	Expectation *Expectation `yaml:"expectation" json:"expectation"`
-	Skipped *bool `yaml:"skipped,omitempty" json:"skipped"`
+	Pending *bool `yaml:"pending,omitempty" json:"pending"`
 	Tags []string `yaml:"tags,omitempty" json:"tags"`
 	CreatedTime *string `yaml:"created-time,omitempty" json:"created-time"`
 }

@@ -30,6 +30,11 @@ func printScriptSourceArgs(outputPrinter *format.OutputPrinter, scriptSource scr
 	if exclTags != nil && len(exclTags) > 0 {
 		outputPrinter.Println(outputPrinter.ContextInfo("Excluded tags", strings.Join(exclTags, ", ")))
 	}
+
+	testName := scriptSelector.GetTestNameFilter()
+	if len(testName) > 0 {
+		outputPrinter.Println(outputPrinter.ContextInfo("Name filter (" + scriptSelector.TypeOfTestNameFilter() + ")", testName))
+	}
 }
 
 func filterInvalidDescriptors(src map[string]*script.Descriptor) (map[string]*script.Descriptor, []*script.Descriptor) {

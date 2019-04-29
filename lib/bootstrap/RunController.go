@@ -151,7 +151,11 @@ func (r *RunController) wrapTestCase(testcase *engine.TestCase) (testing.Interna
 	return testing.InternalTest{
 		Name: testcase.Title,
 		F: func (t *testing.T) {
-			if len(testcase.Tags) > 0 && !r.tagManager.IsActive(testcase.Tags) {
+			if testcase.Pending != nil && *testcase.Pending {
+				r.outputPrinter.Println(r.outputPrinter.Pending(testcase.Title))
+				return
+			}
+			if !r.tagManager.IsActive(testcase.Tags) {
 				r.outputPrinter.Println(r.outputPrinter.Skipped(testcase.Title))
 				return
 			}

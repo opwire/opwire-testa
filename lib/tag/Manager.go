@@ -25,6 +25,9 @@ func NewManager(opts ManagerOptions) (ref *Manager, err error) {
 }
 
 func (g *Manager) IsActive(tags []string) bool {
+	if len(tags) == 0 {
+		return true
+	}
 	if len(g.excludedTags) > 0 {
 		for _, tag := range tags {
 			if utils.Contains(g.excludedTags, tag) {

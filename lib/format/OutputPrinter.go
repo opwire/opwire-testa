@@ -64,6 +64,11 @@ func (w *OutputPrinter) TestCase(title string) string {
 	return fmt.Sprintf("[=] %s", pen(title))
 }
 
+func (w *OutputPrinter) Pending(title string) string {
+	pen := w.GetPen(PendingPen)
+	return fmt.Sprintf("[%s] %s", pen("|"), title)
+}
+
 func (w *OutputPrinter) Skipped(title string) string {
 	pen := w.GetPen(SkippedPen)
 	return fmt.Sprintf("[%s] %s", pen("-"), title)
@@ -121,14 +126,16 @@ func (w *OutputPrinter) GetPen(name PenType) Renderer {
 				pen = color.Style{color.FgYellow}.Render
 			case TestCaseTitlePen:
 				pen = color.Style{color.FgLightYellow}.Render
+			case PendingPen:
+				pen = color.Style{color.FgYellow, color.OpBold}.Render
 			case SkippedPen:
-				pen = color.Style{color.FgYellow}.Render
+				pen = color.Style{color.FgYellow, color.OpBold}.Render
 			case SuccessPen:
-				pen = color.Style{color.FgGreen}.Render
+				pen = color.Style{color.FgGreen, color.OpBold}.Render
 			case FailurePen:
-				pen = color.Style{color.FgRed}.Render
+				pen = color.Style{color.FgRed, color.OpBold}.Render
 			case CrackedPen:
-				pen = color.Style{color.FgRed}.Render
+				pen = color.Style{color.FgRed, color.OpBold}.Render
 			}
 			Pens[name] = pen
 		}
@@ -159,10 +166,11 @@ const (
 	HeadingPen
 	TestSuiteTitlePen
 	TestCaseTitlePen
+	PendingPen
+	SkippedPen
 	SuccessPen
 	FailurePen
 	CrackedPen
-	SkippedPen
 )
 
 var Pens map[PenType]Renderer

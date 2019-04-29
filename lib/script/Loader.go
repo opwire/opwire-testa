@@ -165,7 +165,7 @@ const scriptSchema string = `{
 				"$ref": "#/definitions/TestCase"
 			}
 		},
-		"skipped": {
+		"pending": {
 			"oneOf": [
 				{
 					"type": "null"
@@ -215,7 +215,7 @@ const scriptSchema string = `{
 						}
 					]
 				},
-				"skipped": {
+				"pending": {
 					"oneOf": [
 						{
 							"type": "null"
