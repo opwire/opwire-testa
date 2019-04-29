@@ -14,7 +14,6 @@ import (
 type GenControllerOptions interface {
 	script.Source
 	GetNoColor() bool
-	GetVersion() string
 }
 
 type GenController struct {
@@ -95,7 +94,6 @@ func (c *GenController) Execute(args GenArguments) error {
 
 	// filter invalid descriptors and display errors
 	descriptors, rejected := filterInvalidDescriptors(descriptors)
-
 	for _, d := range rejected {
 		c.outputPrinter.Println(c.outputPrinter.TestSuiteTitle(d.Locator.RelativePath))
 		c.outputPrinter.Println(c.outputPrinter.Section(d.Error.Error()))

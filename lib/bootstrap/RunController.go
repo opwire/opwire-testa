@@ -14,15 +14,12 @@ import (
 
 type RunControllerOptions interface {
 	script.Source
-	GetVersion() string
-	GetRevision() string
 	GetConfigPath() string
 	GetNoColor() bool
 }
 
 type RunController struct {
 	scriptLoader *script.Loader
-	scriptSelector *script.Selector
 	scriptSource script.Source
 	specHandler *engine.SpecHandler
 	tagManager *tag.Manager
@@ -40,11 +37,6 @@ func NewRunController(opts RunControllerOptions) (r *RunController, err error) {
 
 	// create a Script Loader instance
 	r.scriptLoader, err = script.NewLoader(r.scriptSource)
-	if err != nil {
-		return nil, err
-	}
-
-	r.scriptSelector, err = script.NewSelector(r.scriptSource)
 	if err != nil {
 		return nil, err
 	}
@@ -109,17 +101,13 @@ func (r *RunController) Execute(args RunArguments) error {
 	r.outputPrinter.Println(r.outputPrinter.Heading("Loading"))
 
 	// load test specifications
-	allscripts := r.scriptLoader.Load()
+	descriptors := r.scriptLoader.Load()
 
 	// filter invalid descriptors and display errors
-	descriptors := make(map[string]*script.Descriptor, 0)
-	for key, descriptor := range allscripts {
-		if descriptor.Error != nil {
-			r.outputPrinter.Println(r.outputPrinter.TestSuiteTitle(descriptor.Locator.RelativePath))
-			r.outputPrinter.Println(r.outputPrinter.Section(descriptor.Error.Error()))
-		} else {
-			descriptors[key] = descriptor
-		}
+	descriptors, rejected := filterInvalidDescriptors(descriptors)
+	for _, d := range rejected {
+		r.outputPrinter.Println(r.outputPrinter.TestSuiteTitle(d.Locator.RelativePath))
+		r.outputPrinter.Println(r.outputPrinter.Section(d.Error.Error()))
 	}
 
 	// begin testing
