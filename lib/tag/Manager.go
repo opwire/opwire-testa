@@ -1,21 +1,21 @@
-package engine
+package tag
 
 import(
 	"strings"
 	"github.com/opwire/opwire-testa/lib/utils"
 )
 
-type TagManagerOptions interface {
+type ManagerOptions interface {
 	GetConditionalTags() []string
 }
 
-type TagManager struct {
+type Manager struct {
 	includedTags []string
 	excludedTags []string
 }
 
-func NewTagManager(opts TagManagerOptions) (ref *TagManager, err error) {
-	ref = &TagManager{}
+func NewManager(opts ManagerOptions) (ref *Manager, err error) {
+	ref = &Manager{}
 	var conditionalTags []string
 	if opts != nil {
 		conditionalTags = opts.GetConditionalTags()
@@ -24,7 +24,7 @@ func NewTagManager(opts TagManagerOptions) (ref *TagManager, err error) {
 	return ref, err
 }
 
-func (g *TagManager) IsActive(tags []string) bool {
+func (g *Manager) IsActive(tags []string) bool {
 	if len(g.excludedTags) > 0 {
 		for _, tag := range tags {
 			if utils.Contains(g.excludedTags, tag) {
@@ -43,7 +43,7 @@ func (g *TagManager) IsActive(tags []string) bool {
 	return true
 }
 
-func (g *TagManager) Initialize(tagexps []string) {
+func (g *Manager) Initialize(tagexps []string) {
 	pTags := make([]string, 0)
 	nTags := make([]string, 0)
 	for _, tagexp := range tagexps {
@@ -60,10 +60,10 @@ func (g *TagManager) Initialize(tagexps []string) {
 	g.excludedTags = nTags
 }
 
-func (g *TagManager) GetIncludedTags() []string {
+func (g *Manager) GetIncludedTags() []string {
 	return g.includedTags
 }
 
-func (g *TagManager) GetExcludedTags() []string {
+func (g *Manager) GetExcludedTags() []string {
 	return g.excludedTags
 }

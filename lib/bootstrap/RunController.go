@@ -8,6 +8,7 @@ import (
 	"github.com/opwire/opwire-testa/lib/format"
 	"github.com/opwire/opwire-testa/lib/engine"
 	"github.com/opwire/opwire-testa/lib/script"
+	"github.com/opwire/opwire-testa/lib/tag"
 	"github.com/opwire/opwire-testa/lib/utils"
 )
 
@@ -22,7 +23,7 @@ type RunControllerOptions interface {
 type RunController struct {
 	loader *script.Loader
 	specHandler *engine.SpecHandler
-	tagManager *engine.TagManager
+	tagManager *tag.Manager
 	outputPrinter *format.OutputPrinter
 	storage *TestStateStore
 }
@@ -45,8 +46,8 @@ func NewRunController(opts RunControllerOptions) (r *RunController, err error) {
 		return nil, err
 	}
 
-	// create a TagManager instance
-	r.tagManager, err = engine.NewTagManager(opts)
+	// create a Manager instance
+	r.tagManager, err = tag.NewManager(opts)
 	if err != nil {
 		return nil, err
 	}
