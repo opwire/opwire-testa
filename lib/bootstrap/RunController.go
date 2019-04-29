@@ -23,6 +23,13 @@ type RunController struct {
 	tagManager *tag.Manager
 	specHandler *engine.SpecHandler
 	outputPrinter *format.OutputPrinter
+	counter struct{
+		Pending int
+		Skipped int
+		Success int
+		Failure int
+		Cracked int
+	}
 }
 
 func NewRunController(opts RunControllerOptions) (r *RunController, err error) {
@@ -104,9 +111,6 @@ func (r *RunController) Execute(args RunArguments) error {
 	// Run the tests
 	testing.Main(defaultMatchString, internalTests, []testing.InternalBenchmark{}, []testing.InternalExample{})
 
-	// endof testing
-	r.outputPrinter.Println()
-
 	return nil
 }
 
@@ -125,6 +129,7 @@ func (r *RunController) wrapTestSuites(descriptors map[string]*script.Descriptor
 			tests = append(tests, test)
 		}
 	}
+	tests = append(tests, r.summarizeTesting())
 	return tests, nil
 }
 
@@ -153,22 +158,26 @@ func (r *RunController) wrapTestCase(testcase *engine.TestCase) (testing.Interna
 		F: func (t *testing.T) {
 			if testcase.Pending != nil && *testcase.Pending {
 				r.outputPrinter.Println(r.outputPrinter.Pending(testcase.Title))
+				r.counter.Pending += 1
 				return
 			}
 			if !r.scriptSelector.IsMatched(testcase) {
 				label := printUnmatchedPattern(r.outputPrinter, "unmatched")
 				r.outputPrinter.Println(r.outputPrinter.Skipped(testcase.Title), label)
+				r.counter.Skipped += 1
 				return
 			}
 			active, mark := r.tagManager.IsActive(testcase.Tags)
 			tagstr := printMarkedTags(r.outputPrinter, testcase.Tags, mark)
 			if !active {
 				r.outputPrinter.Println(r.outputPrinter.Skipped(testcase.Title), tagstr)
+				r.counter.Skipped += 1
 				return
 			}
 			result, err := r.specHandler.Examine(testcase)
 			if err != nil {
 				r.outputPrinter.Println(r.outputPrinter.Cracked(testcase.Title), tagstr)
+				r.counter.Cracked += 1
 				return
 			}
 			if result != nil && len(result.Errors) > 0 {
@@ -177,9 +186,29 @@ func (r *RunController) wrapTestCase(testcase *engine.TestCase) (testing.Interna
 					r.outputPrinter.Printf(r.outputPrinter.SectionTitle(key))
 					r.outputPrinter.Printf(r.outputPrinter.Section(err.Error()))
 				}
+				r.counter.Failure += 1
 				return
 			}
 			r.outputPrinter.Println(r.outputPrinter.Success(testcase.Title), tagstr)
+			r.counter.Success += 1
+		},
+	}
+}
+
+func (r *RunController) summarizeTesting() (testing.InternalTest) {
+	return testing.InternalTest{
+		Name: "Summary",
+		F: func(t *testing.T) {
+			// summarize testing
+			r.outputPrinter.Println()
+			r.outputPrinter.Println(r.outputPrinter.Heading("Summary"))
+
+			r.outputPrinter.Printf("Pending: %d, Skipped: %d, Cracked: %d, Failed: %d, Passed: %d.",
+				r.counter.Pending, r.counter.Skipped, r.counter.Cracked, r.counter.Success, r.counter.Failure)
+			r.outputPrinter.Println()
+
+			// endof testing
+			r.outputPrinter.Println()
 		},
 	}
 }
