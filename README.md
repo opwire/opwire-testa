@@ -4,6 +4,19 @@
 
 ## Usage
 
+### Download `opwire-testa`
+
+To download the latest `opwire-testa` on Linux/macOS/BSD systems, run:
+
+```shell
+curl https://opwire.org/opwire-testa/install.sh | bash
+```
+
+For other systems:
+
+* Download the relevant [`opwire-testa`](https://github.com/opwire/opwire-testa/releases/latest) release,
+* Extract the `opwire-testa` or `opwire-testa.exe` binary from the archive to project home folder (current directory).
+
 ### Executing tests
 
 #### Command line syntax
