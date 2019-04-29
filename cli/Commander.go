@@ -3,7 +3,6 @@ package cli
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	clp "github.com/urfave/cli"
 	"github.com/opwire/opwire-testa/lib/bootstrap"
 	"github.com/opwire/opwire-testa/lib/utils"
@@ -220,7 +219,6 @@ func (a *ControllerOptions) GetConfigPath() string {
 }
 
 func (a *ControllerOptions) GetTestDirs() []string {
-	a.TestDirs = initDefaultDirs(a.TestDirs)
 	return a.TestDirs
 }
 
@@ -291,14 +289,4 @@ type CmdGenFlags struct {
 
 func (a *CmdGenFlags) GetTestFile() string {
 	return a.TestFile
-}
-
-func initDefaultDirs(testDirs []string) []string {
-	if testDirs == nil || len(testDirs) == 0 {
-		testDir := filepath.Join(utils.FindWorkingDir(), "tests")
-		if utils.IsDir(testDir) {
-			testDirs = []string{testDir}
-		}
-	}
-	return testDirs
 }

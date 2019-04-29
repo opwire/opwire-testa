@@ -1,5 +1,10 @@
 package script
 
+import (
+	"path/filepath"
+	"github.com/opwire/opwire-testa/lib/utils"
+)
+
 type Source interface {
 	GetTestDirs() []string
 	GetTestName() string
@@ -25,6 +30,7 @@ type SourceBuffer struct {
 }
 
 func (a *SourceBuffer) GetTestDirs() []string {
+	a.TestDirs = initDefaultDirs(a.TestDirs)
 	return a.TestDirs
 }
 
@@ -42,4 +48,14 @@ func (a *SourceBuffer) GetTestName() string {
 
 func (a *SourceBuffer) GetConditionalTags() []string {
 	return a.Tags
+}
+
+func initDefaultDirs(testDirs []string) []string {
+	if testDirs == nil || len(testDirs) == 0 {
+		testDir := filepath.Join(utils.FindWorkingDir(), "tests")
+		if utils.IsDir(testDir) {
+			testDirs = []string{testDir}
+		}
+	}
+	return testDirs
 }
