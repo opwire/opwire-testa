@@ -32,6 +32,33 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 		fmt.Fprintf(c.App.Writer, "%s\n", c.App.Version)
 	}
 
+	testSourceFlags := []clp.Flag{
+		clp.StringFlag{
+			Name: "config-path, c",
+			Usage: "Explicit configuration file",
+		},
+		clp.StringSliceFlag{
+			Name: "test-dirs, spec-dirs, d",
+			Usage: "The testcases directories",
+		},
+		clp.StringFlag{
+			Name: "test-file, f",
+			Usage: "Suffix of path to testing script file (.i.e ... your-test.yml)",
+		},
+		clp.StringFlag{
+			Name: "test-name, n",
+			Usage: "Test title/name matching pattern",
+		},
+		clp.StringSliceFlag{
+			Name: "tags, g",
+			Usage: "Conditional tags for selecting tests",
+		},
+		clp.BoolFlag{
+			Name: "no-color",
+			Usage: "Display output in plain text, without color",
+		},
+	}
+
 	app := clp.NewApp()
 	app.Name = "opwire-testa"
 	app.Usage = "Testing toolkit for opwire-agent"
@@ -42,35 +69,9 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 			Name: "run",
 			Aliases: []string{"start"},
 			Usage: "Run the testcases",
-			Flags: []clp.Flag{
-				clp.StringFlag{
-					Name: "config-path, c",
-					Usage: "Explicit configuration file",
-				},
-				clp.StringSliceFlag{
-					Name: "spec-dirs, test-dirs, d",
-					Usage: "The testcases directories",
-				},
-				clp.StringFlag{
-					Name: "test-name, n",
-					Usage: "Test title/name matching pattern",
-				},
-				clp.StringSliceFlag{
-					Name: "tags, g",
-					Usage: "Conditional tags for selecting tests",
-				},
-				clp.BoolFlag{
-					Name: "no-color",
-					Usage: "Display output in plain text, without color",
-				},
-			},
+			Flags: append([]clp.Flag{}, testSourceFlags...),
 			Action: func(c *clp.Context) error {
-				o := &ControllerOptions{ manifest: manifest }
-				o.ConfigPath = c.String("config-path")
-				o.TestDirs = c.StringSlice("test-dirs")
-				o.TestName = c.String("test-name")
-				o.Tags = c.StringSlice("tags")
-				o.NoColor = c.Bool("no-color")
+				o := readScriptSourceFlags(manifest, c)
 				ctl, err := bootstrap.NewRunController(o)
 				if err != nil {
 					return err
@@ -138,39 +139,9 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 				{
 					Name: "curl",
 					Usage: "Generate curl style of a testcase",
-					Flags: []clp.Flag{
-						clp.StringFlag{
-							Name: "config-path, c",
-							Usage: "Explicit configuration file",
-						},
-						clp.StringSliceFlag{
-							Name: "spec-dirs, test-dirs, d",
-							Usage: "The testcases directories",
-						},
-						clp.StringFlag{
-							Name: "test-file, f",
-							Usage: "Suffix of path to testing script file (.i.e ... your-test.yml)",
-						},
-						clp.StringFlag{
-							Name: "test-name, n",
-							Usage: "Test title/name matching pattern",
-						},
-						clp.StringSliceFlag{
-							Name: "tags, g",
-							Usage: "Conditional tags for selecting tests",
-						},
-						clp.BoolFlag{
-							Name: "no-color",
-							Usage: "Display output in plain text, without color",
-						},
-					},
+					Flags: append([]clp.Flag{}, testSourceFlags...),
 					Action: func(c *clp.Context) error {
-						o := &ControllerOptions{ manifest: manifest }
-						o.ConfigPath = c.String("config-path")
-						o.TestDirs = c.StringSlice("test-dirs")
-						o.TestName = c.String("test-name")
-						o.Tags = c.StringSlice("tags")
-						o.NoColor = c.Bool("no-color")
+						o := readScriptSourceFlags(manifest, c)
 						ctl, err := bootstrap.NewGenController(o)
 						if err != nil {
 							return err
@@ -199,6 +170,16 @@ func (c *Commander) Run() error {
 	return c.app.Run(os.Args)
 }
 
+func readScriptSourceFlags(manifest Manifest, c *clp.Context) *ControllerOptions {
+	o := &ControllerOptions{ manifest: manifest }
+	o.ConfigPath = c.String("config-path")
+	o.TestDirs = c.StringSlice("test-dirs")
+	o.TestName = c.String("test-name")
+	o.Tags = c.StringSlice("tags")
+	o.NoColor = c.Bool("no-color")
+	return o
+}
+
 type Manifest interface {
 	GetRevision() string
 	GetVersion() string
@@ -208,6 +189,8 @@ type Manifest interface {
 type ControllerOptions struct {
 	ConfigPath string
 	TestDirs []string
+	InclFiles []string
+	ExclFiles []string
 	TestName string
 	Tags []string
 	NoColor bool
@@ -220,6 +203,14 @@ func (a *ControllerOptions) GetConfigPath() string {
 
 func (a *ControllerOptions) GetTestDirs() []string {
 	return a.TestDirs
+}
+
+func (a *ControllerOptions) GetInclFiles() []string {
+	return a.InclFiles
+}
+
+func (a *ControllerOptions) GetExclFiles() []string {
+	return a.ExclFiles
 }
 
 func (a *ControllerOptions) GetTestName() string {
