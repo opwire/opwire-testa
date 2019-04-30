@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"testing"
+	"time"
 	"github.com/opwire/opwire-testa/lib/format"
 	"github.com/opwire/opwire-testa/lib/engine"
 	"github.com/opwire/opwire-testa/lib/script"
@@ -79,6 +80,9 @@ type RunArguments interface {}
 func (r *RunController) Execute(args RunArguments) error {
 	flag.Set("test.v", "false")
 
+	// start time
+	startTime := time.Now()
+
 	// begin environments
 	r.outputPrinter.Println()
 	r.outputPrinter.Println(r.outputPrinter.Heading("Context"))
@@ -108,6 +112,28 @@ func (r *RunController) Execute(args RunArguments) error {
 		return err2
 	}
 
+	// summary
+	internalTests = append(internalTests, testing.InternalTest{
+		Name: "Summary",
+		F: func(t *testing.T) {
+			// summarize testing
+			r.outputPrinter.Println()
+			r.outputPrinter.Println(r.outputPrinter.Heading("Summary"))
+
+			r.outputPrinter.Printf("[*] Pending: %d, Skipped: %d, Cracked: %d, Failed: %d, Passed: %d",
+				r.counter.Pending, r.counter.Skipped, r.counter.Cracked, r.counter.Success, r.counter.Failure)
+			r.outputPrinter.Println()
+
+			// total elapsed time
+			duration := time.Since(startTime)
+			r.outputPrinter.Printf("[*] Total elapsed time: %s", duration.String())
+			r.outputPrinter.Println()
+
+			// endof testing
+			r.outputPrinter.Println()
+		},
+	})
+
 	// Run the tests
 	testing.Main(defaultMatchString, internalTests, []testing.InternalBenchmark{}, []testing.InternalExample{})
 
@@ -129,7 +155,6 @@ func (r *RunController) wrapTestSuites(descriptors map[string]*script.Descriptor
 			tests = append(tests, test)
 		}
 	}
-	tests = append(tests, r.summarizeTesting())
 	return tests, nil
 }
 
@@ -192,24 +217,6 @@ func (r *RunController) wrapTestCase(testcase *engine.TestCase) (testing.Interna
 			}
 			r.outputPrinter.Println(r.outputPrinter.Success(testcase.Title), tagstr, exectime)
 			r.counter.Success += 1
-		},
-	}
-}
-
-func (r *RunController) summarizeTesting() (testing.InternalTest) {
-	return testing.InternalTest{
-		Name: "Summary",
-		F: func(t *testing.T) {
-			// summarize testing
-			r.outputPrinter.Println()
-			r.outputPrinter.Println(r.outputPrinter.Heading("Summary"))
-
-			r.outputPrinter.Printf("Pending: %d, Skipped: %d, Cracked: %d, Failed: %d, Passed: %d.",
-				r.counter.Pending, r.counter.Skipped, r.counter.Cracked, r.counter.Success, r.counter.Failure)
-			r.outputPrinter.Println()
-
-			// endof testing
-			r.outputPrinter.Println()
 		},
 	}
 }
