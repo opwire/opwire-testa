@@ -175,13 +175,14 @@ func (r *RunController) wrapTestCase(testcase *engine.TestCase) (testing.Interna
 				return
 			}
 			result, err := r.specHandler.Examine(testcase)
+			exectime := printDuration(r.outputPrinter, result.Duration)
 			if err != nil {
-				r.outputPrinter.Println(r.outputPrinter.Cracked(testcase.Title), tagstr)
+				r.outputPrinter.Println(r.outputPrinter.Cracked(testcase.Title), tagstr, exectime)
 				r.counter.Cracked += 1
 				return
 			}
 			if result != nil && len(result.Errors) > 0 {
-				r.outputPrinter.Println(r.outputPrinter.Failure(testcase.Title), tagstr)
+				r.outputPrinter.Println(r.outputPrinter.Failure(testcase.Title), tagstr, exectime)
 				for key, err := range result.Errors {
 					r.outputPrinter.Printf(r.outputPrinter.SectionTitle(key))
 					r.outputPrinter.Printf(r.outputPrinter.Section(err.Error()))
@@ -189,7 +190,7 @@ func (r *RunController) wrapTestCase(testcase *engine.TestCase) (testing.Interna
 				r.counter.Failure += 1
 				return
 			}
-			r.outputPrinter.Println(r.outputPrinter.Success(testcase.Title), tagstr)
+			r.outputPrinter.Println(r.outputPrinter.Success(testcase.Title), tagstr, exectime)
 			r.counter.Success += 1
 		},
 	}

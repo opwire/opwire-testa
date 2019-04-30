@@ -5,6 +5,7 @@ import(
 	"fmt"
 	"reflect"
 	"strings"
+	"time"
 	"github.com/google/go-cmp/cmp"
 	"github.com/opwire/opwire-testa/lib/utils"
 )
@@ -38,9 +39,13 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 		return result, nil
 	}
 
+	// start time
+	startTime := time.Now()
+
 	// make the testing request
 	res, err := e.invoker.Do(testcase.Request)
 	if err != nil {
+		result.Duration = time.Since(startTime)
 		return nil, err
 	}
 	result.Response = res
@@ -128,6 +133,7 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 		result.Status = "error"
 	}
 
+	result.Duration = time.Since(startTime)
 	return result, nil
 }
 
@@ -183,6 +189,7 @@ type MeasureBody struct {
 }
 
 type ExaminationResult struct {
+	Duration time.Duration
 	Errors map[string]error
 	Response *HttpResponse
 	Status string

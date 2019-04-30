@@ -3,6 +3,7 @@ package bootstrap
 import (
 	"path/filepath"
 	"strings"
+	"time"
 	"github.com/opwire/opwire-testa/lib/format"
 	"github.com/opwire/opwire-testa/lib/script"
 	"github.com/opwire/opwire-testa/lib/tag"
@@ -34,9 +35,13 @@ func printMarkedTags(outputPrinter *format.OutputPrinter, tags []string, mark ma
 			}
 			return outputPrinter.RegularTag(tag)
 		})
-		return "(" + strings.Join(tags, ", ") + ")"
+		return "(tags: " + strings.Join(tags, ", ") + ")"
 	}
 	return ""
+}
+
+func printDuration(outputPrinter *format.OutputPrinter, duration time.Duration) string {
+	return "/ " + duration.String()
 }
 
 func printScriptSourceArgs(outputPrinter *format.OutputPrinter, scriptSource script.Source, scriptSelector *script.Selector, tagManager *tag.Manager) {
