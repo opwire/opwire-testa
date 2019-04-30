@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"reflect"
 	"time"
 	"gopkg.in/yaml.v2"
 	"github.com/opwire/opwire-testa/lib/utils"
@@ -125,6 +126,23 @@ func (g *SpecGenerator) generateExpectation(res *HttpResponse) *Expectation {
 		e.Body.HasFormat = utils.RefOfString("flat")
 		e.Body.IsEqualTo = utils.RefOfString(string(res.Body))
 		e.Body.MatchWith = utils.RefOfString(".*")
+	}
+
+	// body fields
+
+	if len(obj) > 0 {
+		flatten, _ := utils.Flatten("", obj)
+		fields := make([]MeasureBodyField, 0)
+		for key, val := range flatten {
+			if val != nil {
+				fields = append(fields, MeasureBodyField{
+					Path: utils.RefOfString(key),
+					Type: utils.RefOfString(reflect.TypeOf(val).String()),
+					Value: val,
+				})
+			}
+		}
+		e.Body.Fields = fields
 	}
 
 	return e

@@ -186,6 +186,13 @@ type MeasureBody struct {
 	Includes *string `yaml:"includes,omitempty" json:"includes"`
 	IsEqualTo *string `yaml:"is-equal-to,omitempty" json:"is-equal-to"`
 	MatchWith *string `yaml:"match-with,omitempty" json:"match-with"`
+	Fields []MeasureBodyField `yaml:"fields,omitempty" json:"fields"`
+}
+
+type MeasureBodyField struct {
+	Path *string `yaml:"path,omitempty" json:"path"`
+	Type *string `yaml:"type,omitempty" json:"type"`
+	Value interface{} `yaml:"value,omitempty" json:"value"`
 }
 
 type ExaminationResult struct {
