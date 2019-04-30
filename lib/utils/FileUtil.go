@@ -2,19 +2,21 @@ package utils
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
+	"github.com/opwire/opwire-testa/lib/storage"
 )
 
 func IsDir(name string) bool {
-	if stat, err := os.Stat(name); !os.IsNotExist(err) {
+	fs := storage.GetFs()
+	if stat, err := fs.Stat(name); !fs.IsNotExist(err) {
 		return stat.IsDir()
 	}
 	return false
 }
 
 func FindWorkingDir() string {
-	dir, err := os.Getwd()
+	fs := storage.GetFs()
+	dir, err := fs.Getwd()
 	if err != nil {
 		return ""
 	}

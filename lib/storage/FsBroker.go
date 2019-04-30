@@ -24,6 +24,8 @@ type File interface {
 type Fs interface {
 	Open(name string) (File, error)
 	Stat(name string) (os.FileInfo, error)
+	IsNotExist(err error) bool
+	Getwd() (dir string, err error)
 }
 
 type OsFs struct {}
