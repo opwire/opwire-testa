@@ -9,7 +9,7 @@ import (
 	"gopkg.in/yaml.v2"
 	"github.com/opwire/opwire-testa/lib/engine"
 	"github.com/opwire/opwire-testa/lib/schema"
-	"github.com/opwire/opwire-testa/lib/storages"
+	"github.com/opwire/opwire-testa/lib/storage"
 	"github.com/opwire/opwire-testa/lib/utils"
 )
 
@@ -64,7 +64,7 @@ func (l *Loader) LoadFile(locator *Locator) (*Descriptor) {
 	// load Test Suite from path
 	testsuite := &engine.TestSuite{}
 
-	fs := storages.GetFs()
+	fs := storage.GetFs()
 	file, err1 := fs.Open(locator.AbsolutePath)
 	if file != nil {
 		defer file.Close()

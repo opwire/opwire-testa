@@ -1,4 +1,4 @@
-package storages
+package storage
 
 import (
 	"io"
@@ -34,6 +34,14 @@ func (fs *OsFs) Open(name string) (File, error) {
 
 func (fs *OsFs) Stat(name string) (os.FileInfo, error) {
 	return os.Stat(name)
+}
+
+func (fs *OsFs) IsNotExist(err error) bool {
+	return os.IsNotExist(err)
+}
+
+func (fs *OsFs) Getwd() (dir string, err error) {
+	return os.Getwd()
 }
 
 func NewOsFs() *OsFs {
