@@ -6,6 +6,7 @@ import(
 	"reflect"
 	"strings"
 	"time"
+	"gopkg.in/yaml.v2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/opwire/opwire-testa/lib/utils"
 )
@@ -88,35 +89,36 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 					}
 				}
 			}
-			if *_eb.HasFormat == "json" {
-				var receivedJSON, expectedJSON interface{}
+			if *_eb.HasFormat == "json" || *_eb.HasFormat == "yaml" {
+				var format string = *_eb.HasFormat
+				var receivedObj, expectedObj map[string]interface{}
 				next := true
 				if (res.Body == nil) {
-					errors["Body/receivedJSON"] = fmt.Errorf("Response body is empty (invalid JSON)")
+					errors["Body/receivedObj"] = fmt.Errorf("Response body is empty (invalid %s)", format)
 					next = false
-				} else if err := json.Unmarshal(res.Body, &receivedJSON); err != nil {
-					errors["Body/receivedJSON"] = fmt.Errorf("Invalid response content: %s", err)
+				} else if err := Unmarshal(format, res.Body, &receivedObj); err != nil {
+					errors["Body/receivedObj"] = fmt.Errorf("Invalid response content: %s", err)
 					next = false
 				}
 				if next && _eb.IsEqualTo != nil {
-					if err := json.Unmarshal([]byte(*_eb.IsEqualTo), &expectedJSON); err != nil {
-						errors["Body/expectedJSON"] = fmt.Errorf("Invalid expected content: %s", err)
+					if err := Unmarshal(format, []byte(*_eb.IsEqualTo), &expectedObj); err != nil {
+						errors["Body/expectedObj"] = fmt.Errorf("Invalid expected content: %s", err)
 						next = false
 					}
 					if next {
-						if diff := cmp.Diff(expectedJSON, receivedJSON); diff != "" {
+						if diff := cmp.Diff(expectedObj, receivedObj); diff != "" {
 							errors["Body/IsEqualTo"] = fmt.Errorf("Body mismatch (-expected +received):\n%s", diff)
 						}
 					}
 				}
 				if next && _eb.Includes != nil {
-					if err := json.Unmarshal([]byte(*_eb.Includes), &expectedJSON); err != nil {
-						errors["Body/expectedJSON"] = fmt.Errorf("Invalid expected content: %s", err)
+					if err := Unmarshal(format, []byte(*_eb.Includes), &expectedObj); err != nil {
+						errors["Body/expectedObj"] = fmt.Errorf("Invalid expected content: %s", err)
 						next = false
 					}
 					if next {
 						var r DiffReporter
-						diff := cmp.Diff(expectedJSON, receivedJSON, cmp.Reporter(&r))
+						diff := cmp.Diff(expectedObj, receivedObj, cmp.Reporter(&r))
 						if r.HasDiffs() {
 							errors["Body/Includes"] = fmt.Errorf("Body mismatch (-expected +received):\n%s", diff)
 						}
@@ -124,8 +126,7 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 				}
 				if next && len(_eb.Fields) > 0 {
 					eFields := _eb.Fields
-					sourceJSON := receivedJSON.(map[string]interface{})
-					rFields, _ := utils.Flatten("", sourceJSON)
+					rFields, _ := utils.Flatten("", receivedObj)
 					for _, eField := range eFields {
 						eValue := eField.Value
 						if rValue, ok := rFields[*eField.Path]; ok {
@@ -150,6 +151,16 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 
 	result.Duration = time.Since(startTime)
 	return result, nil
+}
+
+func Unmarshal(format string, source []byte, target interface{}) error {
+	if format == "json" {
+		return json.Unmarshal(source, target)
+	}
+	if format == "yaml" {
+		return yaml.Unmarshal(source, target)
+	}
+	return fmt.Errorf("Invalid body format: %s", format)
 }
 
 func IsEqual(rVal, eVal interface{}) bool {
