@@ -122,6 +122,21 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 						}
 					}
 				}
+				if next && len(_eb.Fields) > 0 {
+					eFields := _eb.Fields
+					sourceJSON := receivedJSON.(map[string]interface{})
+					rFields, _ := utils.Flatten("", sourceJSON)
+					for _, eField := range eFields {
+						eValue := eField.Value
+						if rValue, ok := rFields[*eField.Path]; ok {
+							if !IsEqual(rValue, eValue) {
+								errors["Body/Fields/" + *eField.Path] = fmt.Errorf("Field mismatch expected: %v / received: %v", eValue, rValue)
+							}
+						} else {
+							errors["Body/Fields/" + *eField.Path] = fmt.Errorf("Field not found, expected: %v", eValue)
+						}
+					}
+				}
 			}
 		}
 	}
@@ -135,6 +150,20 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 
 	result.Duration = time.Since(startTime)
 	return result, nil
+}
+
+func IsEqual(rVal, eVal interface{}) bool {
+	result := (rVal == eVal)
+	if result {
+		return result
+	}
+	rStr := fmt.Sprintf("%v", rVal)
+	eStr := fmt.Sprintf("%v", eVal)
+	return rStr == eStr
+}
+
+func VariableInfo(label string, val interface{}) {
+	fmt.Printf(" - %s: [%v], type: %s\n", label, val, reflect.ValueOf(val).Type().String())
 }
 
 type TestSuite struct {
@@ -191,7 +220,6 @@ type MeasureBody struct {
 
 type MeasureBodyField struct {
 	Path *string `yaml:"path,omitempty" json:"path"`
-	Type *string `yaml:"type,omitempty" json:"type"`
 	Value interface{} `yaml:"value,omitempty" json:"value"`
 }
 
