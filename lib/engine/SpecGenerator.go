@@ -94,9 +94,6 @@ func (g *SpecGenerator) generateExpectation(res *HttpResponse) *Expectation {
 				count = count + 1
 			}
 		}
-		if count > 0 {
-			e.Headers.Total.Is.GTE = &count
-		}
 	}
 
 	// body

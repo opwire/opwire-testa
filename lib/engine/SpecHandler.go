@@ -70,6 +70,15 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 		}
 		_hs := expect.Headers
 		if _hs != nil {
+			if _hs.Total != nil && _hs.Total.Is != nil {
+				headerTotal := len(res.Header)
+				totalIs := _hs.Total.Is
+				if totalIs.EqualTo != nil {
+					if !IsEqual(headerTotal, totalIs.EqualTo) {
+						errors["Header/Total"] = fmt.Errorf("Total of headers (%d) mismatchs with expected number (%v)", headerTotal, totalIs.EqualTo)
+					}
+				}
+			}
 			if _hs.Items != nil {
 				for _, item := range _hs.Items {
 					headerVal := res.Header.Get(*item.Name)
