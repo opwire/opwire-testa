@@ -306,7 +306,7 @@ const scriptSchema string = `{
 											"type": "null"
 										},
 										{
-											"$ref": "#/definitions/EquivalentOperator"
+											"$ref": "#/definitions/ComparisonOperators"
 										}
 									]
 								}
@@ -337,7 +337,7 @@ const scriptSchema string = `{
 															"type": "null"
 														},
 														{
-															"$ref": "#/definitions/ComparisonOperator4Number"
+															"$ref": "#/definitions/IntegerComparators"
 														}
 													]
 												}
@@ -365,7 +365,7 @@ const scriptSchema string = `{
 																"type": "null"
 															},
 															{
-																"$ref": "#/definitions/EquivalentOperator"
+																"$ref": "#/definitions/ComparisonOperators"
 															}
 														]
 													}
@@ -452,7 +452,7 @@ const scriptSchema string = `{
 																		"type": "null"
 																	},
 																	{
-																		"$ref": "#/definitions/EquivalentOperator"
+																		"$ref": "#/definitions/ComparisonOperators"
 																	}
 																]
 															}
@@ -471,7 +471,7 @@ const scriptSchema string = `{
 				}
 			}
 		},
-		"ComparisonOperator4Number": {
+		"IntegerComparators": {
 			"type": "object",
 			"properties": {
 				"equal-to": {
@@ -483,6 +483,9 @@ const scriptSchema string = `{
 							"type": "integer"
 						}
 					]
+				},
+				"not-equal-to": {
+					"type": "null"
 				},
 				"lt": {
 					"oneOf": [
@@ -523,11 +526,14 @@ const scriptSchema string = `{
 							"type": "integer"
 						}
 					]
+				},
+				"contained-in": {
+					"type": "null"
 				}
 			},
 			"additionalProperties": false
 		},
-		"EquivalentOperator": {
+		"ComparisonOperators": {
 			"type": "object",
 			"properties": {
 				"equal-to": {
@@ -537,6 +543,74 @@ const scriptSchema string = `{
 						},
 						{
 							"type": "boolean"
+						},
+						{
+							"type": "number"
+						},
+						{
+							"type": "string"
+						}
+					]
+				},
+				"not-equal-to": {
+					"oneOf": [
+						{
+							"type": "null"
+						},
+						{
+							"type": "boolean"
+						},
+						{
+							"type": "number"
+						},
+						{
+							"type": "string"
+						}
+					]
+				},
+				"lt": {
+					"oneOf": [
+						{
+							"type": "null"
+						},
+						{
+							"type": "number"
+						},
+						{
+							"type": "string"
+						}
+					]
+				},
+				"lte": {
+					"oneOf": [
+						{
+							"type": "null"
+						},
+						{
+							"type": "number"
+						},
+						{
+							"type": "string"
+						}
+					]
+				},
+				"gt": {
+					"oneOf": [
+						{
+							"type": "null"
+						},
+						{
+							"type": "number"
+						},
+						{
+							"type": "string"
+						}
+					]
+				},
+				"gte": {
+					"oneOf": [
+						{
+							"type": "null"
 						},
 						{
 							"type": "number"

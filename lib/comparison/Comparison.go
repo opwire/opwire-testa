@@ -31,4 +31,3 @@ func BelongsTo(val interface{}, list []interface{}) bool {
 func VariableInfo(label string, val interface{}) {
 	fmt.Printf(" - %s: [%v], type: %s\n", label, val, reflect.ValueOf(val).Type().String())
 }
-

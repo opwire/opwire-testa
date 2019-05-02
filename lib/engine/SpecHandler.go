@@ -196,7 +196,7 @@ type Expectation struct {
 }
 
 type MeasureStatusCode struct {
-	Is *EquivalentOperator `yaml:"is,omitempty" json:"is"`
+	Is *ComparisonOperators `yaml:"is,omitempty" json:"is"`
 }
 
 type MeasureHeaders struct {
@@ -205,20 +205,22 @@ type MeasureHeaders struct {
 }
 
 type MeasureTotal struct {
-	Is *ComparisonOperator `yaml:"is,omitempty" json:"is"`
+	Is *ComparisonOperators `yaml:"is,omitempty" json:"is"`
 }
 
-type ComparisonOperator struct {
+type ComparisonOperators struct {
 	EqualTo interface{} `yaml:"equal-to,omitempty" json:"equal-to"`
+	NotEqualTo interface{} `yaml:"not-equal-to,omitempty" json:"not-equal-to"`
 	LT interface{} `yaml:"lt,omitempty" json:"lt"`
 	LTE interface{} `yaml:"lte,omitempty" json:"lte"`
 	GT interface{} `yaml:"gt,omitempty" json:"gt"`
 	GTE interface{} `yaml:"gte,omitempty" json:"gte"`
+	ContainedIn []interface{} `yaml:"contained-in,omitempty" json:"contained-in"`
 }
 
 type MeasureHeader struct {
 	Name *string `yaml:"name" json:"name"`
-	Is *EquivalentOperator `yaml:"is,omitempty" json:"is"`
+	Is *ComparisonOperators `yaml:"is,omitempty" json:"is"`
 }
 
 type MeasureBody struct {
@@ -231,12 +233,7 @@ type MeasureBody struct {
 
 type MeasureBodyField struct {
 	Path *string `yaml:"path,omitempty" json:"path"`
-	Is *EquivalentOperator `yaml:"is,omitempty" json:"is"`
-}
-
-type EquivalentOperator struct {
-	EqualTo interface{} `yaml:"equal-to,omitempty" json:"equal-to"`
-	ContainedIn []interface{} `yaml:"contained-in,omitempty" json:"contained-in"`
+	Is *ComparisonOperators `yaml:"is,omitempty" json:"is"`
 }
 
 type ExaminationResult struct {

@@ -59,7 +59,7 @@ func (g *SpecGenerator) generateExpectation(res *HttpResponse) *Expectation {
 	// status-code
 	sc := res.StatusCode
 	e.StatusCode = &MeasureStatusCode{
-		Is: &EquivalentOperator{
+		Is: &ComparisonOperators{
 			EqualTo: &sc,
 			ContainedIn: []interface{}{sc},
 		},
@@ -70,7 +70,7 @@ func (g *SpecGenerator) generateExpectation(res *HttpResponse) *Expectation {
 	if total > 0 {
 		e.Headers = &MeasureHeaders{
 			Total: &MeasureTotal{
-				Is: &ComparisonOperator{
+				Is: &ComparisonOperators{
 					EqualTo: &total,
 				},
 			},
@@ -86,7 +86,7 @@ func (g *SpecGenerator) generateExpectation(res *HttpResponse) *Expectation {
 				value := vals[0]
 				one := MeasureHeader{
 					Name: &name,
-					Is: &EquivalentOperator{
+					Is: &ComparisonOperators{
 						EqualTo: &value,
 					},
 				}
@@ -140,7 +140,7 @@ func (g *SpecGenerator) generateExpectation(res *HttpResponse) *Expectation {
 			if val != nil {
 				fields = append(fields, MeasureBodyField{
 					Path: utils.RefOfString(key),
-					Is: &EquivalentOperator{
+					Is: &ComparisonOperators{
 						EqualTo: val,
 					},
 				})
