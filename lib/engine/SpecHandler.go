@@ -89,8 +89,9 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 			}
 		}
 		_eb := expect.Body
-		if _eb != nil {
-			if *_eb.HasFormat == "flat" {
+		if _eb != nil && _eb.HasFormat != nil {
+			var format string = *_eb.HasFormat
+			if format == "flat" {
 				if _eb.IsEqualTo != nil {
 					_rb := string(res.Body)
 					if res.Body == nil || _rb != *_eb.IsEqualTo {
@@ -98,8 +99,7 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 					}
 				}
 			}
-			if *_eb.HasFormat == "json" || *_eb.HasFormat == "yaml" {
-				var format string = *_eb.HasFormat
+			if format == "json" || format == "yaml" {
 				var receivedObj, expectedObj map[string]interface{}
 				next := true
 				if (res.Body == nil) {

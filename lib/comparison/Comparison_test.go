@@ -5,8 +5,8 @@ import(
 	"github.com/stretchr/testify/assert"
 )
 
-func TestConvertNumber(t *testing.T) {
-	t.Run("Ok", func(t *testing.T) {
+func TestIsEqual(t *testing.T) {
+	t.Run("Numbers comparison", func(t *testing.T) {
 		assert.True(t, IsEqual(nil, nil))
 
 		var b bool = false
