@@ -3,11 +3,11 @@ package engine
 import(
 	"encoding/json"
 	"fmt"
-	"reflect"
 	"strings"
 	"time"
 	"gopkg.in/yaml.v2"
 	"github.com/google/go-cmp/cmp"
+	"github.com/opwire/opwire-testa/lib/comparison"
 	"github.com/opwire/opwire-testa/lib/utils"
 )
 
@@ -58,12 +58,12 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 		_sc := expect.StatusCode
 		if _sc != nil && _sc.Is != nil {
 			if _sc.Is.EqualTo != nil {
-				if !IsEqual(res.StatusCode, _sc.Is.EqualTo) {
+				if !comparison.IsEqual(res.StatusCode, _sc.Is.EqualTo) {
 					errors["StatusCode"] = fmt.Errorf("Response StatusCode [%d] is not equal to expected value [%v]", res.StatusCode, _sc.Is.EqualTo)
 				}
 			}
 			if _sc.Is.ContainedIn != nil {
-				if BelongsTo(res.StatusCode, _sc.Is.ContainedIn) {
+				if comparison.BelongsTo(res.StatusCode, _sc.Is.ContainedIn) {
 					errors["StatusCode"] = fmt.Errorf("Response StatusCode [%d] does not belong to expected list %v", res.StatusCode, _sc.Is.ContainedIn)
 				}
 			}
@@ -74,7 +74,7 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 				headerTotal := len(res.Header)
 				totalIs := _hs.Total.Is
 				if totalIs.EqualTo != nil {
-					if !IsEqual(headerTotal, totalIs.EqualTo) {
+					if !comparison.IsEqual(headerTotal, totalIs.EqualTo) {
 						errors["Header/Total"] = fmt.Errorf("Total of headers (%d) mismatchs with expected number (%v)", headerTotal, totalIs.EqualTo)
 					}
 				}
@@ -82,7 +82,7 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 			if _hs.Items != nil {
 				for _, item := range _hs.Items {
 					headerVal := res.Header.Get(*item.Name)
-					if item.Is != nil && item.Is.EqualTo != nil && !IsEqual(item.Is.EqualTo, headerVal) {
+					if item.Is != nil && item.Is.EqualTo != nil && !comparison.IsEqual(item.Is.EqualTo, headerVal) {
 						errors[fmt.Sprintf("Header[%s]", *item.Name)] = fmt.Errorf("Returned value: [%s] is mismatched with expected: [%s]", headerVal, item.Is.EqualTo)
 					}
 				}
@@ -140,7 +140,7 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 						if eField.Is != nil && eField.Is.EqualTo != nil {
 							eValue := eField.Is.EqualTo
 							if rValue, ok := rFields[*eField.Path]; ok {
-								if !IsEqual(rValue, eValue) {
+								if !comparison.IsEqual(rValue, eValue) {
 									errors["Body/Fields/" + *eField.Path] = fmt.Errorf("Field mismatch expected: %v / received: %v", eValue, rValue)
 								}
 							} else {
@@ -172,29 +172,6 @@ func Unmarshal(format string, source []byte, target interface{}) error {
 		return yaml.Unmarshal(source, target)
 	}
 	return fmt.Errorf("Invalid body format: %s", format)
-}
-
-func IsEqual(rVal, eVal interface{}) bool {
-	result := (rVal == eVal)
-	if result {
-		return result
-	}
-	rStr := fmt.Sprintf("%v", rVal)
-	eStr := fmt.Sprintf("%v", eVal)
-	return rStr == eStr
-}
-
-func BelongsTo(val interface{}, list []interface{}) bool {
-	for _, item := range list {
-		if IsEqual(val, item) {
-			return true
-		}
-	}
-	return false
-}
-
-func VariableInfo(label string, val interface{}) {
-	fmt.Printf(" - %s: [%v], type: %s\n", label, val, reflect.ValueOf(val).Type().String())
 }
 
 type TestSuite struct {
@@ -281,7 +258,7 @@ func (r *DiffReporter) PushStep(ps cmp.PathStep) {
 func (r *DiffReporter) Report(rs cmp.Result) {
 	if !rs.Equal() {
 		vx, vy := r.path.Last().Values()
-		if !IsZero(vx) {
+		if !comparison.IsZero(vx) {
 			r.diffs = append(r.diffs, fmt.Sprintf("%#v:\n\t-: %+v\n\t+: %+v\n", r.path, vx, vy))
 		}
 	}
@@ -301,8 +278,4 @@ func (r *DiffReporter) HasDiffs() bool {
 
 func (r *DiffReporter) GetDiffs() []string {
 	return r.diffs
-}
-
-func IsZero(v reflect.Value) bool {
-	return !v.IsValid() || reflect.DeepEqual(v.Interface(), reflect.Zero(v.Type()).Interface())
 }
