@@ -56,15 +56,15 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 	expect := testcase.Expectation
 	if expect != nil {
 		_sc := expect.StatusCode
-		if _sc != nil {
-			if _sc.IsEqualTo != nil {
-				if res.StatusCode != *_sc.IsEqualTo {
-					errors["StatusCode"] = fmt.Errorf("Response StatusCode [%d] is not equal to expected value [%d]", res.StatusCode, *_sc.IsEqualTo)
+		if _sc != nil && _sc.Is != nil {
+			if _sc.Is.EqualTo != nil {
+				if !IsEqual(res.StatusCode, _sc.Is.EqualTo) {
+					errors["StatusCode"] = fmt.Errorf("Response StatusCode [%d] is not equal to expected value [%v]", res.StatusCode, _sc.Is.EqualTo)
 				}
 			}
-			if _sc.BelongsTo != nil {
-				if !utils.ContainsInt(_sc.BelongsTo, res.StatusCode) {
-					errors["StatusCode"] = fmt.Errorf("Response StatusCode [%d] does not belong to expected list %v", res.StatusCode, _sc.BelongsTo)
+			if _sc.Is.ContainedIn != nil {
+				if BelongsTo(res.StatusCode, _sc.Is.ContainedIn) {
+					errors["StatusCode"] = fmt.Errorf("Response StatusCode [%d] does not belong to expected list %v", res.StatusCode, _sc.Is.ContainedIn)
 				}
 			}
 		}
@@ -73,8 +73,8 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 			if _hs.Items != nil {
 				for _, item := range _hs.Items {
 					headerVal := res.Header.Get(*item.Name)
-					if item.IsEqualTo != nil && *item.IsEqualTo != headerVal {
-						errors[fmt.Sprintf("Header[%s]", *item.Name)] = fmt.Errorf("Returned value: [%s] is mismatched with expected: [%s]", headerVal, *item.IsEqualTo)
+					if item.Is != nil && item.Is.EqualTo != nil && !IsEqual(item.Is.EqualTo, headerVal) {
+						errors[fmt.Sprintf("Header[%s]", *item.Name)] = fmt.Errorf("Returned value: [%s] is mismatched with expected: [%s]", headerVal, item.Is.EqualTo)
 					}
 				}
 			}
@@ -128,13 +128,15 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 					eFields := _eb.Fields
 					rFields, _ := utils.Flatten("", receivedObj)
 					for _, eField := range eFields {
-						eValue := eField.Value
-						if rValue, ok := rFields[*eField.Path]; ok {
-							if !IsEqual(rValue, eValue) {
-								errors["Body/Fields/" + *eField.Path] = fmt.Errorf("Field mismatch expected: %v / received: %v", eValue, rValue)
+						if eField.Is != nil && eField.Is.EqualTo != nil {
+							eValue := eField.Is.EqualTo
+							if rValue, ok := rFields[*eField.Path]; ok {
+								if !IsEqual(rValue, eValue) {
+									errors["Body/Fields/" + *eField.Path] = fmt.Errorf("Field mismatch expected: %v / received: %v", eValue, rValue)
+								}
+							} else {
+								errors["Body/Fields/" + *eField.Path] = fmt.Errorf("Field not found, expected: %v", eValue)
 							}
-						} else {
-							errors["Body/Fields/" + *eField.Path] = fmt.Errorf("Field not found, expected: %v", eValue)
 						}
 					}
 				}
@@ -173,6 +175,15 @@ func IsEqual(rVal, eVal interface{}) bool {
 	return rStr == eStr
 }
 
+func BelongsTo(val interface{}, list []interface{}) bool {
+	for _, item := range list {
+		if IsEqual(val, item) {
+			return true
+		}
+	}
+	return false
+}
+
 func VariableInfo(label string, val interface{}) {
 	fmt.Printf(" - %s: [%v], type: %s\n", label, val, reflect.ValueOf(val).Type().String())
 }
@@ -199,26 +210,29 @@ type Expectation struct {
 }
 
 type MeasureStatusCode struct {
-	IsEqualTo *int `yaml:"is-equal-to,omitempty" json:"is-equal-to"`
-	BelongsTo []int `yaml:"belongs-to,omitempty" json:"belongs-to"`
+	Is *EquivalentOperator `yaml:"is,omitempty" json:"is"`
 }
 
 type MeasureHeaders struct {
-	Total *MeasureNumber `yaml:"total,omitempty" json:"total"`
+	Total *MeasureTotal `yaml:"total,omitempty" json:"total"`
 	Items []MeasureHeader `yaml:"items,omitempty" json:"items"`
 }
 
-type MeasureNumber struct {
-	IsEqualTo *int `yaml:"is-equal-to,omitempty" json:"is-equal-to"`
-	IsLT *int `yaml:"is-lt,omitempty" json:"is-lt"`
-	IsLTE *int `yaml:"is-lte,omitempty" json:"is-lte"`
-	IsGT *int `yaml:"is-gt,omitempty" json:"is-gt"`
-	IsGTE *int `yaml:"is-gte,omitempty" json:"is-gte"`
+type MeasureTotal struct {
+	Is *ComparisonOperator `yaml:"is,omitempty" json:"is"`
+}
+
+type ComparisonOperator struct {
+	EqualTo interface{} `yaml:"equal-to,omitempty" json:"equal-to"`
+	LT interface{} `yaml:"lt,omitempty" json:"lt"`
+	LTE interface{} `yaml:"lte,omitempty" json:"lte"`
+	GT interface{} `yaml:"gt,omitempty" json:"gt"`
+	GTE interface{} `yaml:"gte,omitempty" json:"gte"`
 }
 
 type MeasureHeader struct {
 	Name *string `yaml:"name" json:"name"`
-	IsEqualTo *string `yaml:"is-equal-to" json:"is-equal-to"`
+	Is *EquivalentOperator `yaml:"is,omitempty" json:"is"`
 }
 
 type MeasureBody struct {
@@ -231,7 +245,12 @@ type MeasureBody struct {
 
 type MeasureBodyField struct {
 	Path *string `yaml:"path,omitempty" json:"path"`
-	Value interface{} `yaml:"value,omitempty" json:"value"`
+	Is *EquivalentOperator `yaml:"is,omitempty" json:"is"`
+}
+
+type EquivalentOperator struct {
+	EqualTo interface{} `yaml:"equal-to,omitempty" json:"equal-to"`
+	ContainedIn []interface{} `yaml:"contained-in,omitempty" json:"contained-in"`
 }
 
 type ExaminationResult struct {

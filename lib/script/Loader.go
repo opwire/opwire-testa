@@ -300,30 +300,18 @@ const scriptSchema string = `{
 						{
 							"type": "object",
 							"properties": {
-								"is-equal-to": {
+								"is": {
 									"oneOf": [
 										{
 											"type": "null"
 										},
 										{
-											"type": "integer"
-										}
-									]
-								},
-								"belongs-to": {
-									"oneOf": [
-										{
-											"type": "null"
-										},
-										{
-											"type": "array",
-											"items": {
-												"type": "integer"
-											}
+											"$ref": "#/definitions/EquivalentOperator"
 										}
 									]
 								}
-							}
+							},
+							"additionalProperties": false
 						}
 					]
 				},
@@ -341,17 +329,20 @@ const scriptSchema string = `{
 											"type": "null"
 										},
 										{
-											"$ref": "#/definitions/IntegerComparator"
-										}
-									]
-								},
-								"has-total": {
-									"oneOf": [
-										{
-											"type": "null"
-										},
-										{
-											"type": "integer"
+											"type": "object",
+											"properties": {
+												"is": {
+													"oneOf": [
+														{
+															"type": "null"
+														},
+														{
+															"$ref": "#/definitions/ComparisonOperator4Number"
+														}
+													]
+												}
+											},
+											"additionalProperties": false
 										}
 									]
 								},
@@ -368,17 +359,18 @@ const scriptSchema string = `{
 													"name": {
 														"type": "string"
 													},
-													"is-equal-to": {
+													"is": {
 														"oneOf": [
 															{
 																"type": "null"
 															},
 															{
-																"type": "string"
+																"$ref": "#/definitions/EquivalentOperator"
 															}
 														]
 													}
-												}
+												},
+												"additionalProperties": false
 											}
 										}
 									]
@@ -435,17 +427,54 @@ const scriptSchema string = `{
 											"type": "string"
 										}
 									]
+								},
+								"fields": {
+									"oneOf": [
+										{
+											"type": "null"
+										},
+										{
+											"type": "array",
+											"items": {
+												"oneOf": [
+													{
+														"type": "null"
+													},
+													{
+														"type": "object",
+														"properties": {
+															"path": {
+																"type": "string"
+															},
+															"is": {
+																"oneOf": [
+																	{
+																		"type": "null"
+																	},
+																	{
+																		"$ref": "#/definitions/EquivalentOperator"
+																	}
+																]
+															}
+														},
+														"additionalProperties": false
+													}
+												]
+											}
+										}
+									]
 								}
-							}
+							},
+							"additionalProperties": false
 						}
 					]
 				}
 			}
 		},
-		"IntegerComparator": {
+		"ComparisonOperator4Number": {
 			"type": "object",
 			"properties": {
-				"is-equal-to": {
+				"equal-to": {
 					"oneOf": [
 						{
 							"type": "null"
@@ -455,7 +484,7 @@ const scriptSchema string = `{
 						}
 					]
 				},
-				"is-lt": {
+				"lt": {
 					"oneOf": [
 						{
 							"type": "null"
@@ -465,7 +494,7 @@ const scriptSchema string = `{
 						}
 					]
 				},
-				"is-lte": {
+				"lte": {
 					"oneOf": [
 						{
 							"type": "null"
@@ -475,7 +504,7 @@ const scriptSchema string = `{
 						}
 					]
 				},
-				"is-gt": {
+				"gt": {
 					"oneOf": [
 						{
 							"type": "null"
@@ -485,7 +514,7 @@ const scriptSchema string = `{
 						}
 					]
 				},
-				"is-gte": {
+				"gte": {
 					"oneOf": [
 						{
 							"type": "null"
@@ -495,7 +524,53 @@ const scriptSchema string = `{
 						}
 					]
 				}
-			}
+			},
+			"additionalProperties": false
+		},
+		"EquivalentOperator": {
+			"type": "object",
+			"properties": {
+				"equal-to": {
+					"oneOf": [
+						{
+							"type": "null"
+						},
+						{
+							"type": "boolean"
+						},
+						{
+							"type": "number"
+						},
+						{
+							"type": "string"
+						}
+					]
+				},
+				"contained-in": {
+					"oneOf": [
+						{
+							"type": "null"
+						},
+						{
+							"type": "array",
+							"items": {
+								"oneOf": [
+									{
+										"type": "boolean"
+									},
+									{
+										"type": "number"
+									},
+									{
+										"type": "string"
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			"additionalProperties": false
 		}
 	},
 	"additionalProperties": false

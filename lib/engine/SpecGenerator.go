@@ -59,15 +59,21 @@ func (g *SpecGenerator) generateExpectation(res *HttpResponse) *Expectation {
 	// status-code
 	sc := res.StatusCode
 	e.StatusCode = &MeasureStatusCode{
-		IsEqualTo: &sc,
-		BelongsTo: []int{sc},
+		Is: &EquivalentOperator{
+			EqualTo: &sc,
+			ContainedIn: []interface{}{sc},
+		},
 	}
 
 	// header
 	total := len(res.Header)
 	if total > 0 {
 		e.Headers = &MeasureHeaders{
-			Total: &MeasureNumber{IsEqualTo: &total},
+			Total: &MeasureTotal{
+				Is: &ComparisonOperator{
+					EqualTo: &total,
+				},
+			},
 			Items: make([]MeasureHeader, 0),
 		}
 		count := 0
@@ -80,14 +86,16 @@ func (g *SpecGenerator) generateExpectation(res *HttpResponse) *Expectation {
 				value := vals[0]
 				one := MeasureHeader{
 					Name: &name,
-					IsEqualTo: &value,
+					Is: &EquivalentOperator{
+						EqualTo: &value,
+					},
 				}
 				e.Headers.Items = append(e.Headers.Items, one)
 				count = count + 1
 			}
 		}
 		if count > 0 {
-			e.Headers.Total.IsGTE = &count
+			e.Headers.Total.Is.GTE = &count
 		}
 	}
 
@@ -135,7 +143,9 @@ func (g *SpecGenerator) generateExpectation(res *HttpResponse) *Expectation {
 			if val != nil {
 				fields = append(fields, MeasureBodyField{
 					Path: utils.RefOfString(key),
-					Value: val,
+					Is: &EquivalentOperator{
+						EqualTo: val,
+					},
 				})
 			}
 		}
