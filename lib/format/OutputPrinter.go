@@ -111,6 +111,9 @@ func (w *OutputPrinter) SectionTitle(title string) string {
 func (w *OutputPrinter) Section(block string) string {
 	lines := strings.Split(block, "\n")
 	lines = utils.Map(lines, func(line string, number int) string {
+		if number == 0 {
+			return " - " + line
+		}
 		return "    " + line
 	})
 	return strings.Join(lines, "\n")

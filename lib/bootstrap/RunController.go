@@ -172,7 +172,6 @@ func (r *RunController) wrapDescriptor(descriptor *script.Descriptor) (testing.I
 				tests = append(tests, r.wrapTestCase(testcase))
 			}
 			testing.RunTests(defaultMatchString, tests)
-			r.outputPrinter.Println()
 		},
 	}, nil
 }
@@ -211,6 +210,7 @@ func (r *RunController) wrapTestCase(testcase *engine.TestCase) (testing.Interna
 				for key, err := range result.Errors {
 					r.outputPrinter.Printf(r.outputPrinter.SectionTitle(key))
 					r.outputPrinter.Printf(r.outputPrinter.Section(err.Error()))
+					r.outputPrinter.Println()
 				}
 				r.counter.Failure += 1
 				return

@@ -27,7 +27,7 @@ func NewHttpInvoker(opts *HttpInvokerOptions) (c *HttpInvoker, err error) {
 		c.pdp = opts.PDP
 	}
 	if len(c.pdp) == 0 {
-		c.pdp = DEFAULT_PDP
+		c.pdp = utils.DEFAULT_PDP
 	}
 
 	c.generator, err = NewSpecGenerator()
@@ -192,10 +192,10 @@ func renderResponse(w io.Writer, res *HttpResponse) error {
 
 func BuildUrl(req *HttpRequest, defaultPDP string, defaultPath string) string {
 	if len(defaultPDP) == 0 {
-		defaultPDP = DEFAULT_PDP
+		defaultPDP = utils.DEFAULT_PDP
 	}
 	if len(defaultPath) == 0 {
-		defaultPath = DEFAULT_PATH
+		defaultPath = utils.DEFAULT_PATH
 	}
 	url := req.Url
 	if len(url) == 0 {
@@ -211,9 +211,6 @@ func BuildUrl(req *HttpRequest, defaultPDP string, defaultPath string) string {
 	}
 	return url
 }
-
-const DEFAULT_PDP string = `http://localhost:17779`
-const DEFAULT_PATH string = `/$`
 
 type HttpHeader struct {
 	Name string `yaml:"name" json:"name"`

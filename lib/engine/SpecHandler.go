@@ -63,7 +63,7 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 				}
 			}
 			if _sc.Is.ContainedIn != nil {
-				if comparison.BelongsTo(res.StatusCode, _sc.Is.ContainedIn) {
+				if !comparison.BelongsTo(res.StatusCode, _sc.Is.ContainedIn) {
 					errors["StatusCode"] = fmt.Errorf("Response StatusCode [%d] does not belong to expected list %v", res.StatusCode, _sc.Is.ContainedIn)
 				}
 			}
@@ -82,7 +82,7 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 			if _hs.Items != nil {
 				for _, item := range _hs.Items {
 					headerVal := res.Header.Get(*item.Name)
-					if item.Is != nil && item.Is.EqualTo != nil && !comparison.IsEqual(item.Is.EqualTo, headerVal) {
+					if item.Is != nil && item.Is.EqualTo != nil && !comparison.IsEqual(headerVal, item.Is.EqualTo) {
 						errors[fmt.Sprintf("Header[%s]", *item.Name)] = fmt.Errorf("Returned value: [%s] is mismatched with expected: [%s]", headerVal, item.Is.EqualTo)
 					}
 				}

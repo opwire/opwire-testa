@@ -86,7 +86,7 @@ func transformReqArgs(args ReqArguments) *engine.HttpRequest {
 
 	req.Url = args.GetUrl()
 	if len(req.Url) == 0 {
-		req.Url = "http://localhost:17779/$"
+		req.Url, _ = utils.UrlJoin(utils.DEFAULT_PDP, utils.DEFAULT_PATH)
 	}
 
 	req.Headers = make([]engine.HttpHeader, 0)
