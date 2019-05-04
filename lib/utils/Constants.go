@@ -5,6 +5,10 @@ import (
 	"strings"
 )
 
+const BODY_FORMAT_FLAT = `text`
+const BODY_FORMAT_JSON = `json`
+const BODY_FORMAT_YAML = `yaml`
+
 const DEFAULT_PDP string = `http://localhost:17779`
 const DEFAULT_PATH string = `/-`
 

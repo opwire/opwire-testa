@@ -93,7 +93,7 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 		_eb := expect.Body
 		if _eb != nil && _eb.HasFormat != nil {
 			var format string = *_eb.HasFormat
-			if format == "text" || format == "flat" {
+			if format == utils.BODY_FORMAT_FLAT {
 				if _eb.IsEqualTo != nil {
 					_rb := string(res.Body)
 					if res.Body == nil || _rb != *_eb.IsEqualTo {
@@ -101,7 +101,7 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 					}
 				}
 			}
-			if format == "json" || format == "yaml" {
+			if format == utils.BODY_FORMAT_JSON || format == utils.BODY_FORMAT_YAML {
 				var receivedObj, expectedObj map[string]interface{}
 				next := true
 				if (res.Body == nil) {
@@ -170,10 +170,10 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 }
 
 func Unmarshal(format string, source []byte, target interface{}) error {
-	if format == "json" {
+	if format == utils.BODY_FORMAT_JSON {
 		return json.Unmarshal(source, target)
 	}
-	if format == "yaml" {
+	if format == utils.BODY_FORMAT_YAML {
 		return yaml.Unmarshal(source, target)
 	}
 	return fmt.Errorf("Invalid body format: %s", format)

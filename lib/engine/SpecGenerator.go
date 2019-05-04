@@ -102,7 +102,7 @@ func (g *SpecGenerator) generateExpectation(res *HttpResponse) *Expectation {
 	obj := make(map[string]interface{}, 0)
 	if e.Body.HasFormat == nil {
 		if err := json.Unmarshal(res.Body, &obj); err == nil {
-			e.Body.HasFormat = utils.RefOfString("json")
+			e.Body.HasFormat = utils.RefOfString(utils.BODY_FORMAT_JSON)
 			var content string
 			if out, err := json.MarshalIndent(obj, "", "  "); err == nil {
 				content = string(out)
@@ -115,7 +115,7 @@ func (g *SpecGenerator) generateExpectation(res *HttpResponse) *Expectation {
 
 	if e.Body.HasFormat == nil {
 		if err := yaml.Unmarshal(res.Body, &obj); err == nil {
-			e.Body.HasFormat = utils.RefOfString("yaml")
+			e.Body.HasFormat = utils.RefOfString(utils.BODY_FORMAT_YAML)
 			var content string
 			if out, err := yaml.Marshal(obj); err == nil {
 				content = string(out)
@@ -127,7 +127,7 @@ func (g *SpecGenerator) generateExpectation(res *HttpResponse) *Expectation {
 	}
 
 	if e.Body.HasFormat == nil {
-		e.Body.HasFormat = utils.RefOfString("flat")
+		e.Body.HasFormat = utils.RefOfString(utils.BODY_FORMAT_FLAT)
 		e.Body.IsEqualTo = utils.RefOfString(string(res.Body))
 		e.Body.MatchWith = utils.RefOfString(".*")
 	}

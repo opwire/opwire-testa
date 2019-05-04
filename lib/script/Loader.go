@@ -394,7 +394,7 @@ const scriptSchema string = `{
 										},
 										{
 											"type": "string",
-											"enum": ["json", "yaml", "flat"]
+											"enum": ["` + utils.BODY_FORMAT_JSON + `", "` + utils.BODY_FORMAT_YAML + `", "` + utils.BODY_FORMAT_FLAT + `"]
 										}
 									]
 								},
