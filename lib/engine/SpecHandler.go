@@ -148,6 +148,10 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 					}
 				}
 			}
+		} else {
+			if _eb.HasFormat == nil && (_eb.IsEqualTo != nil || _eb.Includes != nil) {
+				errors["Body/expectation"] = fmt.Errorf("Unknown body format, please provides [has-format] value")
+			}
 		}
 	}
 	result.Errors = errors
