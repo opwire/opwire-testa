@@ -2,12 +2,7 @@ package comparison
 
 import (
 	"fmt"
-	"reflect"
 )
-
-func IsZero(v reflect.Value) bool {
-	return !v.IsValid() || reflect.DeepEqual(v.Interface(), reflect.Zero(v.Type()).Interface())
-}
 
 func IsEqual(rVal, eVal interface{}) bool {
 	result := (rVal == eVal)
@@ -26,8 +21,4 @@ func BelongsTo(val interface{}, list []interface{}) bool {
 		}
 	}
 	return false
-}
-
-func VariableInfo(label string, val interface{}) {
-	fmt.Printf(" - %s: [%v], type: %s\n", label, val, reflect.ValueOf(val).Type().String())
 }

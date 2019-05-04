@@ -3,7 +3,6 @@ package engine
 import(
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 	"gopkg.in/yaml.v2"
 	"github.com/google/go-cmp/cmp"
@@ -126,9 +125,8 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 						next = false
 					}
 					if next {
-						var r DiffReporter
-						diff := cmp.Diff(expectedObj, receivedObj, cmp.Reporter(&r))
-						if r.HasDiffs() {
+						ok, diff := comparison.IsPartOf(expectedObj, receivedObj)
+						if !ok {
 							errors["Body/Includes"] = fmt.Errorf("Body mismatch (-expected +received):\n%s", diff)
 						}
 					}
@@ -241,38 +239,4 @@ type ExaminationResult struct {
 	Errors map[string]error
 	Response *HttpResponse
 	Status string
-}
-
-type DiffReporter struct {
-	path  cmp.Path
-	diffs []string
-}
-
-func (r *DiffReporter) PushStep(ps cmp.PathStep) {
-	r.path = append(r.path, ps)
-}
-
-func (r *DiffReporter) Report(rs cmp.Result) {
-	if !rs.Equal() {
-		vx, vy := r.path.Last().Values()
-		if !comparison.IsZero(vx) {
-			r.diffs = append(r.diffs, fmt.Sprintf("%#v:\n\t-: %+v\n\t+: %+v\n", r.path, vx, vy))
-		}
-	}
-}
-
-func (r *DiffReporter) PopStep() {
-	r.path = r.path[:len(r.path)-1]
-}
-
-func (r *DiffReporter) String() string {
-	return strings.Join(r.diffs, "\n")
-}
-
-func (r *DiffReporter) HasDiffs() bool {
-	return len(r.diffs) > 0
-}
-
-func (r *DiffReporter) GetDiffs() []string {
-	return r.diffs
 }
