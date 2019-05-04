@@ -57,7 +57,7 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 		_sc := expect.StatusCode
 		if _sc != nil && _sc.Is != nil {
 			if _sc.Is.EqualTo != nil {
-				if !comparison.IsEqual(res.StatusCode, _sc.Is.EqualTo) {
+				if eq, _ := comparison.IsEqualTo(res.StatusCode, _sc.Is.EqualTo); !eq {
 					errors["StatusCode"] = fmt.Errorf("Response StatusCode [%d] is not equal to expected value [%v]", res.StatusCode, _sc.Is.EqualTo)
 				}
 			}
@@ -73,7 +73,7 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 				headerTotal := len(res.Header)
 				totalIs := _hs.Total.Is
 				if totalIs.EqualTo != nil {
-					if !comparison.IsEqual(headerTotal, totalIs.EqualTo) {
+					if eq, _ := comparison.IsEqualTo(headerTotal, totalIs.EqualTo); !eq {
 						errors["Header/Total"] = fmt.Errorf("Total of headers (%d) mismatchs with expected number (%v)", headerTotal, totalIs.EqualTo)
 					}
 				}
@@ -81,8 +81,11 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 			if _hs.Items != nil {
 				for _, item := range _hs.Items {
 					headerVal := res.Header.Get(*item.Name)
-					if item.Is != nil && item.Is.EqualTo != nil && !comparison.IsEqual(headerVal, item.Is.EqualTo) {
-						errors[fmt.Sprintf("Header[%s]", *item.Name)] = fmt.Errorf("Returned value: [%s] is mismatched with expected: [%s]", headerVal, item.Is.EqualTo)
+					if item.Is != nil && item.Is.EqualTo != nil {
+						eq, _ := comparison.IsEqualTo(headerVal, item.Is.EqualTo)
+						if !eq {
+							errors[fmt.Sprintf("Header[%s]", *item.Name)] = fmt.Errorf("Returned value: [%s] is mismatched with expected: [%s]", headerVal, item.Is.EqualTo)
+						}
 					}
 				}
 			}
@@ -90,7 +93,7 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 		_eb := expect.Body
 		if _eb != nil && _eb.HasFormat != nil {
 			var format string = *_eb.HasFormat
-			if format == "flat" {
+			if format == "text" || format == "flat" {
 				if _eb.IsEqualTo != nil {
 					_rb := string(res.Body)
 					if res.Body == nil || _rb != *_eb.IsEqualTo {
@@ -102,15 +105,15 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 				var receivedObj, expectedObj map[string]interface{}
 				next := true
 				if (res.Body == nil) {
-					errors["Body/receivedObj"] = fmt.Errorf("Response body is empty (invalid %s)", format)
+					errors["Body/ReceivedObject"] = fmt.Errorf("Response body is empty (invalid %s)", format)
 					next = false
 				} else if err := Unmarshal(format, res.Body, &receivedObj); err != nil {
-					errors["Body/receivedObj"] = fmt.Errorf("Invalid response content: %s", err)
+					errors["Body/ReceivedObject"] = fmt.Errorf("Invalid response content: %s", err)
 					next = false
 				}
 				if next && _eb.IsEqualTo != nil {
 					if err := Unmarshal(format, []byte(*_eb.IsEqualTo), &expectedObj); err != nil {
-						errors["Body/expectedObj"] = fmt.Errorf("Invalid expected content: %s", err)
+						errors["Body/ExpectedObject"] = fmt.Errorf("Invalid expected content: %s", err)
 						next = false
 					}
 					if next {
@@ -121,7 +124,7 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 				}
 				if next && _eb.Includes != nil {
 					if err := Unmarshal(format, []byte(*_eb.Includes), &expectedObj); err != nil {
-						errors["Body/expectedObj"] = fmt.Errorf("Invalid expected content: %s", err)
+						errors["Body/ReceivedObject"] = fmt.Errorf("Invalid expected content: %s", err)
 						next = false
 					}
 					if next {
@@ -138,7 +141,7 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 						if eField.Is != nil && eField.Is.EqualTo != nil {
 							eValue := eField.Is.EqualTo
 							if rValue, ok := rFields[*eField.Path]; ok {
-								if !comparison.IsEqual(rValue, eValue) {
+								if eq, _ := comparison.IsEqualTo(rValue, eValue); !eq {
 									errors["Body/Fields/" + *eField.Path] = fmt.Errorf("Field mismatch expected: %v / received: %v", eValue, rValue)
 								}
 							} else {
@@ -150,7 +153,7 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 			}
 		} else {
 			if _eb.HasFormat == nil && (_eb.IsEqualTo != nil || _eb.Includes != nil) {
-				errors["Body/expectation"] = fmt.Errorf("Unknown body format, please provides [has-format] value")
+				errors["Body/Expectation"] = fmt.Errorf("Unknown body format, please provides [has-format] value")
 			}
 		}
 	}
@@ -210,16 +213,6 @@ type MeasureTotal struct {
 	Is *ComparisonOperators `yaml:"is,omitempty" json:"is"`
 }
 
-type ComparisonOperators struct {
-	EqualTo interface{} `yaml:"equal-to,omitempty" json:"equal-to"`
-	NotEqualTo interface{} `yaml:"not-equal-to,omitempty" json:"not-equal-to"`
-	LT interface{} `yaml:"lt,omitempty" json:"lt"`
-	LTE interface{} `yaml:"lte,omitempty" json:"lte"`
-	GT interface{} `yaml:"gt,omitempty" json:"gt"`
-	GTE interface{} `yaml:"gte,omitempty" json:"gte"`
-	ContainedIn []interface{} `yaml:"contained-in,omitempty" json:"contained-in"`
-}
-
 type MeasureHeader struct {
 	Name *string `yaml:"name" json:"name"`
 	Is *ComparisonOperators `yaml:"is,omitempty" json:"is"`
@@ -236,6 +229,16 @@ type MeasureBody struct {
 type MeasureBodyField struct {
 	Path *string `yaml:"path,omitempty" json:"path"`
 	Is *ComparisonOperators `yaml:"is,omitempty" json:"is"`
+}
+
+type ComparisonOperators struct {
+	EqualTo interface{} `yaml:"equal-to,omitempty" json:"equal-to"`
+	NotEqualTo interface{} `yaml:"not-equal-to,omitempty" json:"not-equal-to"`
+	LT interface{} `yaml:"lt,omitempty" json:"lt"`
+	LTE interface{} `yaml:"lte,omitempty" json:"lte"`
+	GT interface{} `yaml:"gt,omitempty" json:"gt"`
+	GTE interface{} `yaml:"gte,omitempty" json:"gte"`
+	ContainedIn []interface{} `yaml:"contained-in,omitempty" json:"contained-in"`
 }
 
 type ExaminationResult struct {
