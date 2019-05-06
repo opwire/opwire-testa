@@ -3,9 +3,9 @@ package engine
 import(
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"time"
 	"gopkg.in/yaml.v2"
-	"github.com/google/go-cmp/cmp"
 	"github.com/opwire/opwire-testa/lib/comparison"
 	"github.com/opwire/opwire-testa/lib/utils"
 )
@@ -94,43 +94,60 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 		if _eb != nil && _eb.HasFormat != nil {
 			var format string = *_eb.HasFormat
 			if format == utils.BODY_FORMAT_FLAT {
+				var hold bool
 				if _eb.IsEqualTo != nil {
+					hold = true
 					_rb := string(res.Body)
-					if res.Body == nil || _rb != *_eb.IsEqualTo {
-						errors["Body"] = fmt.Errorf("Response body is mismatched with expected content.\n    Received: %s\n    Expected: %s", _rb, *_eb.IsEqualTo)
+					if _rb != *_eb.IsEqualTo {
+						errors["Body/IsEqualTo"] = fmt.Errorf("[%s] Response body is mismatched with expected content.\nReceived: %s\nExpected: %s", format, _rb, *_eb.IsEqualTo)
 					}
+				}
+				if _eb.MatchWith != nil {
+					hold = true
+					_rb := string(res.Body)
+					if reg, err := regexp.Compile(*_eb.MatchWith); err == nil {
+						if !reg.MatchString(_rb) {
+							errors["Body/MatchWith"] = fmt.Errorf("[%s] Response body is mismatched with the pattern.\nReceived: %s\nPattern: %s", format, _rb, *_eb.MatchWith)
+						}
+					} else {
+						errors["Body/Expectation"] = fmt.Errorf("[%s] Invalid regular expression[%s], error: %s", format, *_eb.MatchWith, err.Error())
+					}
+				}
+				if !hold {
+					errors["Body/Expectation"] = fmt.Errorf("[%s] One of [%s] attributes must be provided", format, "is-equal-to, matches")
 				}
 			}
 			if format == utils.BODY_FORMAT_JSON || format == utils.BODY_FORMAT_YAML {
 				var receivedObj, expectedObj map[string]interface{}
 				next := true
 				if (res.Body == nil) {
-					errors["Body/ReceivedObject"] = fmt.Errorf("Response body is empty (invalid %s)", format)
+					errors["Body/ReceivedObject"] = fmt.Errorf("[%s] Response body is empty", format)
 					next = false
 				} else if err := Unmarshal(format, res.Body, &receivedObj); err != nil {
-					errors["Body/ReceivedObject"] = fmt.Errorf("Invalid response content: %s", err)
+					errors["Body/ReceivedObject"] = fmt.Errorf("[%s] Invalid response content: %s", format, err)
 					next = false
 				}
 				if next && _eb.IsEqualTo != nil {
 					if err := Unmarshal(format, []byte(*_eb.IsEqualTo), &expectedObj); err != nil {
-						errors["Body/ExpectedObject"] = fmt.Errorf("Invalid expected content: %s", err)
+						errors["Body/ExpectedObject"] = fmt.Errorf("[%s] Invalid expected content: %s", format, err)
 						next = false
 					}
 					if next {
-						if diff := cmp.Diff(expectedObj, receivedObj); diff != "" {
-							errors["Body/IsEqualTo"] = fmt.Errorf("Body mismatch (-expected +received):\n%s", diff)
+						ok, diff := comparison.DeepDiff(expectedObj, receivedObj)
+						if !ok {
+							errors["Body/IsEqualTo"] = fmt.Errorf("[%s] Body mismatch (-expected +received):\n%s", format, diff)
 						}
 					}
 				}
 				if next && _eb.Includes != nil {
 					if err := Unmarshal(format, []byte(*_eb.Includes), &expectedObj); err != nil {
-						errors["Body/ReceivedObject"] = fmt.Errorf("Invalid expected content: %s", err)
+						errors["Body/ExpectedObject"] = fmt.Errorf("[%s] Invalid expected content: %s", format, err)
 						next = false
 					}
 					if next {
 						ok, diff := comparison.IsPartOf(expectedObj, receivedObj)
 						if !ok {
-							errors["Body/Includes"] = fmt.Errorf("Body mismatch (-expected +received):\n%s", diff)
+							errors["Body/Includes"] = fmt.Errorf("[%s] Body mismatch (-expected +received):\n%s", format, diff)
 						}
 					}
 				}
