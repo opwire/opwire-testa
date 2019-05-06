@@ -61,7 +61,7 @@ func (g *SpecGenerator) generateExpectation(res *HttpResponse) *Expectation {
 	e.StatusCode = &MeasureStatusCode{
 		Is: &ComparisonOperators{
 			EqualTo: &sc,
-			ContainedIn: []interface{}{sc},
+			MemberOf: []interface{}{sc},
 		},
 	}
 

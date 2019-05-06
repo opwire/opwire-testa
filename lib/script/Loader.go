@@ -527,7 +527,7 @@ const scriptSchema string = `{
 						}
 					]
 				},
-				"contained-in": {
+				"member-of": {
 					"type": "null"
 				}
 			},
@@ -620,7 +620,7 @@ const scriptSchema string = `{
 						}
 					]
 				},
-				"contained-in": {
+				"member-of": {
 					"oneOf": [
 						{
 							"type": "null"

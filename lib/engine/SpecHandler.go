@@ -61,9 +61,14 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 					errors["StatusCode"] = fmt.Errorf("Response StatusCode [%d] is not equal to expected value [%v]", res.StatusCode, _sc.Is.EqualTo)
 				}
 			}
-			if _sc.Is.ContainedIn != nil {
-				if !comparison.BelongsTo(res.StatusCode, _sc.Is.ContainedIn) {
-					errors["StatusCode"] = fmt.Errorf("Response StatusCode [%d] does not belong to expected list %v", res.StatusCode, _sc.Is.ContainedIn)
+			if _sc.Is.MemberOf != nil {
+				if !comparison.BelongsTo(res.StatusCode, _sc.Is.MemberOf) {
+					errors["StatusCode"] = fmt.Errorf("Response StatusCode [%d] must belong to inclusive list %v", res.StatusCode, _sc.Is.MemberOf)
+				}
+			}
+			if _sc.Is.NotMemberOf != nil {
+				if comparison.BelongsTo(res.StatusCode, _sc.Is.NotMemberOf) {
+					errors["StatusCode"] = fmt.Errorf("Response StatusCode [%d] must not belong to exclusive list %v", res.StatusCode, _sc.Is.MemberOf)
 				}
 			}
 		}
@@ -255,7 +260,8 @@ type ComparisonOperators struct {
 	LTE interface{} `yaml:"lte,omitempty" json:"lte"`
 	GT interface{} `yaml:"gt,omitempty" json:"gt"`
 	GTE interface{} `yaml:"gte,omitempty" json:"gte"`
-	ContainedIn []interface{} `yaml:"contained-in,omitempty" json:"contained-in"`
+	MemberOf []interface{} `yaml:"member-of,omitempty" json:"member-of"`
+	NotMemberOf []interface{} `yaml:"not-member-of,omitempty" json:"not-member-of"`
 }
 
 type ExaminationResult struct {
