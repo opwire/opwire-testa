@@ -121,7 +121,7 @@ func (r *RunController) Execute(args RunArguments) error {
 			r.outputPrinter.Println(r.outputPrinter.Heading("Summary"))
 
 			r.outputPrinter.Printf("[*] Pending: %d, Skipped: %d, Cracked: %d, Failed: %d, Passed: %d",
-				r.counter.Pending, r.counter.Skipped, r.counter.Cracked, r.counter.Success, r.counter.Failure)
+				r.counter.Pending, r.counter.Skipped, r.counter.Cracked, r.counter.Failure, r.counter.Success)
 			r.outputPrinter.Println()
 
 			// total elapsed time

@@ -529,6 +529,9 @@ const scriptSchema string = `{
 				},
 				"member-of": {
 					"type": "null"
+				},
+				"not-member-of": {
+					"type": "null"
 				}
 			},
 			"additionalProperties": false
@@ -621,6 +624,29 @@ const scriptSchema string = `{
 					]
 				},
 				"member-of": {
+					"oneOf": [
+						{
+							"type": "null"
+						},
+						{
+							"type": "array",
+							"items": {
+								"oneOf": [
+									{
+										"type": "boolean"
+									},
+									{
+										"type": "number"
+									},
+									{
+										"type": "string"
+									}
+								]
+							}
+						}
+					]
+				},
+				"not-member-of": {
 					"oneOf": [
 						{
 							"type": "null"
