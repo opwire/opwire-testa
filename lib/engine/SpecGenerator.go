@@ -34,7 +34,9 @@ func (g *SpecGenerator) generateTestCase(w io.Writer, req *HttpRequest, res *Htt
 	s.Tags = []string {"snapshot"}
 	username, err := utils.FindUsername()
 	if err == nil {
-		s.Tags = append(s.Tags, username)
+		if tag, err := utils.StandardizeTagLabel(username); err == nil {
+			s.Tags = append(s.Tags, tag)
+		}
 	}
 
 	r := &GeneratedSnapshot{}
