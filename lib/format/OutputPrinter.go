@@ -99,6 +99,16 @@ func (w *OutputPrinter) Failure(title string) string {
 	return fmt.Sprintf("[%s] %s", pen("x"), title)
 }
 
+func (w *OutputPrinter) InfoMsg(msg string) string {
+	pen := w.GetPen(SuccessPen)
+	return pen(msg)
+}
+
+func (w *OutputPrinter) WarnMsg(msg string) string {
+	pen := w.GetPen(FailurePen)
+	return pen(msg)
+}
+
 func (w *OutputPrinter) Cracked(title string) string {
 	pen := w.GetPen(CrackedPen)
 	return fmt.Sprintf("[%s] %s", pen("~"), title)

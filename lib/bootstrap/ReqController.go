@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"github.com/opwire/opwire-testa/lib/engine"
+	"github.com/opwire/opwire-testa/lib/format"
 	"github.com/opwire/opwire-testa/lib/utils"
 )
 
@@ -18,10 +20,12 @@ type ReqArguments interface {
 
 type ReqControllerOptions interface {
 	GetVersion() string
+	GetNoColor() bool
 }
 
 type ReqController struct {
 	httpInvoker *engine.HttpInvoker
+	outputPrinter *format.OutputPrinter
 }
 
 type SnapshotOutput struct {}
@@ -42,6 +46,8 @@ func (z *ExplanationWriter) GetConsoleErr() io.Writer {
 
 func NewReqController(opts ReqControllerOptions) (obj *ReqController, err error) {
 	obj = &ReqController{}
+
+	// create a HTTP Invoker instance
 	httpInvokerOptions := &engine.HttpInvokerOptions{}
 	if opts != nil {
 		httpInvokerOptions.Version = opts.GetVersion()
@@ -50,30 +56,65 @@ func NewReqController(opts ReqControllerOptions) (obj *ReqController, err error)
 	if err != nil {
 		return nil, err
 	}
+
+	// create a OutputPrinter instance
+	obj.outputPrinter, err = format.NewOutputPrinter(opts)
+	if err != nil {
+		return nil, err
+	}
+
 	return obj, err
 }
 
 func (z *ReqController) Execute(args ReqArguments) error {
 	z.assertReady(args)
 
+	terminal := &ExplanationWriter{}
+
 	if args.GetFormat() == "testcase" {
 		_, err := z.httpInvoker.Do(transformReqArgs(args), &SnapshotOutput{})
 		if err != nil {
-			return displayError(err)
+			return z.displayError(err, terminal)
 		}
 		return nil
 	}
 
-	_, err := z.httpInvoker.Do(transformReqArgs(args), &ExplanationWriter{})
+	res, err := z.httpInvoker.Do(transformReqArgs(args), terminal)
 	if err != nil {
-		return displayError(err)
+		return z.displayError(err, terminal)
 	}
+	z.displayResult(res, terminal)
 	return nil
 }
 
-func displayError(err error) error {
-	fmt.Printf("* %s\n", err.Error())
+func (z *ReqController) displayError(err error, terminal *ExplanationWriter) error {
+	if err == nil || terminal == nil {
+		return err
+	}
+	w := terminal.GetConsoleErr()
+	if w == nil {
+		return err
+	}
+	fmt.Fprintf(w, "* %s\n", err.Error())
 	return err
+}
+
+func (z *ReqController) displayResult(res *engine.HttpResponse, terminal *ExplanationWriter) *engine.HttpResponse {
+	if res == nil || terminal == nil {
+		return res
+	}
+	w := terminal.GetConsoleOut()
+	if w == nil {
+		return res
+	}
+	var codeStr string
+	if res.StatusCode < 400 {
+		codeStr = z.outputPrinter.InfoMsg("StatusCode [" + strconv.Itoa(res.StatusCode) + "]")
+	} else {
+		codeStr = z.outputPrinter.WarnMsg("StatusCode [" + strconv.Itoa(res.StatusCode) + "]")
+	}
+	fmt.Fprintf(w, "* Please make sure %s is your expected result\n", codeStr)
+	return res
 }
 
 func transformReqArgs(args ReqArguments) *engine.HttpRequest {
