@@ -28,19 +28,19 @@ type ReqController struct {
 	outputPrinter *format.OutputPrinter
 }
 
-type SnapshotOutput struct {}
+type GenerationPrinter struct {}
 
-func (g *SnapshotOutput) GetTargetWriter() io.Writer {
+func (g *GenerationPrinter) GetWriter() io.Writer {
 	return os.Stdout
 }
 
-type ExplanationWriter struct {}
+type ExplanationTarget struct {}
 
-func (z *ExplanationWriter) GetConsoleOut() io.Writer {
+func (z *ExplanationTarget) GetConsoleOut() io.Writer {
 	return os.Stdout
 }
 
-func (z *ExplanationWriter) GetConsoleErr() io.Writer {
+func (z *ExplanationTarget) GetConsoleErr() io.Writer {
 	return os.Stderr
 }
 
@@ -69,29 +69,29 @@ func NewReqController(opts ReqControllerOptions) (obj *ReqController, err error)
 func (z *ReqController) Execute(args ReqArguments) error {
 	z.assertReady(args)
 
-	terminal := &ExplanationWriter{}
+	console := &ExplanationTarget{}
 
 	if args.GetFormat() == "testcase" {
-		_, err := z.httpInvoker.Do(transformReqArgs(args), &SnapshotOutput{})
+		_, err := z.httpInvoker.Do(transformReqArgs(args), &GenerationPrinter{})
 		if err != nil {
-			return z.displayError(err, terminal)
+			return z.displayError(err, console)
 		}
 		return nil
 	}
 
-	res, err := z.httpInvoker.Do(transformReqArgs(args), terminal)
+	res, err := z.httpInvoker.Do(transformReqArgs(args), console)
 	if err != nil {
-		return z.displayError(err, terminal)
+		return z.displayError(err, console)
 	}
-	z.displayResult(res, terminal)
+	z.displayResult(res, console)
 	return nil
 }
 
-func (z *ReqController) displayError(err error, terminal *ExplanationWriter) error {
-	if err == nil || terminal == nil {
+func (z *ReqController) displayError(err error, console *ExplanationTarget) error {
+	if err == nil || console == nil {
 		return err
 	}
-	w := terminal.GetConsoleErr()
+	w := console.GetConsoleErr()
 	if w == nil {
 		return err
 	}
@@ -99,11 +99,11 @@ func (z *ReqController) displayError(err error, terminal *ExplanationWriter) err
 	return err
 }
 
-func (z *ReqController) displayResult(res *engine.HttpResponse, terminal *ExplanationWriter) *engine.HttpResponse {
-	if res == nil || terminal == nil {
+func (z *ReqController) displayResult(res *engine.HttpResponse, console *ExplanationTarget) *engine.HttpResponse {
+	if res == nil || console == nil {
 		return res
 	}
-	w := terminal.GetConsoleOut()
+	w := console.GetConsoleOut()
 	if w == nil {
 		return res
 	}
