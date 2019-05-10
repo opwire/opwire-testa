@@ -27,8 +27,14 @@ For other systems:
   --test-dirs=... \
   --incl-files=file-name-pattern-or-regexp \
   --excl-files=file-name-pattern-or-regexp \
-  --tags="+tag1,+tag2,-pending-case1,-pending-case2"
+  --tags="+label1,+label2,-pending-case1,-pending-case2"
 ```
+
+Command line options:
+
+* `--incl-files`: File inclusion patterns.
+* `--excl-files`: File exclusion patterns.
+* `--tags`: Conditional tags for selecting test cases. In above example, `label1`, `label2` are test case inclusion tags, `pending-case1`, `pending-case2` are test case exclusion tags.
 
 Use `--help` flag to see more details for arguments:
 

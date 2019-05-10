@@ -35,19 +35,19 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 	testSourceFlags := []clp.Flag{
 		clp.StringFlag{
 			Name: "config-path, c",
-			Usage: "Explicit configuration file",
+			Usage: "Path to configuration file",
 		},
 		clp.StringSliceFlag{
 			Name: "test-dirs, spec-dirs, d",
 			Usage: "The testcases directories",
 		},
 		clp.StringSliceFlag{
-			Name: "incl-files, included-files, i",
-			Usage: "Matching sub-string/pattern to include files",
+			Name: "incl-files, i",
+			Usage: "File inclusion patterns",
 		},
 		clp.StringSliceFlag{
-			Name: "excl-files, excluded-files, e",
-			Usage: "Matching sub-string/pattern to exclude files",
+			Name: "excl-files, e",
+			Usage: "File exclusion patterns",
 		},
 		clp.StringFlag{
 			Name: "test-name, n",
