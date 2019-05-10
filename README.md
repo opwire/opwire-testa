@@ -25,8 +25,10 @@ For other systems:
 ./opwire-testa run \
   --test-dirs=... \
   --test-dirs=... \
-  --incl-files=file-name-pattern-or-regexp \
-  --excl-files=file-name-pattern-or-regexp \
+  --incl-files=tests/feature-1/*/*.yml \
+  --incl-files=tests/feature-2/.* \
+  --excl-files=tests/demo/* \
+  --excl-files=tests/examples/* \
   --tags="+label1,+label2,-pending-case1,-pending-case2"
 ```
 
@@ -75,6 +77,15 @@ Use `--help` flag to see more details for arguments:
 --export "testcase"
 ```
 
+Command line options:
+
+* `--request` (`-X`): Specifies a custom request method to use when communicating with the HTTP server.
+* `--url`: Specifies a URL to fetch.
+* `--header` (`-H`): Extra header to include in the request when sending HTTP to a server.
+* `--data` (`-d`): Sends the specified data in a POST/PUT/PATCH request to the HTTP server.
+* `--export`: Renders this `request` in specific format instead of executing. Currently support only one format: `testcase`.
+* `--snapshot`: Alias of `--export=testcase`.
+
 Use `--help` flag to see more details for arguments:
 
 ```shell
@@ -87,10 +98,11 @@ Use `--help` flag to see more details for arguments:
 
 ```shell
 ./opwire-testa gen curl \
-    --test-dirs=... \
-    --test-dirs=... \
-    --test-file=file-name-pattern \
-    --test-name=test-case-name-pattern
+  --test-dirs=... \
+  --test-dirs=... \
+  --incl-files=file-inclusion-pattern \
+  --excl-files=file-exclusion-pattern \
+  --test-name=test-case-name-pattern
 ```
 
 Use `--help` flag to see more details for arguments:
