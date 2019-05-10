@@ -1,6 +1,8 @@
 # opwire-testa
 
-> Testing toolkit for building opwire-agent modules
+`opwire-testa` is a simple API testing tool written in golang. It is originally developed to test APIs built by `opwire-agent`. The `opwire-testa` is most convenient in working with `opwire-agent`, but is also able to make friends with other API services.
+
+> `Developed by a programmer for other programmers`
 
 ## Usage
 
