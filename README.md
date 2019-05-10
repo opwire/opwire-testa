@@ -32,9 +32,11 @@ For other systems:
 
 Command line options:
 
-* `--incl-files`: File inclusion patterns.
-* `--excl-files`: File exclusion patterns.
-* `--tags`: Conditional tags for selecting test cases. In above example, `label1`, `label2` are test case inclusion tags, `pending-case1`, `pending-case2` are test case exclusion tags.
+* `--test-dirs` (`-d`): Directories contain test suite files.
+* `--incl-files` (`-i`): File inclusion patterns.
+* `--excl-files` (`-e`): File exclusion patterns.
+* `--test-name` (`-n`): Test title/name matching pattern.
+* `--tags` (`-g`): Conditional tags for selecting test cases. In above example, `label1`, `label2` are test case inclusion tags, `pending-case1`, `pending-case2` are test case exclusion tags.
 
 Use `--help` flag to see more details for arguments:
 

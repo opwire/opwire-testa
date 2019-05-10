@@ -39,7 +39,7 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 		},
 		clp.StringSliceFlag{
 			Name: "test-dirs, spec-dirs, d",
-			Usage: "The testcases directories",
+			Usage: "Directories contain test suite files",
 		},
 		clp.StringSliceFlag{
 			Name: "incl-files, i",

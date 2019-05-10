@@ -92,7 +92,7 @@ func (r *GenController) Execute(args GenArguments) error {
 	testcases := r.scriptSelector.GetTestCases(descriptors)
 
 	// filter testcases by conditional tags
-	testcases, _ = r.filterTestCasesByTags(testcases)
+	testcases, _ = filterTestCasesByTags(r.tagManager, testcases)
 
 	// running & result
 	r.outputPrinter.Println()
@@ -124,23 +124,6 @@ func (r *GenController) Execute(args GenArguments) error {
 
 	r.outputPrinter.Println()
 	return nil
-}
-
-func (r *GenController) filterTestCasesByTags(testcases []*engine.TestCase) (accepted []*engine.TestCase, rejected []*engine.TestCase) {
-	accepted = make([]*engine.TestCase, 0)
-	rejected = make([]*engine.TestCase, 0)
-	for _, testcase := range testcases {
-		if active, _ := r.tagManager.IsActive(testcase.Tags); !active {
-			rejected = append(rejected, testcase)
-			continue
-		}
-		if testcase.Pending != nil && *testcase.Pending {
-			rejected = append(rejected, testcase)
-			continue
-		}
-		accepted = append(accepted, testcase)
-	}
-	return accepted, rejected
 }
 
 type CurlGenerator struct {

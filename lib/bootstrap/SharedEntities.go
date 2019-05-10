@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"github.com/opwire/opwire-testa/lib/engine"
 	"github.com/opwire/opwire-testa/lib/format"
 	"github.com/opwire/opwire-testa/lib/script"
 	"github.com/opwire/opwire-testa/lib/tag"
@@ -160,4 +161,21 @@ func checkFilePathMatchPattern(fullPath string, pattern string) bool {
 	}
 
 	return false
+}
+
+func filterTestCasesByTags(tagManager *tag.Manager, testcases []*engine.TestCase) (accepted []*engine.TestCase, rejected []*engine.TestCase) {
+	accepted = make([]*engine.TestCase, 0)
+	rejected = make([]*engine.TestCase, 0)
+	for _, testcase := range testcases {
+		if active, _ := tagManager.IsActive(testcase.Tags); !active {
+			rejected = append(rejected, testcase)
+			continue
+		}
+		if testcase.Pending != nil && *testcase.Pending {
+			rejected = append(rejected, testcase)
+			continue
+		}
+		accepted = append(accepted, testcase)
+	}
+	return accepted, rejected
 }
