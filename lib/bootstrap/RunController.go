@@ -126,13 +126,18 @@ func (r *RunController) Execute(args RunArguments) error {
 			r.outputPrinter.Println()
 			r.outputPrinter.Println(r.outputPrinter.Heading("Summary"))
 
+			totalTestcases := (r.counter.Pending + r.counter.Skipped + r.counter.Cracked + r.counter.Failure + r.counter.Success)
+			totalFiles := len(descriptors)
+			r.outputPrinter.Printf("[*] Total: %d test case(s), in %d file(s)", totalTestcases, totalFiles)
+			r.outputPrinter.Println()
+
 			r.outputPrinter.Printf("[*] Pending: %d, Skipped: %d, Cracked: %d, Failed: %d, Passed: %d",
 				r.counter.Pending, r.counter.Skipped, r.counter.Cracked, r.counter.Failure, r.counter.Success)
 			r.outputPrinter.Println()
 
 			// total elapsed time
 			duration := time.Since(startTime)
-			r.outputPrinter.Printf("[*] Total elapsed time: %s", duration.String())
+			r.outputPrinter.Printf("[*] Elapsed time: %s", duration.String())
 			r.outputPrinter.Println()
 
 			// endof testing
