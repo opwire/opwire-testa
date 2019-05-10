@@ -102,6 +102,12 @@ func (r *RunController) Execute(args RunArguments) error {
 		r.outputPrinter.Println(r.outputPrinter.Section(d.Error.Error()))
 	}
 
+	// filter testing script files by "inclusive-files"
+	descriptors = filterDescriptorsByInclusivePatterns(descriptors, r.scriptSource.GetInclFiles())
+
+	// filter testing script files by "exclusive-files"
+	descriptors = filterDescriptorsByExclusivePatterns(descriptors, r.scriptSource.GetExclFiles())
+
 	// begin testing
 	r.outputPrinter.Println()
 	r.outputPrinter.Println(r.outputPrinter.Heading("Testing"))

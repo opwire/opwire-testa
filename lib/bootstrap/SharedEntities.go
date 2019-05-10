@@ -2,6 +2,7 @@ package bootstrap
 
 import (
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 	"github.com/opwire/opwire-testa/lib/format"
@@ -56,6 +57,22 @@ func printScriptSourceArgs(outputPrinter *format.OutputPrinter, scriptSource scr
 		outputPrinter.Println(outputPrinter.ContextInfo("Test directories", "Unspecified"))
 	}
 
+	var inclFiles []string
+	if scriptSource != nil {
+		inclFiles = scriptSource.GetInclFiles()
+	}
+	if inclFiles != nil && len(inclFiles) > 0 {
+		outputPrinter.Println(outputPrinter.ContextInfo("File inclusion patterns", "", inclFiles...))
+	}
+
+	var exclFiles []string
+	if scriptSource != nil {
+		exclFiles = scriptSource.GetExclFiles()
+	}
+	if exclFiles != nil && len(exclFiles) > 0 {
+		outputPrinter.Println(outputPrinter.ContextInfo("File exclusion patterns", "", exclFiles...))
+	}
+
 	inclTags := tagManager.GetIncludedTags()
 	if inclTags != nil && len(inclTags) > 0 {
 		outputPrinter.Println(outputPrinter.ContextInfo("Selected tags", strings.Join(inclTags, ", ")))
@@ -85,21 +102,62 @@ func filterInvalidDescriptors(src map[string]*script.Descriptor) (map[string]*sc
 	return selected, rejected
 }
 
-func filterDescriptorsByFilePattern(src map[string]*script.Descriptor, suffix string) map[string]*script.Descriptor {
-	if len(suffix) == 0 {
+func filterDescriptorsByInclusivePatterns(src map[string]*script.Descriptor, patterns []string) map[string]*script.Descriptor {
+	if len(patterns) == 0 {
 		return src
 	}
 	dst := make(map[string]*script.Descriptor, 0)
 	for key, d := range src {
-		if strings.HasSuffix(d.Locator.AbsolutePath, suffix) {
-			dst[key] = d
-			continue
-		}
-		matched, err := filepath.Match(suffix, d.Locator.AbsolutePath)
-		if (err == nil && matched) {
-			dst[key] = d
-			continue
+		for _, pattern := range patterns {
+			if checkFilePathMatchPattern(d.Locator.AbsolutePath, pattern) {
+				dst[key] = d
+				continue
+			}
 		}
 	}
 	return dst
+}
+
+func filterDescriptorsByExclusivePatterns(src map[string]*script.Descriptor, patterns []string) map[string]*script.Descriptor {
+	if len(patterns) == 0 {
+		return src
+	}
+	dst := make(map[string]*script.Descriptor, 0)
+	for key, d := range src {
+		found := false
+		for _, pattern := range patterns {
+			if checkFilePathMatchPattern(d.Locator.AbsolutePath, pattern) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			dst[key] = d
+		}
+	}
+	return dst
+}
+
+func checkFilePathMatchPattern(fullPath string, pattern string) bool {
+	srcPath, _ := utils.DetectRelativePath(fullPath)
+
+	// try matching as a suffix string
+	if strings.HasSuffix(srcPath, pattern) {
+		return true
+	}
+
+	// try matching using filepath
+	matched, err := filepath.Match(pattern, srcPath)
+	if (err == nil && matched) {
+		return true
+	}
+
+	// try matching with a regexp
+	if reg, err := regexp.Compile(pattern); err == nil {
+		if reg.MatchString(srcPath) {
+			return true
+		}
+	}
+
+	return false
 }

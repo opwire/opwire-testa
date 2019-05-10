@@ -60,24 +60,13 @@ func NewGenController(opts GenControllerOptions) (ref *GenController, err error)
 	return ref, err
 }
 
-type GenArguments interface {
-	GetTestFile() string
-}
+type GenArguments interface {}
 
 func (r *GenController) Execute(args GenArguments) error {
-	var testFile string
-	if args != nil {
-		testFile = args.GetTestFile()
-	}
-
 	// display environment of command
 	r.outputPrinter.Println()
 	r.outputPrinter.Println(r.outputPrinter.Heading("Context"))
 	printScriptSourceArgs(r.outputPrinter, r.scriptSource, r.scriptSelector, r.tagManager)
-
-	if len(testFile) > 0 {
-		r.outputPrinter.Println(r.outputPrinter.ContextInfo("File filter", testFile))
-	}
 
 	// display prerequisites
 	r.outputPrinter.Println()
@@ -93,8 +82,11 @@ func (r *GenController) Execute(args GenArguments) error {
 		r.outputPrinter.Println(r.outputPrinter.Section(d.Error.Error()))
 	}
 
-	// filter testing script files by "test-file"
-	descriptors = filterDescriptorsByFilePattern(descriptors, testFile)
+	// filter testing script files by "inclusive-files"
+	descriptors = filterDescriptorsByInclusivePatterns(descriptors, r.scriptSource.GetInclFiles())
+
+	// filter testing script files by "exclusive-files"
+	descriptors = filterDescriptorsByExclusivePatterns(descriptors, r.scriptSource.GetExclFiles())
 
 	// filter target testcase by "test-name" title/name
 	testcases := r.scriptSelector.GetTestCases(descriptors)

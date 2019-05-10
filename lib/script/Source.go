@@ -7,6 +7,8 @@ import (
 
 type Source interface {
 	GetTestDirs() []string
+	GetInclFiles() []string
+	GetExclFiles() []string
 	GetTestName() string
 	GetConditionalTags() []string
 }
@@ -15,6 +17,8 @@ func NewSource(opts Source) (ref *SourceBuffer, err error) {
 	buf := &SourceBuffer{}
 	if opts != nil {
 		buf.TestDirs = opts.GetTestDirs()
+		buf.InclFiles = opts.GetInclFiles()
+		buf.ExclFiles = opts.GetExclFiles()
 		buf.TestName = opts.GetTestName()
 		buf.Tags = opts.GetConditionalTags()
 	}

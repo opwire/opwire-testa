@@ -50,10 +50,6 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 			Usage: "Matching sub-string/pattern to exclude files",
 		},
 		clp.StringFlag{
-			Name: "test-file, f",
-			Usage: "Suffix of path to testing script file (.i.e ... your-test.yml)",
-		},
-		clp.StringFlag{
 			Name: "test-name, n",
 			Usage: "Test title/name matching pattern",
 		},
@@ -154,9 +150,7 @@ func NewCommander(manifest Manifest) (*Commander, error) {
 						if err != nil {
 							return err
 						}
-						ctl.Execute(&CmdGenFlags{
-							TestFile: c.String("test-file"),
-						})
+						ctl.Execute(&CmdGenFlags{})
 						return nil
 					},
 				},
@@ -285,9 +279,4 @@ type CmdRunFlags struct {
 }
 
 type CmdGenFlags struct {
-	TestFile string
-}
-
-func (a *CmdGenFlags) GetTestFile() string {
-	return a.TestFile
 }
