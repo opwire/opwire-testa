@@ -10,8 +10,8 @@ type ManagerOptions interface {
 }
 
 type Manager struct {
-	includedTags []string
-	excludedTags []string
+	inclusiveTags []string
+	exclusiveTags []string
 }
 
 func NewManager(opts ManagerOptions) (ref *Manager, err error) {
@@ -29,17 +29,17 @@ func (g *Manager) IsActive(tags []string) (bool, map[string]int8) {
 	if len(tags) == 0 {
 		return true, mark
 	}
-	if len(g.excludedTags) > 0 {
+	if len(g.exclusiveTags) > 0 {
 		for _, tag := range tags {
-			if utils.Contains(g.excludedTags, tag) {
+			if utils.Contains(g.exclusiveTags, tag) {
 				mark[tag] = -1
 				return false, mark
 			}
 		}
 	}
-	if len(g.includedTags) > 0 {
+	if len(g.inclusiveTags) > 0 {
 		for _, tag := range tags {
-			if utils.Contains(g.includedTags, tag) {
+			if utils.Contains(g.inclusiveTags, tag) {
 				mark[tag] = +1
 				return true, mark
 			}
@@ -56,20 +56,26 @@ func (g *Manager) Initialize(tagexps []string) {
 		signedTags := utils.Split(tagexp, ",")
 		for _, tag := range signedTags {
 			if strings.HasPrefix(tag, "-") {
-				nTags = append(nTags, strings.TrimPrefix(tag, "-"))
+				nTag := strings.TrimPrefix(tag, "-")
+				if len(nTag) > 0 && !utils.Contains(nTags, nTag) {
+					nTags = append(nTags, nTag)
+				}
 			} else {
-				pTags = append(pTags, strings.TrimPrefix(tag, "+"))
+				pTag := strings.TrimPrefix(tag, "+")
+				if len(pTag) > 0 && !utils.Contains(pTags, pTag) {
+					pTags = append(pTags, pTag)
+				}
 			}
 		}
 	}
-	g.includedTags = pTags
-	g.excludedTags = nTags
+	g.inclusiveTags = pTags
+	g.exclusiveTags = nTags
 }
 
-func (g *Manager) GetIncludedTags() []string {
-	return g.includedTags
+func (g *Manager) GetInclusiveTags() []string {
+	return g.inclusiveTags
 }
 
-func (g *Manager) GetExcludedTags() []string {
-	return g.excludedTags
+func (g *Manager) GetExclusiveTags() []string {
+	return g.exclusiveTags
 }

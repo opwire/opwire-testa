@@ -74,12 +74,12 @@ func printScriptSourceArgs(outputPrinter *format.OutputPrinter, scriptSource scr
 		outputPrinter.Println(outputPrinter.ContextInfo("File exclusion patterns", "", exclFiles...))
 	}
 
-	inclTags := tagManager.GetIncludedTags()
+	inclTags := tagManager.GetInclusiveTags()
 	if inclTags != nil && len(inclTags) > 0 {
 		outputPrinter.Println(outputPrinter.ContextInfo("Selected tags", strings.Join(inclTags, ", ")))
 	}
 
-	exclTags := tagManager.GetExcludedTags()
+	exclTags := tagManager.GetExclusiveTags()
 	if exclTags != nil && len(exclTags) > 0 {
 		outputPrinter.Println(outputPrinter.ContextInfo("Excluded tags", strings.Join(exclTags, ", ")))
 	}
