@@ -49,27 +49,33 @@ func (g *Manager) IsActive(tags []string) (bool, map[string]int8) {
 	return true, mark
 }
 
-func (g *Manager) Initialize(tagexps []string) {
-	pTags := make([]string, 0)
-	nTags := make([]string, 0)
+func (g *Manager) Parse(tagexps []string) {
+	if g.exclusiveTags == nil {
+		g.exclusiveTags = make([]string, 0)
+	}
+	if g.inclusiveTags == nil {
+		g.inclusiveTags = make([]string, 0)
+	}
 	for _, tagexp := range tagexps {
 		signedTags := utils.Split(tagexp, ",")
 		for _, tag := range signedTags {
 			if strings.HasPrefix(tag, "-") {
-				nTag := strings.TrimPrefix(tag, "-")
-				if len(nTag) > 0 && !utils.Contains(nTags, nTag) {
-					nTags = append(nTags, nTag)
-				}
+				g.exclusiveTags = appendTag(g.exclusiveTags, strings.TrimPrefix(tag, "-"))
 			} else {
-				pTag := strings.TrimPrefix(tag, "+")
-				if len(pTag) > 0 && !utils.Contains(pTags, pTag) {
-					pTags = append(pTags, pTag)
-				}
+				g.inclusiveTags = appendTag(g.inclusiveTags, strings.TrimPrefix(tag, "+"))
 			}
 		}
 	}
-	g.inclusiveTags = pTags
-	g.exclusiveTags = nTags
+}
+
+func (g *Manager) Reset() {
+	g.inclusiveTags = nil
+	g.exclusiveTags = nil
+}
+
+func (g *Manager) Initialize(tagexps []string) {
+	g.Reset()
+	g.Parse(tagexps)
 }
 
 func (g *Manager) GetInclusiveTags() []string {
@@ -78,4 +84,13 @@ func (g *Manager) GetInclusiveTags() []string {
 
 func (g *Manager) GetExclusiveTags() []string {
 	return g.exclusiveTags
+}
+
+func appendTag(tagStore []string, tags ...string) []string {
+	for _, tag := range tags {
+		if len(tag) > 0 && !utils.Contains(tagStore, tag) {
+			tagStore = append(tagStore, tag)
+		}
+	}
+	return tagStore
 }

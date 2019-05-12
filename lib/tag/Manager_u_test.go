@@ -9,7 +9,7 @@ func TestManager_Initialize(t *testing.T) {
 	ref, err := NewManager(nil)
 	assert.NotNil(t, ref)
 	assert.Nil(t, err)
-	t.Run("Ok", func(t *testing.T) {
+	t.Run("Default", func(t *testing.T) {
 		TESTCASES := []struct {
 			tagExpression []string
 			inclusiveTags []string
@@ -44,8 +44,57 @@ func TestManager_Initialize(t *testing.T) {
 		}
 		for _, TEST := range TESTCASES {
 			ref.Initialize(TEST.tagExpression)
-			assert.Equal(t, ref.inclusiveTags, TEST.inclusiveTags)
-			assert.Equal(t, ref.exclusiveTags, TEST.exclusiveTags)
+			assert.Equal(t, TEST.inclusiveTags, ref.inclusiveTags)
+			assert.Equal(t, TEST.exclusiveTags, ref.exclusiveTags)
+		}
+	})
+}
+
+func TestManager_IsActive(t *testing.T) {
+	ref, err := NewManager(nil)
+	assert.NotNil(t, ref)
+	assert.Nil(t, err)
+	t.Run("Default", func(t *testing.T) {
+		TESTCASES := []struct {
+			tagExpression []string
+			tags []string
+			ok bool
+			mark map[string]int8
+		}{
+			{
+				tagExpression: []string{},
+				tags: []string{},
+				ok: true,
+				mark: map[string]int8{},
+			},
+			{
+				tagExpression: []string{},
+				tags: []string{ "abc", "def" },
+				ok: true,
+				mark: map[string]int8{},
+			},
+			{
+				tagExpression: []string{ "+abc, -xyz" },
+				tags: []string{ "abc", "def" },
+				ok: true,
+				mark: map[string]int8{
+					"abc": 1,
+				},
+			},
+			{
+				tagExpression: []string{ "+abc, -def, -xyz" },
+				tags: []string{ "abc", "def" },
+				ok: false,
+				mark: map[string]int8{
+					"def": -1,
+				},
+			},
+		}
+		for _, TEST := range TESTCASES {
+			ref.Initialize(TEST.tagExpression)
+			ok, mark := ref.IsActive(TEST.tags)
+			assert.Equal(t, TEST.ok, ok)
+			assert.Equal(t, TEST.mark, mark)
 		}
 	})
 }
