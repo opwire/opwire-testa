@@ -24,12 +24,14 @@ func NewSelector(opts SelectorOptions) (ref *Selector, err error) {
 	}
 
 	var testNameRe *regexp.Regexp
-	if utils.TEST_CASE_TITLE_REGEXP.MatchString(testName) {
-		testName = standardizeName(testName)
-	} else {
-		re, err := regexp.Compile(strings.ToLower(testName))
-		if err == nil {
-			testNameRe = re
+	if len(testName) > 0 {
+		if utils.TEST_CASE_TITLE_REGEXP.MatchString(testName) {
+			testName = standardizeName(testName)
+		} else {
+			re, err := regexp.Compile(strings.ToLower(testName))
+			if err == nil {
+				testNameRe = re
+			}
 		}
 	}
 
@@ -53,11 +55,11 @@ func (r *Selector) GetTestNameFilter() string {
 	return r.testName
 }
 
-func (r *Selector) IsMatched(testcase *engine.TestCase) bool {
+func (r *Selector) IsMatched(testName string) bool {
 	if len(r.testName) == 0 {
 		return true
 	} else {
-		name := standardizeName(testcase.Title)
+		name := standardizeName(testName)
 		if r.testNameRe == nil {
 			if strings.Contains(name, r.testName) {
 				return true
@@ -77,19 +79,8 @@ func (r *Selector) GetTestCases(descriptors map[string]*Descriptor) []*engine.Te
 		testsuite := d.TestSuite
 		if testsuite != nil {
 			for _, testcase := range testsuite.TestCases {
-				if len(r.testName) == 0 {
+				if testcase != nil && r.IsMatched(testcase.Title) {
 					testcases = append(testcases, testcase)
-				} else {
-					name := standardizeName(testcase.Title)
-					if r.testNameRe == nil {
-						if strings.Contains(name, r.testName) {
-							testcases = append(testcases, testcase)
-						}
-					} else {
-						if r.testNameRe.MatchString(name) {
-							testcases = append(testcases, testcase)
-						}
-					}
 				}
 			}
 		}

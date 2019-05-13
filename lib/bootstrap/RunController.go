@@ -196,7 +196,7 @@ func (r *RunController) wrapTestCase(testcase *engine.TestCase) (testing.Interna
 				r.counter.Pending += 1
 				return
 			}
-			if !r.scriptSelector.IsMatched(testcase) {
+			if !r.scriptSelector.IsMatched(testcase.Title) {
 				label := printUnmatchedPattern(r.outputPrinter, "unmatched")
 				r.outputPrinter.Println(r.outputPrinter.Skipped(testcase.Title), label)
 				r.counter.Skipped += 1
