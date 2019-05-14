@@ -11,18 +11,22 @@ import (
 	"github.com/opwire/opwire-testa/lib/utils"
 )
 
+type HttpInvoker interface {
+	Do(req *HttpRequest, interceptors ...Interceptor) (res *HttpResponse, err error)
+}
+
 type HttpInvokerOptions struct {
 	PDP string
 	Version string
 }
 
-type HttpInvoker struct {
+type HttpInvokerImpl struct {
 	pdp string
 	generator *SpecGenerator
 }
 
-func NewHttpInvoker(opts *HttpInvokerOptions) (c *HttpInvoker, err error) {
-	c = &HttpInvoker{}
+func NewHttpInvoker(opts *HttpInvokerOptions) (c *HttpInvokerImpl, err error) {
+	c = &HttpInvokerImpl{}
 	if opts != nil {
 		c.pdp = opts.PDP
 	}
@@ -41,7 +45,7 @@ func NewHttpInvoker(opts *HttpInvokerOptions) (c *HttpInvoker, err error) {
 	return c, nil
 }
 
-func (c *HttpInvoker) Do(req *HttpRequest, interceptors ...Interceptor) (*HttpResponse, error) {
+func (c *HttpInvokerImpl) Do(req *HttpRequest, interceptors ...Interceptor) (*HttpResponse, error) {
 	if req == nil {
 		return nil, fmt.Errorf("Request must not be nil")
 	}

@@ -9,10 +9,7 @@ import(
 
 func DeepDiff(x interface{}, y interface{}) (bool, string) {
 	diff := cmp.Diff(x, y)
-	if diff == "" {
-		return false, diff
-	}
-	return true, diff
+	return diff != "", diff
 }
 
 func IsPartOf(part interface{}, whole interface{}) (bool, string) {

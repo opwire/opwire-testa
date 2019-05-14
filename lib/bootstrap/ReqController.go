@@ -24,7 +24,7 @@ type ReqControllerOptions interface {
 }
 
 type ReqController struct {
-	httpInvoker *engine.HttpInvoker
+	httpInvoker engine.HttpInvoker
 	outputPrinter *format.OutputPrinter
 }
 

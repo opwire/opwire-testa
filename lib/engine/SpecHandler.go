@@ -14,7 +14,7 @@ type SpecHandlerOptions interface {
 }
 
 type SpecHandler struct {
-	invoker *HttpInvoker
+	invoker HttpInvoker
 }
 
 func NewSpecHandler(opts SpecHandlerOptions) (e *SpecHandler, err error) {
