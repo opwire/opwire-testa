@@ -3,6 +3,7 @@ package storage
 import (
 	"io"
 	"os"
+	"path/filepath"
 )
 
 type File interface {
@@ -26,6 +27,7 @@ type Fs interface {
 	Stat(name string) (os.FileInfo, error)
 	IsNotExist(err error) bool
 	Getwd() (dir string, err error)
+	Walk(root string, walkFn filepath.WalkFunc) error
 }
 
 type OsFs struct {}
@@ -44,6 +46,10 @@ func (fs *OsFs) IsNotExist(err error) bool {
 
 func (fs *OsFs) Getwd() (dir string, err error) {
 	return os.Getwd()
+}
+
+func (fs *OsFs) Walk(root string, walkFn filepath.WalkFunc) (err error) {
+	return filepath.Walk(root, walkFn)
 }
 
 func NewOsFs() *OsFs {

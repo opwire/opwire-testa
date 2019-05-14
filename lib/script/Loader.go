@@ -3,7 +3,6 @@ package script
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 	"gopkg.in/yaml.v2"
@@ -126,7 +125,8 @@ func (l *Loader) ReadDirs(sourceDirs []string, ext string) (locators []*Locator,
 
 func (l *Loader) ReadDir(sourceDir string, ext string) ([]*Locator, error) {
 	locators := make([]*Locator, 0)
-	err := filepath.Walk(sourceDir, func(path string, f os.FileInfo, err error) error {
+	fs := storage.GetFs()
+	err := fs.Walk(sourceDir, func(path string, f os.FileInfo, err error) error {
 		if err == nil && !f.IsDir() {
 			r, err := regexp.MatchString(ext, f.Name())
 			if err == nil && r {

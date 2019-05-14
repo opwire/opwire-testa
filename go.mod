@@ -3,6 +3,7 @@ module github.com/opwire/opwire-testa
 go 1.12
 
 require (
+	github.com/golang/mock v1.3.1
 	github.com/google/go-cmp v0.2.1-0.20190312032427-6f77996f0c42
 	github.com/gookit/color v1.1.6
 	github.com/jeremywohl/flatten v0.0.0-20180923035001-588fe0d4c603
