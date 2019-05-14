@@ -25,3 +25,16 @@ func StandardizeTagLabel(tag string) (string, error) {
 	}
 	return tag, nil
 }
+
+func ConvertTabToSpaces(block string, dedent int) string {
+	lines := strings.Split(block, "\n")
+	lines = Map(lines, func(line string, number int) string {
+		var count int
+		line = strings.TrimLeftFunc(line, func(r rune) bool {
+			count += 1
+			return count <= dedent
+		})
+		return strings.ReplaceAll(line, "\t", "  ")
+	})
+	return strings.Join(lines, "\n")
+}

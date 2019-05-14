@@ -3,6 +3,7 @@ package bootstrap
 import (
 	"flag"
 	"fmt"
+	"io"
 	"testing"
 	"time"
 	"github.com/opwire/opwire-testa/lib/format"
@@ -78,8 +79,6 @@ func NewRunController(opts RunControllerOptions) (r *RunController, err error) {
 type RunArguments interface {}
 
 func (r *RunController) Execute(args RunArguments) error {
-	flag.Set("test.v", "false")
-
 	// start time
 	startTime := time.Now()
 
@@ -146,10 +145,24 @@ func (r *RunController) Execute(args RunArguments) error {
 	})
 
 	// Run the tests
-	testing.Main(defaultMatchString, internalTests, []testing.InternalBenchmark{}, []testing.InternalExample{})
+	flag.Set("test.v", "false")
+	if false {
+		testing.MainStart(testDeps(defaultMatchString), internalTests, nil, nil).Run()
+	} else {
+		testing.Main(defaultMatchString, internalTests, nil, nil)
+	}
 
 	return nil
 }
+
+type testDeps func(pat, str string) (bool, error)
+func (f testDeps) MatchString(pat, str string) (bool, error)   { return f(pat, str) }
+func (f testDeps) StartCPUProfile(w io.Writer) error           { return nil }
+func (f testDeps) StopCPUProfile()                             {}
+func (f testDeps) WriteProfileTo(string, io.Writer, int) error { return nil }
+func (f testDeps) ImportPath() string                          { return "" }
+func (f testDeps) StartTestLog(io.Writer)                      {}
+func (f testDeps) StopTestLog() error                          { return nil }
 
 func defaultMatchString(pat, str string) (bool, error) {
 	return true, nil
