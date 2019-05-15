@@ -50,35 +50,18 @@ func (c *HttpInvokerImpl) Do(req *HttpRequest, interceptors ...Interceptor) (*Ht
 		return nil, fmt.Errorf("Request must not be nil")
 	}
 
-	url := BuildUrl(req, c.pdp, "")
+	if len(req.PDP) == 0 {
+		req.PDP = c.pdp
+	}
 
 	reqTimeout := time.Second * 10
 	var httpClient *http.Client = &http.Client{
 		Timeout: reqTimeout,
 	}
 
-	method := "GET"
-	if len(req.Method) > 0 {
-		method = req.Method
-	}
-
-	var body *bytes.Buffer
-	
-	if len(req.Body) > 0 {
-		body = bytes.NewBufferString(req.Body)
-	} else {
-		body = bytes.NewBuffer([]byte{})
-	}
-	
-	lowReq, err := http.NewRequest(method, url, body)
+	lowReq, err := req.GetRawRequest()
 	if err != nil {
 		return nil, err
-	}
-
-	for _, header := range req.Headers {
-		if len(header.Name) > 0 && len(header.Value) > 0 {
-			lowReq.Header.Add(header.Name, header.Value)
-		}
 	}
 
 	// Pre-processing
@@ -86,7 +69,7 @@ func (c *HttpInvokerImpl) Do(req *HttpRequest, interceptors ...Interceptor) (*Ht
 		if monitor, ok := interceptor.(ExplanationTarget); monitor != nil && ok {
 			w := monitor.GetConsoleOut()
 			if w != nil {
-				renderRequest(w, lowReq)
+				renderRequest(w, req)
 			}
 		}
 	}
@@ -131,7 +114,11 @@ func (c *HttpInvokerImpl) Do(req *HttpRequest, interceptors ...Interceptor) (*Ht
 	return res, nil
 }
 
-func renderRequest(w io.Writer, req *http.Request) error {
+func renderRequest(w io.Writer, r *HttpRequest) error {
+	req, err := r.GetRawRequest()
+	if err != nil {
+		return err
+	}
 	// render first line
 	line := []string{">"}
 	if len(req.Method) > 0 {
@@ -194,13 +181,9 @@ func renderResponse(w io.Writer, res *HttpResponse) error {
 	return nil
 }
 
-func BuildUrl(req *HttpRequest, defaultPDP string, defaultPath string) string {
-	if len(defaultPDP) == 0 {
-		defaultPDP = utils.DEFAULT_PDP
-	}
-	if len(defaultPath) == 0 {
-		defaultPath = utils.DEFAULT_PATH
-	}
+func BuildUrl(req *HttpRequest) string {
+	defaultPDP := utils.DEFAULT_PDP
+	defaultPath := utils.DEFAULT_PATH
 	url := req.Url
 	if len(url) == 0 {
 		pdp := defaultPDP
@@ -228,6 +211,40 @@ type HttpRequest struct {
 	Path string `yaml:"path,omitempty" json:"path"`
 	Headers []HttpHeader `yaml:"headers,omitempty" json:"headers"`
 	Body string `yaml:"body,omitempty" json:"body"`
+	request *http.Request
+}
+
+func (r *HttpRequest) GetRawRequest() (req *http.Request, err error) {
+	if r.request == nil {
+		url := BuildUrl(r)
+
+		method := "GET"
+		if len(r.Method) > 0 {
+			method = r.Method
+		}
+
+		var body *bytes.Buffer
+
+		if len(r.Body) > 0 {
+			body = bytes.NewBufferString(r.Body)
+		} else {
+			body = bytes.NewBuffer([]byte{})
+		}
+
+		req, err = http.NewRequest(method, url, body)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, header := range r.Headers {
+			if len(header.Name) > 0 && len(header.Value) > 0 {
+				req.Header.Add(header.Name, header.Value)
+			}
+		}
+
+		r.request = req
+	}
+	return r.request, nil
 }
 
 type HttpResponse struct {

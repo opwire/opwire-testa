@@ -143,7 +143,7 @@ type CurlGenerator struct {
 func (g *CurlGenerator) generateCommand(w io.Writer, req *engine.HttpRequest) error {
 	fmt.Fprintf(w, "curl \\\n")
 	fmt.Fprintf(w, "  --request %s \\\n", req.Method)
-	fmt.Fprintf(w, "  --url \"%s\" \\\n", engine.BuildUrl(req, "", ""))
+	fmt.Fprintf(w, "  --url \"%s\" \\\n", engine.BuildUrl(req))
 	for _, header := range req.Headers {
 		fmt.Fprintf(w, "  --header '%s: %s' \\\n", header.Name, header.Value)
 	}
