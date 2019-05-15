@@ -2,6 +2,8 @@ package format
 
 import (
 	"fmt"
+	"io"
+	"os"
 	"strings"
 	"github.com/gookit/color"
 	"github.com/opwire/opwire-testa/lib/utils"
@@ -13,6 +15,7 @@ type OutputPrinterOptions interface {
 
 type OutputPrinter struct {
 	options OutputPrinterOptions
+	writer io.Writer
 }
 
 func NewOutputPrinter(opts OutputPrinterOptions) (ref *OutputPrinter, err error) {
@@ -21,12 +24,23 @@ func NewOutputPrinter(opts OutputPrinterOptions) (ref *OutputPrinter, err error)
 	return ref, err
 }
 
+func (w *OutputPrinter) GetWriter() io.Writer {
+	if w.writer == nil {
+		w.writer = os.Stdout
+	}
+	return w.writer
+}
+
+func (w *OutputPrinter) SetWriter(writer io.Writer) {
+	w.writer = writer
+}
+
 func (w *OutputPrinter) Printf(format string, args ...interface{}) (n int, err error) {
-	return fmt.Printf(format, args...)
+	return fmt.Fprintf(w.GetWriter(), format, args...)
 }
 
 func (w *OutputPrinter) Println(a ...interface{}) (n int, err error) {
-	return fmt.Println(a...)
+	return fmt.Fprintln(w.GetWriter(), a...)
 }
 
 func (w *OutputPrinter) Heading(title string) string {

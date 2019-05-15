@@ -3,7 +3,6 @@ package bootstrap
 import (
 	"fmt"
 	"io"
-	"os"
 	"strings"
 	"github.com/opwire/opwire-testa/lib/engine"
 	"github.com/opwire/opwire-testa/lib/format"
@@ -22,6 +21,7 @@ type GenController struct {
 	scriptSource script.Source
 	tagManager *tag.Manager
 	outputPrinter *format.OutputPrinter
+	resultWriter io.Writer
 }
 
 func NewGenController(opts GenControllerOptions) (ref *GenController, err error) {
@@ -61,6 +61,17 @@ func NewGenController(opts GenControllerOptions) (ref *GenController, err error)
 }
 
 type GenArguments interface {}
+
+func (r *GenController) GetResultWriter() io.Writer {
+	if r.resultWriter == nil {
+		return r.outputPrinter.GetWriter()
+	}
+	return r.resultWriter
+}
+
+func (r *GenController) SetResultWriter(writer io.Writer) {
+	r.resultWriter = writer
+}
 
 func (r *GenController) Execute(args GenArguments) error {
 	// display environment of command
@@ -119,7 +130,7 @@ func (r *GenController) Execute(args GenArguments) error {
 		request := testcase.Request
 
 		generator := new(CurlGenerator)
-		generator.generateCommand(os.Stdout, request)
+		generator.generateCommand(r.GetResultWriter(), request)
 	}
 
 	r.outputPrinter.Println()
@@ -137,6 +148,5 @@ func (g *CurlGenerator) generateCommand(w io.Writer, req *engine.HttpRequest) er
 		fmt.Fprintf(w, "  --header '%s: %s' \\\n", header.Name, header.Value)
 	}
 	fmt.Fprintf(w, "  --data='%s'\n", req.Body)
-	fmt.Fprintln(w)
 	return nil
 }

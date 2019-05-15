@@ -34,6 +34,9 @@ func ConvertTabToSpaces(block string, dedent int) string {
 		tablen := strings.IndexFunc(line, func(c rune) bool {
 			return c != '\t'
 		})
+		if tablen < 0 {
+			continue
+		}
 		if indent < 0 || indent > tablen {
 			indent = tablen
 		}
@@ -54,5 +57,19 @@ func ConvertTabToSpaces(block string, dedent int) string {
 		})
 		return strings.ReplaceAll(line, "\t", "  ")
 	})
+	// remove the first blank line
+	if len(lines) > 0 && lines[0] == "" {
+		lines = lines[1:]
+	}
 	return strings.Join(lines, "\n")
+}
+
+type DevNull int
+
+func (DevNull) Write(p []byte) (int, error) {
+	return len(p), nil
+}
+
+func (DevNull) WriteString(s string) (int, error) {
+	return len(s), nil
 }
