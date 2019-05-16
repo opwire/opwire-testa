@@ -62,7 +62,7 @@ func NewReqController(opts ReqControllerOptions) (obj *ReqController, err error)
 
 func (r *ReqController) GetOutWriter() io.Writer {
 	if r.outWriter == nil {
-		return r.outputPrinter.GetWriter()
+		return os.Stdout
 	}
 	return r.outWriter
 }

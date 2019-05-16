@@ -3,6 +3,7 @@ package bootstrap
 import (
 	"fmt"
 	"io"
+	"os"
 	"strings"
 	"github.com/opwire/opwire-testa/lib/engine"
 	"github.com/opwire/opwire-testa/lib/format"
@@ -21,7 +22,7 @@ type GenController struct {
 	scriptSource script.Source
 	tagManager *tag.Manager
 	outputPrinter *format.OutputPrinter
-	resultWriter io.Writer
+	outWriter io.Writer
 }
 
 func NewGenController(opts GenControllerOptions) (ref *GenController, err error) {
@@ -62,15 +63,15 @@ func NewGenController(opts GenControllerOptions) (ref *GenController, err error)
 
 type GenArguments interface {}
 
-func (r *GenController) GetResultWriter() io.Writer {
-	if r.resultWriter == nil {
-		return r.outputPrinter.GetWriter()
+func (r *GenController) GetOutWriter() io.Writer {
+	if r.outWriter == nil {
+		return os.Stdout
 	}
-	return r.resultWriter
+	return r.outWriter
 }
 
-func (r *GenController) SetResultWriter(writer io.Writer) {
-	r.resultWriter = writer
+func (r *GenController) SetOutWriter(writer io.Writer) {
+	r.outWriter = writer
 }
 
 func (r *GenController) Execute(args GenArguments) error {
@@ -130,7 +131,7 @@ func (r *GenController) Execute(args GenArguments) error {
 		request := testcase.Request
 
 		generator := new(CurlGenerator)
-		generator.generateCommand(r.GetResultWriter(), request)
+		generator.generateCommand(r.GetOutWriter(), request)
 	}
 
 	r.outputPrinter.Println()

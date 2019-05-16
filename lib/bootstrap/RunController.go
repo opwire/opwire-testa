@@ -78,6 +78,10 @@ func NewRunController(opts RunControllerOptions) (r *RunController, err error) {
 
 type RunArguments interface {}
 
+func (r *RunController) GetOutputPrinter() *format.OutputPrinter {
+	return r.outputPrinter
+}
+
 func (r *RunController) Execute(args RunArguments) error {
 	// start time
 	startTime := time.Now()

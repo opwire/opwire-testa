@@ -26,7 +26,7 @@ func NewOutputPrinter(opts OutputPrinterOptions) (ref *OutputPrinter, err error)
 
 func (w *OutputPrinter) GetWriter() io.Writer {
 	if w.writer == nil {
-		w.writer = os.Stdout
+		return os.Stdout
 	}
 	return w.writer
 }
