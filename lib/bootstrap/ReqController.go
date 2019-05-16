@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"strconv"
+	"strings"
 	"github.com/opwire/opwire-testa/lib/engine"
 	"github.com/opwire/opwire-testa/lib/format"
 	"github.com/opwire/opwire-testa/lib/utils"
@@ -26,22 +27,14 @@ type ReqControllerOptions interface {
 type ReqController struct {
 	httpInvoker engine.HttpInvoker
 	outputPrinter *format.OutputPrinter
+	outWriter io.Writer
+	errWriter io.Writer
 }
 
 type GenerationPrinter struct {}
 
 func (g *GenerationPrinter) GetWriter() io.Writer {
 	return os.Stdout
-}
-
-type ExplanationTarget struct {}
-
-func (z *ExplanationTarget) GetConsoleOut() io.Writer {
-	return os.Stdout
-}
-
-func (z *ExplanationTarget) GetConsoleErr() io.Writer {
-	return os.Stderr
 }
 
 func NewReqController(opts ReqControllerOptions) (obj *ReqController, err error) {
@@ -66,32 +59,135 @@ func NewReqController(opts ReqControllerOptions) (obj *ReqController, err error)
 	return obj, err
 }
 
+func (r *ReqController) GetOutWriter() io.Writer {
+	if r.outWriter == nil {
+		return r.outputPrinter.GetWriter()
+	}
+	return r.outWriter
+}
+
+func (r *ReqController) SetOutWriter(writer io.Writer) {
+	r.outWriter = writer
+}
+
+func (r *ReqController) GetErrWriter() io.Writer {
+	if r.errWriter == nil {
+		return os.Stderr
+	}
+	return r.errWriter
+}
+
+func (r *ReqController) SetErrWriter(writer io.Writer) {
+	r.errWriter = writer
+}
+
 func (z *ReqController) Execute(args ReqArguments) error {
 	z.assertReady(args)
 
-	console := &ExplanationTarget{}
+	invocationPrinter := &InvocationPrinter{
+		writer: z.GetOutWriter(),
+	}
 
 	if args.GetFormat() == "testcase" {
 		_, err := z.httpInvoker.Do(transformReqArgs(args), &GenerationPrinter{})
 		if err != nil {
-			return z.displayError(err, console)
+			return z.displayError(err)
 		}
 		return nil
 	}
 
-	res, err := z.httpInvoker.Do(transformReqArgs(args), console)
+	res, err := z.httpInvoker.Do(transformReqArgs(args), invocationPrinter)
 	if err != nil {
-		return z.displayError(err, console)
+		return z.displayError(err)
 	}
-	z.displayResult(res, console)
+	z.displayResult(res)
 	return nil
 }
 
-func (z *ReqController) displayError(err error, console *ExplanationTarget) error {
-	if err == nil || console == nil {
+type InvocationPrinter struct {
+	writer io.Writer
+}
+
+func (r *InvocationPrinter) PreProcess(req *engine.HttpRequest) error {
+	return renderRequest(r.writer, req)
+}
+
+func (r *InvocationPrinter) PostProcess(req *engine.HttpRequest, res *engine.HttpResponse) error {
+	return renderResponse(r.writer, res)
+}
+
+func renderRequest(w io.Writer, r *engine.HttpRequest) error {
+	req, err := r.GetRawRequest()
+	if err != nil {
 		return err
 	}
-	w := console.GetConsoleErr()
+	// render first line
+	line := []string{">"}
+	if len(req.Method) > 0 {
+		line = append(line, req.Method)
+	}
+	if req.URL != nil {
+		reqURI := req.URL.RequestURI()
+		if len(reqURI) > 0 {
+			line = append(line, reqURI)
+		} else {
+			if len(req.URL.Path) > 0 {
+				line = append(line, req.URL.Path)
+			}
+		}
+	}
+	if len(req.Proto) > 0 {
+		line = append(line, req.Proto)
+	}
+	fmt.Fprintln(w, strings.Join(line, " "))
+	// render Host
+	if req.URL != nil && len(req.URL.Host) > 0 {
+		fmt.Fprintln(w, "> Host: " + req.URL.Host)
+	}
+	// render User-Agent
+	userAgent := req.UserAgent()
+	if len(userAgent) > 0 {
+		fmt.Fprintln(w, "> User-Agent: " + userAgent)
+	}
+	// render headers
+	for key, vals := range req.Header {
+		for _, val := range vals {
+			fmt.Fprintln(w, "> " + key + ": " + val)
+		}
+	}
+	fmt.Fprintln(w, ">")
+	return nil
+}
+
+func renderResponse(w io.Writer, res *engine.HttpResponse) error {
+	// render status line
+	line := []string{"<"}
+	if len(res.Version) > 0 {
+		line = append(line, res.Version)
+	}
+	if len(res.Status) > 0 {
+		line = append(line, res.Status)
+	} else {
+		line = append(line, fmt.Sprintf("%v", res.StatusCode))
+	}
+	fmt.Fprintln(w, strings.Join(line, " "))
+	// render headers
+	for key, vals := range res.Header {
+		for _, val := range vals {
+			fmt.Fprintln(w, "< " + key + ": " + val)
+		}
+	}
+	fmt.Fprintln(w, "<")
+	// render body
+	fmt.Fprintln(w, string(res.Body))
+	return nil
+}
+
+func (z *ReqController) displayError(err error) error {
+	if err == nil {
+		return err
+	}
+	w := z.GetErrWriter()
 	if w == nil {
 		return err
 	}
@@ -99,11 +195,11 @@ func (z *ReqController) displayError(err error, console *ExplanationTarget) erro
 	return err
 }
 
-func (z *ReqController) displayResult(res *engine.HttpResponse, console *ExplanationTarget) *engine.HttpResponse {
-	if res == nil || console == nil {
+func (z *ReqController) displayResult(res *engine.HttpResponse) *engine.HttpResponse {
+	if res == nil {
 		return res
 	}
-	w := console.GetConsoleOut()
+	w := z.GetOutWriter()
 	if w == nil {
 		return res
 	}

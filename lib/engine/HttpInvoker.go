@@ -6,7 +6,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"strings"
 	"time"
 	"github.com/opwire/opwire-testa/lib/utils"
 )
@@ -66,11 +65,8 @@ func (c *HttpInvokerImpl) Do(req *HttpRequest, interceptors ...Interceptor) (*Ht
 
 	// Pre-processing
 	for _, interceptor := range interceptors {
-		if monitor, ok := interceptor.(ExplanationTarget); monitor != nil && ok {
-			w := monitor.GetConsoleOut()
-			if w != nil {
-				renderRequest(w, req)
-			}
+		if processor, ok := interceptor.(PreProcessor); processor != nil && ok {
+			processor.PreProcess(req)
 		}
 	}
 
@@ -97,11 +93,8 @@ func (c *HttpInvokerImpl) Do(req *HttpRequest, interceptors ...Interceptor) (*Ht
 
 	// Post-processing
 	for _, interceptor := range interceptors {
-		if monitor, ok := interceptor.(ExplanationTarget); monitor != nil && ok {
-			w := monitor.GetConsoleOut()
-			if w != nil {
-				renderResponse(w, res)
-			}
+		if processor, ok := interceptor.(PostProcessor); processor != nil && ok {
+			processor.PostProcess(req, res)
 		}
 		if printer, ok := interceptor.(GenerationPrinter); printer != nil && ok {
 			w := printer.GetWriter()
@@ -112,73 +105,6 @@ func (c *HttpInvokerImpl) Do(req *HttpRequest, interceptors ...Interceptor) (*Ht
 	}
 
 	return res, nil
-}
-
-func renderRequest(w io.Writer, r *HttpRequest) error {
-	req, err := r.GetRawRequest()
-	if err != nil {
-		return err
-	}
-	// render first line
-	line := []string{">"}
-	if len(req.Method) > 0 {
-		line = append(line, req.Method)
-	}
-	if req.URL != nil {
-		reqURI := req.URL.RequestURI()
-		if len(reqURI) > 0 {
-			line = append(line, reqURI)
-		} else {
-			if len(req.URL.Path) > 0 {
-				line = append(line, req.URL.Path)
-			}
-		}
-	}
-	if len(req.Proto) > 0 {
-		line = append(line, req.Proto)
-	}
-	fmt.Fprintln(w, strings.Join(line, " "))
-	// render Host
-	if req.URL != nil && len(req.URL.Host) > 0 {
-		fmt.Fprintln(w, "> Host: " + req.URL.Host)
-	}
-	// render User-Agent
-	userAgent := req.UserAgent()
-	if len(userAgent) > 0 {
-		fmt.Fprintln(w, "> User-Agent: " + userAgent)
-	}
-	// render headers
-	for key, vals := range req.Header {
-		for _, val := range vals {
-			fmt.Fprintln(w, "> " + key + ": " + val)
-		}
-	}
-	fmt.Fprintln(w, ">")
-	return nil
-}
-
-func renderResponse(w io.Writer, res *HttpResponse) error {
-	// render status line
-	line := []string{"<"}
-	if len(res.Version) > 0 {
-		line = append(line, res.Version)
-	}
-	if len(res.Status) > 0 {
-		line = append(line, res.Status)
-	} else {
-		line = append(line, fmt.Sprintf("%v", res.StatusCode))
-	}
-	fmt.Fprintln(w, strings.Join(line, " "))
-	// render headers
-	for key, vals := range res.Header {
-		for _, val := range vals {
-			fmt.Fprintln(w, "< " + key + ": " + val)
-		}
-	}
-	fmt.Fprintln(w, "<")
-	// render body
-	fmt.Fprintln(w, string(res.Body))
-	return nil
 }
 
 func BuildUrl(req *HttpRequest) string {
@@ -259,10 +185,14 @@ type HttpResponse struct {
 type Interceptor interface {
 }
 
-type ExplanationTarget interface {
+type PreProcessor interface {
 	Interceptor
-	GetConsoleOut() io.Writer
-	GetConsoleErr() io.Writer
+	PreProcess(req *HttpRequest) error
+}
+
+type PostProcessor interface {
+	Interceptor
+	PostProcess(req *HttpRequest, res *HttpResponse) error
 }
 
 type GenerationPrinter interface {
