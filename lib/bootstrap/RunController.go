@@ -32,6 +32,7 @@ type RunController struct {
 		Failure int
 		Cracked int
 	}
+	t *testing.T
 }
 
 func NewRunController(opts RunControllerOptions) (r *RunController, err error) {
@@ -76,11 +77,15 @@ func NewRunController(opts RunControllerOptions) (r *RunController, err error) {
 	return r, nil
 }
 
-type RunArguments interface {}
+func (r *RunController) SetT(t *testing.T) {
+	r.t = t
+}
 
 func (r *RunController) GetOutputPrinter() *format.OutputPrinter {
 	return r.outputPrinter
 }
+
+type RunArguments interface {}
 
 func (r *RunController) Execute(args RunArguments) error {
 	// start time
@@ -149,6 +154,10 @@ func (r *RunController) Execute(args RunArguments) error {
 	})
 
 	// Run the tests
+	if r.t != nil {
+		return runTests(r.t, internalTests)
+	}
+
 	flag.Set("test.v", "false")
 	if false {
 		testing.MainStart(testDeps(defaultMatchString), internalTests, nil, nil).Run()
@@ -156,6 +165,13 @@ func (r *RunController) Execute(args RunArguments) error {
 		testing.Main(defaultMatchString, internalTests, nil, nil)
 	}
 
+	return nil
+}
+
+func runTests(t *testing.T, internalTests []testing.InternalTest) error {
+	for _, test := range internalTests {
+		test.F(t)
+	}
 	return nil
 }
 
