@@ -3,7 +3,6 @@ package engine
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -16,12 +15,10 @@ type HttpInvoker interface {
 
 type HttpInvokerOptions struct {
 	PDP string
-	Version string
 }
 
 type HttpInvokerImpl struct {
 	pdp string
-	generator *SpecGenerator
 }
 
 func NewHttpInvoker(opts *HttpInvokerOptions) (c *HttpInvokerImpl, err error) {
@@ -29,18 +26,6 @@ func NewHttpInvoker(opts *HttpInvokerOptions) (c *HttpInvokerImpl, err error) {
 	if opts != nil {
 		c.pdp = opts.PDP
 	}
-	if len(c.pdp) == 0 {
-		c.pdp = utils.DEFAULT_PDP
-	}
-
-	c.generator, err = NewSpecGenerator()
-	if err != nil {
-		return nil, err
-	}
-	if opts != nil {
-		c.generator.Version = opts.Version
-	}
-
 	return c, nil
 }
 
@@ -96,27 +81,19 @@ func (c *HttpInvokerImpl) Do(req *HttpRequest, interceptors ...Interceptor) (*Ht
 		if processor, ok := interceptor.(PostProcessor); processor != nil && ok {
 			processor.PostProcess(req, res)
 		}
-		if printer, ok := interceptor.(GenerationPrinter); printer != nil && ok {
-			w := printer.GetWriter()
-			if w != nil {
-				c.generator.generateTestCase(w, req, res)
-			}
-		}
 	}
 
 	return res, nil
 }
 
 func BuildUrl(req *HttpRequest) string {
-	defaultPDP := utils.DEFAULT_PDP
-	defaultPath := utils.DEFAULT_PATH
 	url := req.Url
 	if len(url) == 0 {
-		pdp := defaultPDP
+		pdp := utils.DEFAULT_PDP
 		if len(req.PDP) > 0 {
 			pdp = req.PDP
 		}
-		basePath := defaultPath
+		basePath := utils.DEFAULT_PATH
 		if len(req.Path) > 0 {
 			basePath = req.Path
 		}
@@ -182,8 +159,7 @@ type HttpResponse struct {
 	Body []byte
 }
 
-type Interceptor interface {
-}
+type Interceptor interface {}
 
 type PreProcessor interface {
 	Interceptor
@@ -193,9 +169,4 @@ type PreProcessor interface {
 type PostProcessor interface {
 	Interceptor
 	PostProcess(req *HttpRequest, res *HttpResponse) error
-}
-
-type GenerationPrinter interface {
-	Interceptor
-	GetWriter() io.Writer
 }

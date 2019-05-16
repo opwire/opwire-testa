@@ -26,15 +26,10 @@ type ReqControllerOptions interface {
 
 type ReqController struct {
 	httpInvoker engine.HttpInvoker
+	specGenerator *engine.SpecGenerator
 	outputPrinter *format.OutputPrinter
 	outWriter io.Writer
 	errWriter io.Writer
-}
-
-type GenerationPrinter struct {}
-
-func (g *GenerationPrinter) GetWriter() io.Writer {
-	return os.Stdout
 }
 
 func NewReqController(opts ReqControllerOptions) (obj *ReqController, err error) {
@@ -42,12 +37,18 @@ func NewReqController(opts ReqControllerOptions) (obj *ReqController, err error)
 
 	// create a HTTP Invoker instance
 	httpInvokerOptions := &engine.HttpInvokerOptions{}
-	if opts != nil {
-		httpInvokerOptions.Version = opts.GetVersion()
-	}
 	obj.httpInvoker, err = engine.NewHttpInvoker(httpInvokerOptions)
 	if err != nil {
 		return nil, err
+	}
+
+	// create a SpecGenerator instance
+	obj.specGenerator, err = engine.NewSpecGenerator()
+	if err != nil {
+		return nil, err
+	}
+	if opts != nil {
+		obj.specGenerator.Version = opts.GetVersion()
 	}
 
 	// create a OutputPrinter instance
@@ -84,12 +85,16 @@ func (r *ReqController) SetErrWriter(writer io.Writer) {
 func (z *ReqController) Execute(args ReqArguments) error {
 	z.assertReady(args)
 
+	generationPrinter := &GenerationPrinter{
+		generator: z.specGenerator,
+		writer: z.GetOutWriter(),
+	}
 	invocationPrinter := &InvocationPrinter{
 		writer: z.GetOutWriter(),
 	}
 
 	if args.GetFormat() == "testcase" {
-		_, err := z.httpInvoker.Do(transformReqArgs(args), &GenerationPrinter{})
+		_, err := z.httpInvoker.Do(transformReqArgs(args), generationPrinter)
 		if err != nil {
 			return z.displayError(err)
 		}
@@ -102,6 +107,21 @@ func (z *ReqController) Execute(args ReqArguments) error {
 	}
 	z.displayResult(res)
 	return nil
+}
+
+type GenerationPrinter struct {
+	generator *engine.SpecGenerator
+	writer io.Writer
+}
+
+func (r *GenerationPrinter) PostProcess(req *engine.HttpRequest, res *engine.HttpResponse) error {
+	if r.generator == nil {
+		panic(fmt.Errorf("GenerationPrinter.generator must not be nil"))
+	}
+	if r.writer == nil {
+		panic(fmt.Errorf("GenerationPrinter.writer must not be nil"))
+	}
+	return r.generator.GenerateTestCase(r.writer, req, res)
 }
 
 type InvocationPrinter struct {

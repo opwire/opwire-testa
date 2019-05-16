@@ -24,7 +24,7 @@ func NewSpecGenerator() (*SpecGenerator, error) {
 	return ref, nil
 }
 
-func (g *SpecGenerator) generateTestCase(w io.Writer, req *HttpRequest, res *HttpResponse) error {
+func (g *SpecGenerator) GenerateTestCase(w io.Writer, req *HttpRequest, res *HttpResponse) error {
 	s := TestCase{}
 	s.Title = "<Generated testcase>"
 	s.Version = utils.RefOfString(g.Version)
