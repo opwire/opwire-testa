@@ -26,7 +26,7 @@ func StandardizeTagLabel(tag string) (string, error) {
 	return tag, nil
 }
 
-func ConvertTabToSpaces(block string, dedent int) string {
+func ConvertTabToSpaces(block string, newIndent int) string {
 	lines := strings.Split(block, "\n")
 	// determines the indent length
 	indent := -1
@@ -45,16 +45,19 @@ func ConvertTabToSpaces(block string, dedent int) string {
 		indent = 0
 	}
 	// update dedent length
-	if dedent == 0 || dedent > indent {
-		dedent = indent
-	}
+	dedent := indent - newIndent
 	// de-indent the text block
 	lines = Map(lines, func(line string, number int) string {
-		var count int
-		line = strings.TrimLeftFunc(line, func(r rune) bool {
-			count += 1
-			return count <= dedent
-		})
+		if dedent > 0 {
+			var count int
+			line = strings.TrimLeftFunc(line, func(r rune) bool {
+				count += 1
+				return count <= dedent
+			})
+		}
+		if dedent < 0 {
+			line = strings.Repeat("\t", -dedent) + line
+		}
 		return strings.ReplaceAll(line, "\t", "  ")
 	})
 	// remove the first blank line
