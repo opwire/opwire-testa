@@ -38,7 +38,15 @@ func (c *HttpInvokerImpl) Do(req *HttpRequest, interceptors ...Interceptor) (*Ht
 		req.PDP = c.pdp
 	}
 
-	reqTimeout := time.Second * 10
+	var reqTimeout time.Duration
+	if req.Timeout != nil {
+		var err error
+		reqTimeout, err = time.ParseDuration(*req.Timeout)
+		if err != nil || reqTimeout <= 0 {
+			reqTimeout = time.Second * 10
+		}
+	}
+
 	var httpClient *http.Client = &http.Client{
 		Timeout: reqTimeout,
 	}
@@ -114,6 +122,7 @@ type HttpRequest struct {
 	Path string `yaml:"path,omitempty" json:"path"`
 	Headers []HttpHeader `yaml:"headers,omitempty" json:"headers"`
 	Body string `yaml:"body,omitempty" json:"body"`
+	Timeout *string `yaml:"timeout,omitempty" json:"timeout"`
 	request *http.Request
 }
 

@@ -285,6 +285,17 @@ const scriptSchema string = `{
 				},
 				"body": {
 					"type": "string"
+				},
+				"timeout": {
+					"oneOf": [
+						{
+							"type": "null"
+						},
+						{
+							"type": "string",
+							"pattern": "^` + utils.TIMEOUT_PATTERN + `$"
+						}
+					]
 				}
 			},
 			"additionalProperties": false

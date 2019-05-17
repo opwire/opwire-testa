@@ -138,8 +138,7 @@ func (r *GenController) Execute(args GenArguments) error {
 	return nil
 }
 
-type CurlGenerator struct {
-}
+type CurlGenerator struct {}
 
 func (g *CurlGenerator) generateCommand(w io.Writer, req *engine.HttpRequest) error {
 	fmt.Fprintf(w, "curl \\\n")
