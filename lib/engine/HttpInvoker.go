@@ -72,14 +72,7 @@ func (c *HttpInvokerImpl) Do(req *HttpRequest, interceptors ...Interceptor) (*Ht
 		return nil, err
 	}
 
-	res := &HttpResponse{}
-
-	res.Version = lowRes.Proto
-	res.Status = lowRes.Status
-	res.StatusCode = lowRes.StatusCode
-	res.Header = lowRes.Header
-
-	res.Body, err = ioutil.ReadAll(lowRes.Body)
+	res, err := NewHttpResponse(lowRes)
 	if err != nil {
 		return nil, err
 	}
@@ -166,6 +159,25 @@ type HttpResponse struct {
 	Header http.Header
 	ContentLength int64
 	Body []byte
+	response *http.Response
+}
+
+func NewHttpResponse(lowRes *http.Response) (res *HttpResponse, err error) {
+	res = &HttpResponse{}
+
+	res.Version = lowRes.Proto
+	res.Status = lowRes.Status
+	res.StatusCode = lowRes.StatusCode
+	res.Header = lowRes.Header
+
+	res.Body, err = ioutil.ReadAll(lowRes.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	res.response = lowRes
+
+	return res, nil
 }
 
 type Interceptor interface {}
