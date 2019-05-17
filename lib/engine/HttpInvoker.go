@@ -163,6 +163,10 @@ type HttpResponse struct {
 }
 
 func NewHttpResponse(lowRes *http.Response) (res *HttpResponse, err error) {
+	if lowRes == nil {
+		return nil, fmt.Errorf("The source http.Reponse must not be nil")
+	}
+
 	res = &HttpResponse{}
 
 	res.Version = lowRes.Proto
@@ -170,6 +174,7 @@ func NewHttpResponse(lowRes *http.Response) (res *HttpResponse, err error) {
 	res.StatusCode = lowRes.StatusCode
 	res.Header = lowRes.Header
 
+	res.ContentLength = lowRes.ContentLength
 	res.Body, err = ioutil.ReadAll(lowRes.Body)
 	if err != nil {
 		return nil, err
@@ -178,6 +183,13 @@ func NewHttpResponse(lowRes *http.Response) (res *HttpResponse, err error) {
 	res.response = lowRes
 
 	return res, nil
+}
+
+func (r *HttpResponse) GetRawResponse() (res *http.Response, err error) {
+	if r.response == nil {
+		return nil, fmt.Errorf("The original http.Reponse must not be nil")
+	}
+	return r.response, nil
 }
 
 type Interceptor interface {}
