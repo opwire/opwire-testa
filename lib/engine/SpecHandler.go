@@ -1,11 +1,9 @@
 package engine
 
 import(
-	"encoding/json"
 	"fmt"
 	"regexp"
 	"time"
-	"gopkg.in/yaml.v2"
 	"github.com/opwire/opwire-testa/lib/comparison"
 	"github.com/opwire/opwire-testa/lib/utils"
 )
@@ -128,12 +126,12 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 				if (res.Body == nil) {
 					errors["Body/ReceivedObject"] = fmt.Errorf("[%s] Response body is empty", format)
 					next = false
-				} else if err := Unmarshal(format, res.Body, &receivedObj); err != nil {
+				} else if err := utils.Unmarshal(format, res.Body, &receivedObj); err != nil {
 					errors["Body/ReceivedObject"] = fmt.Errorf("[%s] Invalid response content: %s", format, err)
 					next = false
 				}
 				if next && _eb.IsEqualTo != nil {
-					if err := Unmarshal(format, []byte(*_eb.IsEqualTo), &expectedObj); err != nil {
+					if err := utils.Unmarshal(format, []byte(*_eb.IsEqualTo), &expectedObj); err != nil {
 						errors["Body/ExpectedObject"] = fmt.Errorf("[%s] Invalid expected content: %s", format, err)
 						next = false
 					}
@@ -145,7 +143,7 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 					}
 				}
 				if next && _eb.Includes != nil {
-					if err := Unmarshal(format, []byte(*_eb.Includes), &expectedObj); err != nil {
+					if err := utils.Unmarshal(format, []byte(*_eb.Includes), &expectedObj); err != nil {
 						errors["Body/ExpectedObject"] = fmt.Errorf("[%s] Invalid expected content: %s", format, err)
 						next = false
 					}
@@ -189,16 +187,6 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 
 	result.Duration = time.Since(startTime)
 	return result, nil
-}
-
-func Unmarshal(format string, source []byte, target interface{}) error {
-	if format == utils.BODY_FORMAT_JSON {
-		return json.Unmarshal(source, target)
-	}
-	if format == utils.BODY_FORMAT_YAML {
-		return yaml.Unmarshal(source, target)
-	}
-	return fmt.Errorf("Invalid body format: %s", format)
 }
 
 type TestSuite struct {
