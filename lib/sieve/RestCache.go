@@ -9,25 +9,119 @@ import (
 	"github.com/opwire/opwire-testa/lib/utils"
 )
 
-type RestCache struct {}
-
 func NewRestCache() (*RestCache, error) {
 	s := &RestCache{}
+	s.restResult = make(map[string]*RestResult, 0)
 	return s, nil
 }
 
-func (s *RestCache) Read(query string) (string, error) {
-	q, err := Parse(query)
-	if err != nil {
-		return "", err
-	}
-
-	_ = q
-	return "", nil
+type RestCache struct {
+	restResult map[string]*RestResult
 }
 
-func (s *RestCache) Save(query string) (string, error) {
-	return "", nil
+func (s *RestCache) Query(query string) (string, error) {
+	if s.restResult == nil {
+		return utils.BLANK, fmt.Errorf("RestCache must be initialized")
+	}
+
+	q, err := Parse(query)
+	if err != nil {
+		return utils.BLANK, err
+	}
+	if q == nil {
+		return utils.BLANK, fmt.Errorf("Query[%s] not found", query)
+	}
+
+	if len(q.TestID) == 0 {
+		return utils.BLANK, fmt.Errorf("TestID must not be empty")
+	}
+
+	rr, ok := s.restResult[q.TestID]
+	if !ok || rr == nil {
+		return utils.BLANK, fmt.Errorf("RestResult[%s] not found", q.TestID)
+	}
+
+	switch(q.Attr) {
+	case RESP_STATUS:
+		return rr.Status, nil
+
+	case RESP_STATUS_CODE:
+		return fmt.Sprintf("%d", rr.StatusCode), nil
+
+	case RESP_HEADER:
+		if len(q.ItemKey) == 0 {
+			return utils.BLANK, fmt.Errorf("Resp[%s].Header's name must be provided", q.TestID)
+		}
+		vals, found := rr.Header[q.ItemKey]
+		if !found {
+			if len(q.Default) > 0 {
+				return q.Default, nil
+			}
+			return utils.BLANK, fmt.Errorf("Resp[%s].Header[%s] not found", q.TestID, q.ItemKey)
+		}
+		valsize := len(vals)
+		if valsize == 0 {
+			return utils.BLANK, fmt.Errorf("Resp[%s].Header[%s] is invalid", q.TestID, q.ItemKey)
+		}
+		if valsize == 1 {
+			return vals[0], nil
+		} else {
+			return strings.Join(vals, ", "), nil
+		}
+
+	case RESP_BODY:
+		if rr.Body == nil {
+			if len(q.Default) > 0 {
+				return q.Default, nil
+			}
+			return utils.BLANK, fmt.Errorf("Resp[%s].Body is nil", q.TestID)
+		}
+		return string(rr.Body), nil
+
+	case RESP_BODY_FIELD:
+		if rr.BodyField == nil {
+			return utils.BLANK, fmt.Errorf("Resp[%s].BodyField must be initialized", q.TestID)
+		}
+		if len(q.ItemKey) == 0 {
+			return utils.BLANK, fmt.Errorf("Resp[%s].BodyField's name must be provided", q.TestID)
+		}
+		val, found := rr.BodyField[q.ItemKey]
+		if !found {
+			if len(q.Default) > 0 {
+				return q.Default, nil
+			}
+			return utils.BLANK, fmt.Errorf("Resp[%s].BodyField[%s] not found", q.TestID, q.ItemKey)
+		}
+		return fmt.Sprintf("%v", val), nil
+	}
+	return utils.BLANK, nil
+}
+
+func (s *RestCache) Get(testId string) (*RestResult, error) {
+	if rr, ok := s.restResult[testId]; ok {
+		return rr, nil
+	} else {
+		return nil, fmt.Errorf("RestResult[%s] not found", testId)
+	}
+}
+
+func (s *RestCache) Store(testId string, res *engine.HttpResponse) (*RestResult, error) {
+	if s.restResult == nil {
+		s.restResult = make(map[string]*RestResult, 0)
+	}
+
+	newRR, err := NewRestResult(res)
+	if err != nil {
+		return nil, err
+	}
+
+	oldRR, ok := s.restResult[testId]
+	s.restResult[testId] = newRR
+
+	if ok {
+		return oldRR, nil
+	}
+	return nil, nil
 }
 
 func NewRestResult(lowRes *engine.HttpResponse) (*RestResult, error) {
@@ -41,7 +135,7 @@ func NewRestResult(lowRes *engine.HttpResponse) (*RestResult, error) {
 	res.StatusCode = lowRes.StatusCode
 	res.Header = lowRes.Header
 	res.ContentLength = lowRes.ContentLength
-	res.Body = string(lowRes.Body)
+	res.Body = lowRes.Body
 
 	// BodyField
 	obj := make(map[string]interface{}, 0)
@@ -61,12 +155,10 @@ func NewRestResult(lowRes *engine.HttpResponse) (*RestResult, error) {
 	}
 
 	if found {
-		res.BodyField = make(map[string]string)
+		res.BodyField = make(map[string]interface{})
 		flatten, _ := utils.Flatten("", obj)
 		for key, val := range flatten {
-			if val != nil {
-				res.BodyField[key] = fmt.Sprintf("%v", val)
-			}
+			res.BodyField[key] = val
 		}
 	}
 
@@ -78,8 +170,8 @@ type RestResult struct {
 	StatusCode int
 	Header http.Header
 	ContentLength int64
-	Body string
-	BodyField map[string]string
+	Body []byte
+	BodyField map[string]interface{}
 }
 
 type DataType int
