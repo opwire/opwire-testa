@@ -9,6 +9,7 @@ import (
 	"github.com/opwire/opwire-testa/lib/format"
 	"github.com/opwire/opwire-testa/lib/engine"
 	"github.com/opwire/opwire-testa/lib/script"
+	"github.com/opwire/opwire-testa/lib/sieve"
 	"github.com/opwire/opwire-testa/lib/tag"
 )
 
@@ -213,14 +214,14 @@ func (r *RunController) wrapDescriptor(descriptor *script.Descriptor) (testing.I
 			r.outputPrinter.Println(r.outputPrinter.TestSuiteTitle(descriptor.Locator.RelativePath))
 			tests := make([]testing.InternalTest, 0)
 			for _, testcase := range testsuite.TestCases {
-				tests = append(tests, r.wrapTestCase(testcase))
+				tests = append(tests, r.wrapTestCase(testcase, testsuite.GetResultCache()))
 			}
 			testing.RunTests(defaultMatchString, tests)
 		},
 	}, nil
 }
 
-func (r *RunController) wrapTestCase(testcase *engine.TestCase) (testing.InternalTest) {
+func (r *RunController) wrapTestCase(testcase *engine.TestCase, cache *sieve.RestCache) (testing.InternalTest) {
 	return testing.InternalTest{
 		Name: testcase.Title,
 		F: func (t *testing.T) {
@@ -242,7 +243,7 @@ func (r *RunController) wrapTestCase(testcase *engine.TestCase) (testing.Interna
 				r.counter.Skipped += 1
 				return
 			}
-			result, err := r.specHandler.Examine(testcase)
+			result, err := r.specHandler.Examine(testcase, cache)
 			exectime := printDuration(r.outputPrinter, result.Duration)
 			if err != nil {
 				r.outputPrinter.Println(r.outputPrinter.Cracked(testcase.Title), tagstr, exectime)

@@ -6,16 +6,17 @@ import (
 	"io"
 	"time"
 	"gopkg.in/yaml.v2"
+	"github.com/opwire/opwire-testa/lib/client"
 	"github.com/opwire/opwire-testa/lib/utils"
 )
 
-type SpecGenerator struct {
+type SpecBuilder struct {
 	ExcludedHeaders []string
 	Version string
 }
 
-func NewSpecGenerator() (*SpecGenerator, error) {
-	ref := new(SpecGenerator)
+func NewSpecBuilder() (*SpecBuilder, error) {
+	ref := new(SpecBuilder)
 	ref.ExcludedHeaders = []string {
 		"content-length",
 		"date",
@@ -24,7 +25,7 @@ func NewSpecGenerator() (*SpecGenerator, error) {
 	return ref, nil
 }
 
-func (g *SpecGenerator) GenerateTestCase(w io.Writer, req *HttpRequest, res *HttpResponse) error {
+func (g *SpecBuilder) GenerateTestCase(w io.Writer, req *client.HttpRequest, res *client.HttpResponse) error {
 	s := TestCase{}
 	s.Title = "<Generated testcase>"
 	s.Version = utils.RefOfString(g.Version)
@@ -52,7 +53,7 @@ func (g *SpecGenerator) GenerateTestCase(w io.Writer, req *HttpRequest, res *Htt
 	return nil
 }
 
-func (g *SpecGenerator) generateExpectation(res *HttpResponse) *Expectation {
+func (g *SpecBuilder) generateExpectation(res *client.HttpResponse) *Expectation {
 	if res == nil {
 		return nil
 	}

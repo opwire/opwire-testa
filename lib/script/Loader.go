@@ -205,6 +205,16 @@ const scriptSchema string = `{
 						}
 					]
 				},
+				"capture": {
+					"oneOf": [
+						{
+							"type": "null"
+						},
+						{
+							"$ref": "#/definitions/Expectation"
+						}
+					]
+				},
 				"expectation": {
 					"oneOf": [
 						{

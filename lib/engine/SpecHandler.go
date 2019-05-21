@@ -4,7 +4,9 @@ import(
 	"fmt"
 	"regexp"
 	"time"
+	"github.com/opwire/opwire-testa/lib/client"
 	"github.com/opwire/opwire-testa/lib/comparison"
+	"github.com/opwire/opwire-testa/lib/sieve"
 	"github.com/opwire/opwire-testa/lib/utils"
 )
 
@@ -12,19 +14,19 @@ type SpecHandlerOptions interface {
 }
 
 type SpecHandler struct {
-	invoker HttpInvoker
+	invoker client.HttpInvoker
 }
 
 func NewSpecHandler(opts SpecHandlerOptions) (e *SpecHandler, err error) {
 	e = &SpecHandler{}
-	e.invoker, err = NewHttpInvoker(nil)
+	e.invoker, err = client.NewHttpInvoker(nil)
 	if err != nil {
 		return nil, err
 	}
 	return e, nil
 }
 
-func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
+func (e *SpecHandler) Examine(testcase *TestCase, cache *sieve.RestCache) (*ExaminationResult, error) {
 	if testcase == nil {
 		return nil, fmt.Errorf("TestCase must not be nil")
 	}
@@ -185,6 +187,11 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 		result.Status = "error"
 	}
 
+	// cache HttpResponse
+	if testcase.Capture != nil && len(testcase.Capture.StoreID) > 0 {
+		cache.Store(testcase.Capture.StoreID, res)
+	}
+
 	result.Duration = time.Since(startTime)
 	return result, nil
 }
@@ -192,16 +199,29 @@ func (e *SpecHandler) Examine(testcase *TestCase) (*ExaminationResult, error) {
 type TestSuite struct {
 	TestCases []*TestCase `yaml:"testcases" json:"testcases"`
 	Pending *bool `yaml:"pending,omitempty" json:"pending"`
+	resultCache *sieve.RestCache
+}
+
+func (r *TestSuite) GetResultCache() (*sieve.RestCache) {
+	if r.resultCache == nil {
+		r.resultCache, _ = sieve.NewRestCache()
+	}
+	return r.resultCache
 }
 
 type TestCase struct {
 	Title string `yaml:"title" json:"title"`
 	Version *string `yaml:"version,omitempty" json:"version"`
-	Request *HttpRequest `yaml:"request" json:"request"`
+	Request *client.HttpRequest `yaml:"request" json:"request"`
+	Capture *SectionCapture `yaml:"capture" json:"capture"`
 	Expectation *Expectation `yaml:"expectation" json:"expectation"`
 	Pending *bool `yaml:"pending,omitempty" json:"pending"`
 	Tags []string `yaml:"tags,omitempty" json:"tags"`
 	CreatedTime *string `yaml:"created-time,omitempty" json:"created-time"`
+}
+
+type SectionCapture struct {
+	StoreID string `yaml:"store-id,omitempty" json:"store-id"`
 }
 
 type Expectation struct {
@@ -255,6 +275,6 @@ type ComparisonOperators struct {
 type ExaminationResult struct {
 	Duration time.Duration
 	Errors map[string]error
-	Response *HttpResponse
+	Response *client.HttpResponse
 	Status string
 }

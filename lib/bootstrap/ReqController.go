@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"github.com/opwire/opwire-testa/lib/client"
 	"github.com/opwire/opwire-testa/lib/engine"
 	"github.com/opwire/opwire-testa/lib/format"
 	"github.com/opwire/opwire-testa/lib/utils"
@@ -25,8 +26,8 @@ type ReqControllerOptions interface {
 }
 
 type ReqController struct {
-	httpInvoker engine.HttpInvoker
-	specGenerator *engine.SpecGenerator
+	httpInvoker client.HttpInvoker
+	specBuilder *engine.SpecBuilder
 	outputPrinter *format.OutputPrinter
 	outWriter io.Writer
 	errWriter io.Writer
@@ -36,19 +37,19 @@ func NewReqController(opts ReqControllerOptions) (obj *ReqController, err error)
 	obj = &ReqController{}
 
 	// create a HTTP Invoker instance
-	httpInvokerOptions := &engine.HttpInvokerOptions{}
-	obj.httpInvoker, err = engine.NewHttpInvoker(httpInvokerOptions)
+	httpInvokerOptions := &client.HttpInvokerOptions{}
+	obj.httpInvoker, err = client.NewHttpInvoker(httpInvokerOptions)
 	if err != nil {
 		return nil, err
 	}
 
-	// create a SpecGenerator instance
-	obj.specGenerator, err = engine.NewSpecGenerator()
+	// create a SpecBuilder instance
+	obj.specBuilder, err = engine.NewSpecBuilder()
 	if err != nil {
 		return nil, err
 	}
 	if opts != nil {
-		obj.specGenerator.Version = opts.GetVersion()
+		obj.specBuilder.Version = opts.GetVersion()
 	}
 
 	// create a OutputPrinter instance
@@ -86,7 +87,7 @@ func (z *ReqController) Execute(args ReqArguments) error {
 	z.assertReady(args)
 
 	generationPrinter := &GenerationPrinter{
-		generator: z.specGenerator,
+		generator: z.specBuilder,
 		writer: z.GetOutWriter(),
 	}
 	invocationPrinter := &InvocationPrinter{
@@ -110,11 +111,11 @@ func (z *ReqController) Execute(args ReqArguments) error {
 }
 
 type GenerationPrinter struct {
-	generator *engine.SpecGenerator
+	generator *engine.SpecBuilder
 	writer io.Writer
 }
 
-func (r *GenerationPrinter) PostProcess(req *engine.HttpRequest, res *engine.HttpResponse) error {
+func (r *GenerationPrinter) PostProcess(req *client.HttpRequest, res *client.HttpResponse) error {
 	if r.generator == nil {
 		panic(fmt.Errorf("GenerationPrinter.generator must not be nil"))
 	}
@@ -128,15 +129,15 @@ type InvocationPrinter struct {
 	writer io.Writer
 }
 
-func (r *InvocationPrinter) PreProcess(req *engine.HttpRequest) error {
+func (r *InvocationPrinter) PreProcess(req *client.HttpRequest) error {
 	return renderRequest(r.writer, req)
 }
 
-func (r *InvocationPrinter) PostProcess(req *engine.HttpRequest, res *engine.HttpResponse) error {
+func (r *InvocationPrinter) PostProcess(req *client.HttpRequest, res *client.HttpResponse) error {
 	return renderResponse(r.writer, res)
 }
 
-func renderRequest(w io.Writer, r *engine.HttpRequest) error {
+func renderRequest(w io.Writer, r *client.HttpRequest) error {
 	req, err := r.GetRawRequest()
 	if err != nil {
 		return err
@@ -179,7 +180,7 @@ func renderRequest(w io.Writer, r *engine.HttpRequest) error {
 	return nil
 }
 
-func renderResponse(w io.Writer, res *engine.HttpResponse) error {
+func renderResponse(w io.Writer, res *client.HttpResponse) error {
 	// render status line
 	line := []string{"<"}
 	if len(res.Version) > 0 {
@@ -215,7 +216,7 @@ func (z *ReqController) displayError(err error) error {
 	return err
 }
 
-func (z *ReqController) displayResult(res *engine.HttpResponse) *engine.HttpResponse {
+func (z *ReqController) displayResult(res *client.HttpResponse) *client.HttpResponse {
 	if res == nil {
 		return res
 	}
@@ -233,8 +234,8 @@ func (z *ReqController) displayResult(res *engine.HttpResponse) *engine.HttpResp
 	return res
 }
 
-func transformReqArgs(args ReqArguments) *engine.HttpRequest {
-	req := &engine.HttpRequest{}
+func transformReqArgs(args ReqArguments) *client.HttpRequest {
+	req := &client.HttpRequest{}
 
 	req.Method = args.GetMethod()
 	if len(req.Method) == 0 {
@@ -246,13 +247,13 @@ func transformReqArgs(args ReqArguments) *engine.HttpRequest {
 		req.Url, _ = utils.UrlJoin(utils.DEFAULT_PDP, utils.DEFAULT_PATH)
 	}
 
-	req.Headers = make([]engine.HttpHeader, 0)
+	req.Headers = make([]client.HttpHeader, 0)
 	headerList := args.GetHeader()
 	if headerList != nil {
 		for _, item := range headerList {
 			pair := utils.Split(item, ":")
 			if len(pair) == 2 {
-				header := engine.HttpHeader{
+				header := client.HttpHeader{
 					Name: pair[0],
 					Value: pair[1],
 				}

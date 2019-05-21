@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
-	"github.com/opwire/opwire-testa/lib/engine"
+	"github.com/opwire/opwire-testa/lib/client"
 	"github.com/opwire/opwire-testa/lib/utils"
 )
 
@@ -105,7 +105,7 @@ func (s *RestCache) Get(testId string) (*RestResult, error) {
 	}
 }
 
-func (s *RestCache) Store(testId string, res *engine.HttpResponse) (*RestResult, error) {
+func (s *RestCache) Store(testId string, res *client.HttpResponse) (*RestResult, error) {
 	if s.restResult == nil {
 		s.restResult = make(map[string]*RestResult, 0)
 	}
@@ -124,7 +124,7 @@ func (s *RestCache) Store(testId string, res *engine.HttpResponse) (*RestResult,
 	return nil, nil
 }
 
-func NewRestResult(lowRes *engine.HttpResponse) (*RestResult, error) {
+func NewRestResult(lowRes *client.HttpResponse) (*RestResult, error) {
 	if lowRes == nil {
 		return nil, fmt.Errorf("HttpResponse must not be nil")
 	}

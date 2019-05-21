@@ -5,7 +5,7 @@ import (
 	"io"
 	"os"
 	"strings"
-	"github.com/opwire/opwire-testa/lib/engine"
+	"github.com/opwire/opwire-testa/lib/client"
 	"github.com/opwire/opwire-testa/lib/format"
 	"github.com/opwire/opwire-testa/lib/script"
 	"github.com/opwire/opwire-testa/lib/tag"
@@ -140,10 +140,10 @@ func (r *GenController) Execute(args GenArguments) error {
 
 type CurlGenerator struct {}
 
-func (g *CurlGenerator) generateCommand(w io.Writer, req *engine.HttpRequest) error {
+func (g *CurlGenerator) generateCommand(w io.Writer, req *client.HttpRequest) error {
 	fmt.Fprintf(w, "curl \\\n")
 	fmt.Fprintf(w, "  --request %s \\\n", req.Method)
-	fmt.Fprintf(w, "  --url \"%s\" \\\n", engine.BuildUrl(req))
+	fmt.Fprintf(w, "  --url \"%s\" \\\n", client.BuildUrl(req))
 	for _, header := range req.Headers {
 		fmt.Fprintf(w, "  --header '%s: %s' \\\n", header.Name, header.Value)
 	}
