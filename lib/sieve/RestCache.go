@@ -19,6 +19,16 @@ type RestCache struct {
 	restResult map[string]*RestResult
 }
 
+func (s *RestCache) Evaluate(text string) string {
+	return SIEVE_TESTCASE_VAR_EXPRESSION.ReplaceAllStringFunc(text, func(exp string) string {
+		result, err := s.Query(exp)
+		if err != nil {
+			return exp
+		}
+		return result
+	})
+}
+
 func (s *RestCache) Query(query string) (string, error) {
 	if s.restResult == nil {
 		return utils.BLANK, fmt.Errorf("RestCache must be initialized")
@@ -192,11 +202,13 @@ type Query struct {
 	Default string
 }
 
-var SIEVE_TESTCASE_STATUS_REGEXP = regexp.MustCompile(`(?i)^\s*case\[([^\]]*)\]\.Status\s*(\:\-([^\}]*))?\s*$`)
-var SIEVE_TESTCASE_STATUS_CODE_REGEXP = regexp.MustCompile(`(?i)^\s*case\[([^\]]*)\]\.StatusCode\s*(\:\-([^\}]*))?\s*$`)
-var SIEVE_TESTCASE_HEADER_REGEXP = regexp.MustCompile(`(?i)^\s*case\[([^\]]*)\]\.Header\[([^\]]*)\]\s*(\:\-([^\}]*))?\s*$`)
-var SIEVE_TESTCASE_BODY_REGEXP = regexp.MustCompile(`(?i)^\s*case\[([^\]]*)\]\.Body\s*(\:\-([^\}]*))?\s*$`)
-var SIEVE_TESTCASE_BODY_FIELD_REGEXP = regexp.MustCompile(`(?i)^\s*case\[([^\]]*)\]\.Body\[([^\]]*)\]\s*(\:\-([^\}]*))?\s*$`)
+var SIEVE_TESTCASE_VAR_EXPRESSION = regexp.MustCompile(`(?i)\${{([^}]*)}}`)
+var SIEVE_TESTCASE_PATTERN_BOUND = `^(?i)\${{%s}}$`
+var SIEVE_TESTCASE_STATUS_REGEXP = regexp.MustCompile(fmt.Sprintf(SIEVE_TESTCASE_PATTERN_BOUND, `\s*case\[([^\]]*)\]\.Status\s*(\:\-([^\}]*))?\s*`))
+var SIEVE_TESTCASE_STATUS_CODE_REGEXP = regexp.MustCompile(fmt.Sprintf(SIEVE_TESTCASE_PATTERN_BOUND, `\s*case\[([^\]]*)\]\.StatusCode\s*(\:\-([^\}]*))?\s*`))
+var SIEVE_TESTCASE_HEADER_REGEXP = regexp.MustCompile(fmt.Sprintf(SIEVE_TESTCASE_PATTERN_BOUND, `\s*case\[([^\]]*)\]\.Header\[([^\]]*)\]\s*(\:\-([^\}]*))?\s*`))
+var SIEVE_TESTCASE_BODY_REGEXP = regexp.MustCompile(fmt.Sprintf(SIEVE_TESTCASE_PATTERN_BOUND, `\s*case\[([^\]]*)\]\.Body\s*(\:\-([^\}]*))?\s*`))
+var SIEVE_TESTCASE_BODY_FIELD_REGEXP = regexp.MustCompile(fmt.Sprintf(SIEVE_TESTCASE_PATTERN_BOUND, `\s*case\[([^\]]*)\]\.Body\[([^\]]*)\]\s*(\:\-([^\}]*))?\s*`))
 
 func Parse(query string) (*Query, error) {
 	var q *Query
