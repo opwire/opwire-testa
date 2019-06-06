@@ -1,9 +1,17 @@
 package utils
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 )
+
+func BuildMultilineError(errs []string) error {
+	if len(errs) == 0 {
+		return nil
+	}
+	return errors.New(strings.Join(errs, "\n"))
+}
 
 func CombineErrors(label string, messages []string) error {
 	errstrs := make([]string, 0)

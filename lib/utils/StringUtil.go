@@ -76,3 +76,34 @@ func (DevNull) Write(p []byte) (int, error) {
 func (DevNull) WriteString(s string) (int, error) {
 	return len(s), nil
 }
+
+func AppendLinesWithIndent(store []string, lines []string, indent int) []string {
+	lines = Map(lines, func(line string, number int) string {
+		if indent > 0 {
+			return strings.Repeat(" ", indent) + line
+		}
+		return line
+	})
+	if store == nil {
+		store = lines
+	} else {
+		store = append(store, lines...)
+	}
+	return store
+}
+
+func AppendBlockWithIndent(array []string, block string, indent int) []string {
+	lines := strings.Split(block, "\n")
+	lines = Map(lines, func(line string, number int) string {
+		if indent > 0 {
+			return strings.Repeat(" ", indent) + line
+		}
+		return line
+	})
+	if array == nil {
+		array = lines
+	} else {
+		array = append(array, lines...)
+	}
+	return array
+}

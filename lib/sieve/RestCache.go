@@ -29,6 +29,22 @@ func (s *RestCache) Evaluate(text string) string {
 	})
 }
 
+func (s *RestCache) EvaluateWithExplanation(text string) (string, []string) {
+	var errs []string
+	output := SIEVE_TESTCASE_VAR_EXPRESSION.ReplaceAllStringFunc(text, func(exp string) string {
+		result, err := s.Query(exp)
+		if err != nil {
+			if errs == nil {
+				errs = make([]string, 0)
+			}
+			errs = append(errs, err.Error())
+			return exp
+		}
+		return result
+	})
+	return output, errs
+}
+
 func (s *RestCache) Query(query string) (string, error) {
 	if s.restResult == nil {
 		return utils.BLANK, fmt.Errorf("RestCache must be initialized")
@@ -46,9 +62,9 @@ func (s *RestCache) Query(query string) (string, error) {
 		return utils.BLANK, fmt.Errorf("TestID must not be empty")
 	}
 
-	rr, ok := s.restResult[q.TestID]
-	if !ok || rr == nil {
-		return utils.BLANK, fmt.Errorf("RestResult[%s] not found", q.TestID)
+	rr, er1 := s.Get(q.TestID)
+	if er1 != nil {
+		return utils.BLANK, er1
 	}
 
 	switch(q.Attr) {
@@ -113,6 +129,83 @@ func (s *RestCache) Get(testId string) (*RestResult, error) {
 	} else {
 		return nil, fmt.Errorf("RestResult[%s] not found", testId)
 	}
+}
+
+func (s *RestCache) Apply(req *client.HttpRequest) (r *client.HttpRequest, err error) {
+	r = &client.HttpRequest{}
+	var errs []string
+	var err1 []string
+
+	if len(req.Method) > 0 {
+		r.Method, err1 = s.EvaluateWithExplanation(req.Method)
+		if err1 != nil {
+			errs = append(errs, "Evaluate(req.Method) failed")
+			errs = utils.AppendLinesWithIndent(errs, err1, 2)
+		}
+	}
+
+	if len(req.Url) > 0 {
+		r.Url, err1 = s.EvaluateWithExplanation(req.Url)
+		if err1 != nil {
+			errs = append(errs, "Evaluate(req.Url) failed")
+			errs = utils.AppendLinesWithIndent(errs, err1, 2)
+		}
+	}
+
+	if len(req.PDP) > 0 {
+		r.PDP, err1 = s.EvaluateWithExplanation(req.PDP)
+		if err1 != nil {
+			errs = append(errs, "Evaluate(req.PDP) failed")
+			errs = utils.AppendLinesWithIndent(errs, err1, 2)
+		}
+	}
+
+	if len(req.Path) > 0 {
+		r.Path, err1 = s.EvaluateWithExplanation(req.Path)
+		if err1 != nil {
+			errs = append(errs, "Evaluate(req.Path) failed")
+			errs = utils.AppendLinesWithIndent(errs, err1, 2)
+		}
+	}
+
+	if req.Headers != nil {
+		var err2, err3 []string
+		r.Headers = make([]client.HttpHeader, len(req.Headers))
+		for i, h := range req.Headers {
+			newH := client.HttpHeader{
+				Name: h.Name,
+				Value: h.Value,
+			}
+			if len(newH.Value) > 0 {
+				newH.Value, err3 = s.EvaluateWithExplanation(newH.Value)
+				if err3 != nil {
+					err2 = append(err2, fmt.Sprintf("Evaluate(req.Headers[%d]/%s) failed", i, newH.Name))
+					err2 = utils.AppendLinesWithIndent(err2, err3, 2)
+				}
+			}
+			r.Headers[i] = newH
+		}
+		if len(err2) > 0 {
+			errs = append(errs, "Evaluate(req.Headers) failed")
+			errs = utils.AppendLinesWithIndent(errs, err2, 2)
+		}
+	}
+
+	if len(req.Body) > 0 {
+		r.Body, err1 = s.EvaluateWithExplanation(req.Body)
+		if err1 != nil {
+			errs = append(errs, "Evaluate(req.Body) failed")
+			errs = utils.AppendLinesWithIndent(errs, err1, 2)
+		}
+	}
+
+	r.Timeout = req.Timeout
+
+	if errs != nil && len(errs) > 0 {
+		return r, utils.BuildMultilineError(errs)
+	}
+
+	return r, nil
 }
 
 func (s *RestCache) Store(testId string, res *client.HttpResponse) (*RestResult, error) {
