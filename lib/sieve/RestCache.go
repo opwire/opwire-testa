@@ -169,7 +169,6 @@ func (s *RestCache) Apply(req *client.HttpRequest) (r *client.HttpRequest, err e
 	}
 
 	if req.Headers != nil {
-		var err2, err3 []string
 		r.Headers = make([]client.HttpHeader, len(req.Headers))
 		for i, h := range req.Headers {
 			newH := client.HttpHeader{
@@ -177,17 +176,18 @@ func (s *RestCache) Apply(req *client.HttpRequest) (r *client.HttpRequest, err e
 				Value: h.Value,
 			}
 			if len(newH.Value) > 0 {
-				newH.Value, err3 = s.EvaluateWithExplanation(newH.Value)
-				if err3 != nil {
-					err2 = append(err2, fmt.Sprintf("Evaluate(req.Headers[%d]/%s) failed", i, newH.Name))
-					err2 = utils.AppendLinesWithIndent(err2, err3, 2)
+				var err2 []string
+				newH.Value, err2 = s.EvaluateWithExplanation(newH.Value)
+				if err2 != nil {
+					err1 = append(err1, fmt.Sprintf("Evaluate(req.Headers[%d]/%s) failed", i, newH.Name))
+					err1 = utils.AppendLinesWithIndent(err1, err2, 2)
 				}
 			}
 			r.Headers[i] = newH
 		}
-		if len(err2) > 0 {
+		if len(err1) > 0 {
 			errs = append(errs, "Evaluate(req.Headers) failed")
-			errs = utils.AppendLinesWithIndent(errs, err2, 2)
+			errs = utils.AppendLinesWithIndent(errs, err1, 2)
 		}
 	}
 
