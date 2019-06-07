@@ -199,7 +199,10 @@ func (e *SpecHandler) Examine(testcase *TestCase, cache *sieve.RestCache) (*Exam
 
 	// cache HttpResponse
 	if testcase.Capture != nil && len(testcase.Capture.StoreID) > 0 {
-		cache.Store(testcase.Capture.StoreID, res)
+		_, err := cache.Store(testcase.Capture.StoreID, res)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	result.Duration = time.Since(startTime)

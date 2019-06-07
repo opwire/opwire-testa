@@ -229,7 +229,7 @@ func (s *RestCache) Store(testId string, res *client.HttpResponse) (*RestResult,
 
 func NewRestResult(lowRes *client.HttpResponse) (*RestResult, error) {
 	if lowRes == nil {
-		return nil, fmt.Errorf("HttpResponse must not be nil")
+		panic(fmt.Errorf("HttpResponse must not be nil"))
 	}
 
 	res := &RestResult{}
