@@ -1,6 +1,6 @@
 # opwire-testa
 
-`opwire-testa` is a simple API testing tool written in golang. It is originally developed to test APIs built by `opwire-agent`. The `opwire-testa` is most convenient in working with `opwire-agent`, but is also able to make friends with other API services.
+`opwire-testa` is a simple API testing tool written in golang. It is originally developed to test APIs built by `opwire-agent`. The `opwire-testa` is the most convenient one to work with `opwire-agent`, but is also able to be used with other API services easily.
 
 > `Developed by a programmer for other programmers`
 
@@ -17,7 +17,7 @@ curl https://opwire.org/opwire-testa/install.sh | bash
 For other systems:
 
 * Download the relevant [`opwire-testa`](https://github.com/opwire/opwire-testa/releases/latest) release,
-* Extract the `opwire-testa` or `opwire-testa.exe` binary from the archive to project home folder (current directory).
+* Extract the `opwire-testa` or `opwire-testa.exe` binary from the archive to the home folder of your project.
 
 ### Executing tests
 
@@ -40,7 +40,7 @@ Command line options:
 * `--incl-files` (`-i`): File inclusion patterns.
 * `--excl-files` (`-e`): File exclusion patterns.
 * `--test-name` (`-n`): Test title/name matching pattern.
-* `--tags` (`-g`): Conditional tags for selecting test cases. In above example, `label1`, `label2` are test case inclusion tags, `pending-case1`, `pending-case2` are test case exclusion tags.
+* `--tags` (`-g`): Conditional tags for selecting test cases. In the above example, `label1`, `label2` are the two tags which include test cases, while `pending-case1`, `pending-case2` exclude test cases. To include test cases, the mandantory is not having any `pending-case1` or `pending-case2` selected.
 
 Use `--help` flag to see more details for arguments:
 
@@ -81,11 +81,11 @@ Use `--help` flag to see more details for arguments:
 
 Command line options:
 
-* `--request` (`-X`): Specifies a custom request method to use when communicating with the HTTP server.
+* `--request` (`-X`): Specifies a customized request method to use when communicating with the HTTP server.
 * `--url`: Specifies a URL to fetch.
-* `--header` (`-H`): Extra header to include in the request when sending HTTP to a server.
-* `--data` (`-d`): Sends the specified data in a POST/PUT/PATCH request to the HTTP server.
-* `--export`: Renders this `request` in specific format instead of executing. Currently support only one format: `testcase`.
+* `--header` (`-H`): Specifies an extra header to include in the request when sending HTTP to the server.
+* `--data` (`-d`): Specifies HTTP body in a POST/PUT/PATCH request to the HTTP server.
+* `--export`: Renders this `request` in a specific format instead of executing. The only one format supported, currently is `testcase`.
 * `--snapshot`: Alias of `--export=testcase`.
 
 Use `--help` flag to see more details for arguments:
@@ -117,4 +117,4 @@ Use `--help` flag to see more details for arguments:
 
 MIT
 
-See [LICENSE](LICENSE) to see the full text.
+Refer to [LICENSE](LICENSE) to see the full text.
