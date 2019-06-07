@@ -20,7 +20,7 @@ type RestCache struct {
 }
 
 func (s *RestCache) Evaluate(text string) string {
-	return SIEVE_TESTCASE_VAR_EXPRESSION.ReplaceAllStringFunc(text, func(exp string) string {
+	return STEP_VAR_EXPRESSION.ReplaceAllStringFunc(text, func(exp string) string {
 		result, err := s.Query(exp)
 		if err != nil {
 			return exp
@@ -31,7 +31,7 @@ func (s *RestCache) Evaluate(text string) string {
 
 func (s *RestCache) EvaluateWithExplanation(text string) (string, []string) {
 	var errs []string
-	output := SIEVE_TESTCASE_VAR_EXPRESSION.ReplaceAllStringFunc(text, func(exp string) string {
+	output := STEP_VAR_EXPRESSION.ReplaceAllStringFunc(text, func(exp string) string {
 		result, err := s.Query(exp)
 		if err != nil {
 			if errs == nil {
@@ -295,33 +295,33 @@ type Query struct {
 	Default string
 }
 
-var SIEVE_TESTCASE_VAR_EXPRESSION = regexp.MustCompile(`(?i)\${{([^}]*)}}`)
-var SIEVE_TESTCASE_PATTERN_BOUND = `^(?i)\${{%s}}$`
-var SIEVE_TESTCASE_STATUS_REGEXP = regexp.MustCompile(fmt.Sprintf(SIEVE_TESTCASE_PATTERN_BOUND, `\s*case\[([^\]]*)\]\.Status\s*(\:\-([^\}]*))?\s*`))
-var SIEVE_TESTCASE_STATUS_CODE_REGEXP = regexp.MustCompile(fmt.Sprintf(SIEVE_TESTCASE_PATTERN_BOUND, `\s*case\[([^\]]*)\]\.StatusCode\s*(\:\-([^\}]*))?\s*`))
-var SIEVE_TESTCASE_HEADER_REGEXP = regexp.MustCompile(fmt.Sprintf(SIEVE_TESTCASE_PATTERN_BOUND, `\s*case\[([^\]]*)\]\.Header\[([^\]]*)\]\s*(\:\-([^\}]*))?\s*`))
-var SIEVE_TESTCASE_BODY_REGEXP = regexp.MustCompile(fmt.Sprintf(SIEVE_TESTCASE_PATTERN_BOUND, `\s*case\[([^\]]*)\]\.Body\s*(\:\-([^\}]*))?\s*`))
-var SIEVE_TESTCASE_BODY_FIELD_REGEXP = regexp.MustCompile(fmt.Sprintf(SIEVE_TESTCASE_PATTERN_BOUND, `\s*case\[([^\]]*)\]\.Body\[([^\]]*)\]\s*(\:\-([^\}]*))?\s*`))
+var STEP_VAR_EXPRESSION = regexp.MustCompile(`(?i)\${{([^}]*)}}`)
+var STEP_PATTERN_BOUND = `^(?i)\${{%s}}$`
+var STEP_RES_STATUS_REGEXP = regexp.MustCompile(fmt.Sprintf(STEP_PATTERN_BOUND, `\s*case\[([^\]]*)\]\.Status\s*(\:\-([^\}]*))?\s*`))
+var STEP_RES_STATUS_CODE_REGEXP = regexp.MustCompile(fmt.Sprintf(STEP_PATTERN_BOUND, `\s*case\[([^\]]*)\]\.StatusCode\s*(\:\-([^\}]*))?\s*`))
+var STEP_RES_HEADER_REGEXP = regexp.MustCompile(fmt.Sprintf(STEP_PATTERN_BOUND, `\s*case\[([^\]]*)\]\.Header\[([^\]]*)\]\s*(\:\-([^\}]*))?\s*`))
+var STEP_RES_BODY_REGEXP = regexp.MustCompile(fmt.Sprintf(STEP_PATTERN_BOUND, `\s*case\[([^\]]*)\]\.Body\s*(\:\-([^\}]*))?\s*`))
+var STEP_RES_BODY_FIELD_REGEXP = regexp.MustCompile(fmt.Sprintf(STEP_PATTERN_BOUND, `\s*case\[([^\]]*)\]\.Body\[([^\]]*)\]\s*(\:\-([^\}]*))?\s*`))
 
 func Parse(query string) (*Query, error) {
 	var q *Query
-	q = extract2(RESP_STATUS, SIEVE_TESTCASE_STATUS_REGEXP.FindAllStringSubmatch(query, -1))
+	q = extract2(RESP_STATUS, STEP_RES_STATUS_REGEXP.FindAllStringSubmatch(query, -1))
 	if q != nil {
 		return q, nil
 	}
-	q = extract2(RESP_STATUS_CODE, SIEVE_TESTCASE_STATUS_CODE_REGEXP.FindAllStringSubmatch(query, -1))
+	q = extract2(RESP_STATUS_CODE, STEP_RES_STATUS_CODE_REGEXP.FindAllStringSubmatch(query, -1))
 	if q != nil {
 		return q, nil
 	}
-	q = extract3(RESP_HEADER, SIEVE_TESTCASE_HEADER_REGEXP.FindAllStringSubmatch(query, -1))
+	q = extract3(RESP_HEADER, STEP_RES_HEADER_REGEXP.FindAllStringSubmatch(query, -1))
 	if q != nil {
 		return q, nil
 	}
-	q = extract2(RESP_BODY, SIEVE_TESTCASE_BODY_REGEXP.FindAllStringSubmatch(query, -1))
+	q = extract2(RESP_BODY, STEP_RES_BODY_REGEXP.FindAllStringSubmatch(query, -1))
 	if q != nil {
 		return q, nil
 	}
-	q = extract3(RESP_BODY_FIELD, SIEVE_TESTCASE_BODY_FIELD_REGEXP.FindAllStringSubmatch(query, -1))
+	q = extract3(RESP_BODY_FIELD, STEP_RES_BODY_FIELD_REGEXP.FindAllStringSubmatch(query, -1))
 	if q != nil {
 		return q, nil
 	}
