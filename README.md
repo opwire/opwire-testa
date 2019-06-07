@@ -19,7 +19,7 @@ For other systems:
 * Download the relevant [`opwire-testa`](https://github.com/opwire/opwire-testa/releases/latest) release,
 * Extract the `opwire-testa` or `opwire-testa.exe` binary from the archive to the home folder of your project.
 
-### Executing tests
+### Execute tests
 
 #### Command line syntax
 
