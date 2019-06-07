@@ -243,25 +243,35 @@ func (r *RunController) wrapTestCase(testcase *engine.TestCase, cache *sieve.Res
 				r.counter.Skipped += 1
 				return
 			}
+
 			result, err := r.specHandler.Examine(testcase, cache)
+			if result == nil {
+				panic(fmt.Errorf("Result of Examine() must not be nil"))
+			}
+
 			exectime := printDuration(r.outputPrinter, result.Duration)
 			if err != nil {
 				r.outputPrinter.Println(r.outputPrinter.Cracked(testcase.Title), tagstr, exectime)
+				r.printErrorMap(result.Errors)
 				r.counter.Cracked += 1
 				return
 			}
-			if result != nil && len(result.Errors) > 0 {
+			if len(result.Errors) > 0 {
 				r.outputPrinter.Println(r.outputPrinter.Failure(testcase.Title), tagstr, exectime)
-				for key, err := range result.Errors {
-					r.outputPrinter.Printf(r.outputPrinter.SectionTitle(key))
-					r.outputPrinter.Printf(r.outputPrinter.Section(err.Error()))
-					r.outputPrinter.Println()
-				}
+				r.printErrorMap(result.Errors)
 				r.counter.Failure += 1
 				return
 			}
 			r.outputPrinter.Println(r.outputPrinter.Success(testcase.Title), tagstr, exectime)
 			r.counter.Success += 1
 		},
+	}
+}
+
+func (r *RunController) printErrorMap(errorKV map[string]error) {
+	for key, err := range errorKV {
+		r.outputPrinter.Printf(r.outputPrinter.SectionTitle(key))
+		r.outputPrinter.Printf(r.outputPrinter.Section(err.Error()))
+		r.outputPrinter.Println()
 	}
 }

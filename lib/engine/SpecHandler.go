@@ -28,7 +28,7 @@ func NewSpecHandler(opts SpecHandlerOptions) (e *SpecHandler, err error) {
 
 func (e *SpecHandler) Examine(testcase *TestCase, cache *sieve.RestCache) (*ExaminationResult, error) {
 	if testcase == nil {
-		return nil, fmt.Errorf("TestCase must not be nil")
+		panic(fmt.Errorf("TestCase must not be nil"))
 	}
 
 	result := &ExaminationResult{}
@@ -52,7 +52,11 @@ func (e *SpecHandler) Examine(testcase *TestCase, cache *sieve.RestCache) (*Exam
 	res, err := e.invoker.Do(req)
 	if err != nil {
 		result.Duration = time.Since(startTime)
-		return nil, err
+		result.Status = "error"
+		result.Errors = map[string]error{
+			"HttpClient": utils.LabelifyError("Web Server not available", err),
+		}
+		return result, err
 	}
 	result.Response = res
 

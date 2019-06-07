@@ -26,3 +26,9 @@ func CombineErrors(label string, messages []string) error {
 	}
 	return nil
 }
+
+func LabelifyError(label string, err error) error {
+	lines := strings.Split(err.Error(), "\n")
+	lines = AppendLinesWithIndent([]string{label}, lines, 2)
+	return BuildMultilineError(lines)
+}
