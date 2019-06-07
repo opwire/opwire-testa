@@ -42,8 +42,14 @@ func (e *SpecHandler) Examine(testcase *TestCase, cache *sieve.RestCache) (*Exam
 	// start time
 	startTime := time.Now()
 
+	// transform expression
+	req, err := cache.Apply(testcase.Request)
+	if err != nil {
+		panic(err)
+	}
+
 	// make the testing request
-	res, err := e.invoker.Do(testcase.Request)
+	res, err := e.invoker.Do(req)
 	if err != nil {
 		result.Duration = time.Since(startTime)
 		return nil, err

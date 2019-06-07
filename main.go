@@ -7,6 +7,12 @@ import(
 )
 
 func main() {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Printf("Testing execution has cracked, error: %s\n", err)
+		}
+	}()
+
 	manifest := &Manifest{}
 
 	cmd, err := cli.NewCommander(manifest)
